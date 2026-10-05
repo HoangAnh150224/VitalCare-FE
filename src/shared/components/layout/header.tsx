@@ -29,7 +29,8 @@ type Identity = {
   fullName?: string;
   firstName?: string;
   lastName?: string;
-  email?: string;
+  email?: string | null;
+  phone?: string;
   avatar?: string;
 };
 
@@ -136,6 +137,8 @@ function UserMenu() {
   const name =
     user?.fullName ??
     [user?.firstName, user?.lastName].filter(Boolean).join(" ");
+  // Email is optional now; the phone number always exists, so it stands in.
+  const contact = user?.email || user?.phone;
 
   return (
     <DropdownMenu>
@@ -155,13 +158,13 @@ function UserMenu() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="min-w-52">
-        {(name || user?.email) && (
+        {(name || contact) && (
           <>
             <DropdownMenuLabel className="flex flex-col gap-0.5">
               <span className="truncate text-sm font-medium">{name}</span>
-              {user?.email && (
+              {contact && (
                 <span className="truncate text-xs font-normal text-muted-foreground">
-                  {user.email}
+                  {contact}
                 </span>
               )}
             </DropdownMenuLabel>

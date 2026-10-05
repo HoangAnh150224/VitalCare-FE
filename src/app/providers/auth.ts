@@ -47,12 +47,12 @@ async function readError(response: Response, fallback: string): Promise<ApiError
 }
 
 export const authProvider: AuthProvider = {
-  async login({ username, password }) {
+  async login({ phone, password }) {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ phone, password }),
       });
 
       if (!response.ok) {
@@ -63,7 +63,7 @@ export const authProvider: AuthProvider = {
             name: "LoginError",
             // The API answers every failed sign-in with the same message on
             // purpose; showing it verbatim keeps that property intact.
-            message: error.message ?? "Tên đăng nhập hoặc mật khẩu không đúng",
+            message: error.message ?? "Số điện thoại hoặc mật khẩu không đúng",
           },
         };
       }

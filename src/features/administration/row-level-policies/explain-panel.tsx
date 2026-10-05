@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import { Separator } from "@/shared/ui/separator";
+import type { User } from "@/domains/user/types";
 import {
   ACTIONS,
   actionLabel,
@@ -62,11 +63,20 @@ export function ExplainPanel({
   const [recordId, setRecordId] = useState<string>("");
   const [simulation, setSimulation] = useState<SimulateResult | null>(null);
 
-  const { options: userOptions } = useSelect({
+  // Name *and* number: this dropdown chooses whose data scope gets explained,
+  // and nothing stops two members of staff sharing a full name. Picking the
+  // wrong one produces a confident answer about the wrong account. The phone
+  // number is unique by constraint, so the pair is always decidable.
+  //
+  // searchField has to be named explicitly -- it follows optionLabel only
+  // while that is a plain field name, and otherwise falls back to "title",
+  // which a user record does not have.
+  const { options: userOptions } = useSelect<User>({
     resource: "users",
-    optionLabel: "username",
+    optionLabel: (user) => `${user.fullName} · ${user.phone}`,
     optionValue: "id",
-    sorters: [{ field: "username", order: "asc" }],
+    searchField: "fullName",
+    sorters: [{ field: "fullName", order: "asc" }],
   });
 
   const { result: explainResult, query: explainQuery } = useCustom<ExplainResponse>({

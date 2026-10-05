@@ -149,26 +149,29 @@ export const UserEdit = () => {
               >
                 <FormField
                   control={form.control}
-                  name="username"
+                  name="phone"
                   rules={{
-                    required: "Vui lòng nhập tên đăng nhập",
-                    minLength: { value: 3, message: "Tối thiểu 3 ký tự" },
+                    required: "Vui lòng nhập số điện thoại",
                     pattern: {
-                      value: /^[a-zA-Z0-9._-]+$/,
-                      message:
-                        "Chỉ gồm chữ cái, chữ số, dấu chấm, dấu gạch dưới và dấu gạch ngang",
+                      value: /^[\s.()-]*(?:\+?84|0)(?:[\s.()-]*\d){9}[\s.()-]*$/,
+                      message: "Nhập số điện thoại Việt Nam, ví dụ 0901234567 hoặc +84901234567",
                     },
                   }}
                   render={({ field }) => (
                     <FormItem className="md:col-span-4">
-                      <FormLabel>Tên đăng nhập</FormLabel>
+                      <FormLabel>Số điện thoại</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
+                          type="tel"
+                          inputMode="tel"
                           value={field.value ?? ""}
                           className="font-mono"
                         />
                       </FormControl>
+                      <FormDescription>
+                        Dùng để đăng nhập. Đổi số sẽ đổi cách đăng nhập.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -178,7 +181,6 @@ export const UserEdit = () => {
                   control={form.control}
                   name="email"
                   rules={{
-                    required: "Vui lòng nhập email",
                     pattern: {
                       value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
                       message: "Vui lòng nhập địa chỉ email hợp lệ",
@@ -186,7 +188,7 @@ export const UserEdit = () => {
                   }}
                   render={({ field }) => (
                     <FormItem className="md:col-span-4">
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Email (không bắt buộc)</FormLabel>
                       <FormControl>
                         <Input
                           {...field}

@@ -116,9 +116,9 @@ export const Profile = () => {
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-                Tên đăng nhập
+                Số điện thoại
               </span>
-              <span className="text-sm">{identity?.username ?? "—"}</span>
+              <span className="text-sm font-mono">{identity?.phone ?? "—"}</span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">

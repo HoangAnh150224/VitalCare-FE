@@ -55,7 +55,8 @@ type Identity = {
   fullName?: string;
   firstName?: string;
   lastName?: string;
-  email?: string;
+  email?: string | null;
+  phone?: string;
   avatar?: string;
 };
 
@@ -501,6 +502,8 @@ function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
   if (!authProvider?.getIdentity) return null;
 
   const name = user?.fullName ?? [user?.firstName, user?.lastName].filter(Boolean).join(" ");
+  // Email is optional now; the phone number always exists, so it stands in.
+  const contact = user?.email || user?.phone;
   const avatar = (
     <Avatar className="size-8 shrink-0">
       {user?.avatar && <AvatarImage src={user.avatar} alt={name} />}
@@ -527,9 +530,9 @@ function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
               <span className="truncate text-sm font-medium text-sidebar-foreground">
                 {name || "Tài khoản"}
               </span>
-              {user?.email && (
+              {contact && (
                 <span className="truncate text-xs text-sidebar-foreground/60">
-                  {user.email}
+                  {contact}
                 </span>
               )}
             </div>

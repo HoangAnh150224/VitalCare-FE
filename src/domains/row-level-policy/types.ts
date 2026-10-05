@@ -70,8 +70,8 @@ export type RowLevelPolicy = {
    */
   invalidReason: string | null;
   source: string;
-  createdBy: { id: number; username: string; fullName: string } | null;
-  updatedBy: { id: number; username: string; fullName: string } | null;
+  createdBy: { id: number; fullName: string } | null;
+  updatedBy: { id: number; fullName: string } | null;
   createdAt: string;
   updatedAt: string | null;
 };

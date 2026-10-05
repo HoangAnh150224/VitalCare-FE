@@ -19,8 +19,9 @@ import { cn } from "@/shared/lib/utils";
 /**
  * The sign-in screen.
  *
- * Username *or* email, because the API accepts either and nobody should have to
- * remember which one this system keyed on.
+ * The phone number is the sign-in identifier. Any spelling reaches the same
+ * account -- 0901234567 and +84901234567 alike -- because the server
+ * normalises before it looks anything up, so this form sends what was typed.
  *
  * There is no self-registration and no password-reset link: accounts are
  * created by an administrator on the Users screen, and a forgotten password is
@@ -34,7 +35,7 @@ import { cn } from "@/shared/lib/utils";
  * is on its own.
  */
 export const SignInForm = () => {
-  const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
   const { title } = useRefineOptions();
@@ -42,7 +43,7 @@ export const SignInForm = () => {
 
   const handleSignIn = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    login({ username, password });
+    login({ phone, password });
   };
 
   return (
@@ -101,16 +102,21 @@ export const SignInForm = () => {
           <CardContent className={cn("px-0")}>
             <form onSubmit={handleSignIn}>
               <div className={cn("flex flex-col gap-2")}>
-                <Label htmlFor="username">Tên đăng nhập hoặc email</Label>
+                <Label htmlFor="phone">Số điện thoại</Label>
                 <Input
-                  id="username"
-                  name="username"
-                  type="text"
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  inputMode="tel"
+                  // "username", not "tel": password managers pair the saved
+                  // password with the field marked as the sign-in identifier,
+                  // whatever shape that identifier happens to have.
                   autoComplete="username"
+                  placeholder="0901234567"
                   autoFocus
                   required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
 
