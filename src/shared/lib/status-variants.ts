@@ -1,5 +1,7 @@
 import type { ComponentProps } from "react";
 
+import type { AppointmentStatus } from "@/domains/appointment/types";
+import type { CustomerStatus } from "@/domains/customer/types";
 import type { DepartmentStatus } from "@/domains/department/types";
 import type { OrganizationStatus } from "@/domains/organization/types";
 import type { TaskPriority, TaskStatus } from "@/domains/task/types";
@@ -77,6 +79,25 @@ export const DEPARTMENT_STATUS_VARIANTS: Record<DepartmentStatus, BadgeVariant> 
     active: "success",
     inactive: "neutral",
   };
+
+/**
+ * Patient is the state the whole flow exists to reach, so it is the green one;
+ * neutral is quiet rather than a warning — it is where everybody starts.
+ */
+export const CUSTOMER_STATUS_VARIANTS: Record<CustomerStatus, BadgeVariant> = {
+  neutral: "neutral",
+  patient: "success",
+};
+
+/**
+ * Scheduled is the live state somebody still has to act on, so it is the
+ * coloured one; cancelled is an ordinary end and stays muted.
+ */
+export const APPOINTMENT_STATUS_VARIANTS: Record<AppointmentStatus, BadgeVariant> = {
+  scheduled: "info",
+  checked_in: "success",
+  cancelled: "neutral",
+};
 
 /**
  * How each action of a `resource:action` code reads in a badge. `delete` is the

@@ -114,8 +114,15 @@ export const ShowViewHeader = ({
             in the cluster. Before this, Refresh and Edit were both outlines
             and Delete was a solid red — which made the loudest control on a
             detail screen the one that destroys the record being read.
+
+            Only for a resource that declares an edit route. A write permission
+            can cover state changes with no form behind them -- appointments:write
+            books and cancels -- and a button that navigates to a route nobody
+            declared lands on the 404 page.
           */}
-          <EditButton recordItemId={recordItemId} resource={resourceName} />
+          {resource?.edit && (
+            <EditButton recordItemId={recordItemId} resource={resourceName} />
+          )}
           {/*
             Unlike the one in a list row, this delete has to navigate. The
             screen it sits on is *about* the record it just removed, so staying

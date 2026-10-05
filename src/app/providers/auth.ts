@@ -1,6 +1,7 @@
-import type { AuthProvider } from "@refinedev/core";
+import type { AuthActionResponse, AuthProvider } from "@refinedev/core";
 
 import { API_URL } from "@/shared/api/constants";
+import { readRegistrationError } from "@/shared/api/registration";
 import { connect, disconnect } from "@/shared/api/live";
 import {
   clearSession,
@@ -46,6 +47,35 @@ async function readError(response: Response, fallback: string): Promise<ApiError
   }
 }
 
+/**
+ * Everything that follows receiving a token pair — from a sign-in or from a
+ * registration, which answers with one so the new account lands signed in.
+ */
+async function startSession(tokens: TokenPair, errorName: string): Promise<AuthActionResponse> {
+  saveSession(tokens);
+
+  // The token says who you are and nothing more, so what this account may
+  // do is a second call. Awaited rather than fired off, because the shell
+  // renders its menu the moment this returns success — starting it and not
+  // waiting would show every user an empty sidebar for a frame.
+  if (!(await loadAuthorities(API_URL))) {
+    clearSession();
+    return {
+      success: false,
+      error: {
+        name: errorName,
+        message: "Đăng nhập thành công nhưng không tải được quyền của bạn. Vui lòng thử lại.",
+      },
+    };
+  }
+
+  // The live channel needs a token, so it cannot open before now. Opening
+  // it here rather than from a component keeps it one connection for the
+  // session instead of one per mount.
+  connect();
+  return { success: true, redirectTo: "/" };
+}
+
 export const authProvider: AuthProvider = {
   async login({ phone, password }) {
     try {
@@ -68,33 +98,51 @@ export const authProvider: AuthProvider = {
         };
       }
 
-      saveSession((await response.json()) as TokenPair);
-
-      // The token says who you are and nothing more, so what this account may
-      // do is a second call. Awaited rather than fired off, because the shell
-      // renders its menu the moment this returns success — starting it and not
-      // waiting would show every user an empty sidebar for a frame.
-      if (!(await loadAuthorities(API_URL))) {
-        clearSession();
-        return {
-          success: false,
-          error: {
-            name: "LoginError",
-            message: "Đăng nhập thành công nhưng không tải được quyền của bạn. Vui lòng thử lại.",
-          },
-        };
-      }
-
-      // The live channel needs a token, so it cannot open before now. Opening
-      // it here rather than from a component keeps it one connection for the
-      // session instead of one per mount.
-      connect();
-      return { success: true, redirectTo: "/" };
+      return await startSession((await response.json()) as TokenPair, "LoginError");
     } catch {
       return {
         success: false,
         error: {
           name: "LoginError",
+          message: "Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.",
+        },
+      };
+    }
+  },
+
+  /**
+   * Creates an account with the code sent to its phone number, and signs it
+   * in — the API answers a registration with a token pair, like a sign-in.
+   *
+   * A 422 carries per-field messages (a wrong code is one, on `otp`); they ride
+   * along on the error as `fieldErrors` so the form can put each under its
+   * field instead of only in a toast.
+   */
+  async register({ phone, otp, fullName, password }) {
+    try {
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, otp, fullName, password }),
+      });
+
+      if (!response.ok) {
+        const error = await readRegistrationError(response);
+        return {
+          success: false,
+          error: Object.assign(new Error(error.message), {
+            name: "RegisterError",
+            fieldErrors: error.fieldErrors,
+          }),
+        };
+      }
+
+      return await startSession((await response.json()) as TokenPair, "RegisterError");
+    } catch {
+      return {
+        success: false,
+        error: {
+          name: "RegisterError",
           message: "Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.",
         },
       };

@@ -1,10 +1,9 @@
 /**
- * Who you are: signing in and your own profile.
+ * Who you are: signing in, registering, and your own profile.
  *
- * `Register` and `ForgotPassword` are unused scaffolding — accounts are created
- * and passwords reset by an administrator on the Users screen, so nothing
- * routes to them. They are exported so that enabling self-service later is a
- * route and an auth provider method, not a hunt for the screens.
+ * `Register` is routed at `/register` — self-registration by phone number with
+ * a one-time code. `ForgotPassword` is still unused scaffolding: passwords are
+ * reset by an administrator on the Users screen, so nothing routes to it.
  */
 export { Login } from "./login";
 export { Profile } from "./profile";

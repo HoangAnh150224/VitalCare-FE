@@ -44,3 +44,23 @@ export function formatDateTime(value?: string | null): string {
     ? EMPTY
     : date.toLocaleString(LOCALE, DATE_TIME);
 }
+
+/**
+ * A calendar date the API sends as `YYYY-MM-DD` — an appointment day.
+ *
+ * Not `formatDate`: `new Date("2026-10-05")` is midnight UTC, which a browser
+ * west of Greenwich shows as the 4th. This date has no time zone to convert
+ * from; it is the clinic's day, written as it is.
+ */
+export function formatLocalDate(value?: string | null): string {
+  if (!value) return EMPTY;
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return EMPTY;
+  return new Date(year, month - 1, day).toLocaleDateString(LOCALE, DATE);
+}
+
+/** A wall-clock time the API sends as `HH:mm:ss`, shown as `HH:mm`. */
+export function formatLocalTime(value?: string | null): string {
+  if (!value) return EMPTY;
+  return value.slice(0, 5);
+}

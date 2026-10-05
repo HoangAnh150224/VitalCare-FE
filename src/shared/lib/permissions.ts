@@ -9,18 +9,33 @@
  */
 
 /**
- * Refine's six actions, mapped onto the three the API grants.
+ * Refine's six actions, mapped onto the actions the API grants — plus the
+ * custom actions some resources check on their own.
  *
  * `clone` needs `write` rather than `read` even though it opens a form
  * pre-filled from an existing record: what it produces is a create.
+ *
+ * `activate` and `check_in` are permission actions of their own on the API
+ * (`customers:activate`, `appointments:check_in`), because turning somebody
+ * into a patient is a different grant from editing their address. Without an
+ * entry here `permissionFor` would answer `null` for them — which the access
+ * control provider reads as "allowed" — and the buttons would show to
+ * everybody, only for the API to refuse the click. `cancel` is a state change
+ * covered by `write`.
  */
-export const ACTION_TO_PERMISSION: Record<string, "read" | "write" | "delete"> = {
+export const ACTION_TO_PERMISSION: Record<
+  string,
+  "read" | "write" | "delete" | "activate" | "check_in"
+> = {
   list: "read",
   show: "read",
   create: "write",
   edit: "write",
   clone: "write",
   delete: "delete",
+  cancel: "write",
+  activate: "activate",
+  check_in: "check_in",
 };
 
 /**

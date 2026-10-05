@@ -2,6 +2,10 @@ import type { ResourceProps } from "@refinedev/core";
 import {
   Bell,
   Building2,
+  CalendarCheck,
+  CalendarDays,
+  Contact,
+  Hospital,
   LayoutDashboard,
   KeyRound,
   ListChecks,
@@ -85,6 +89,68 @@ export const resources: ResourceProps[] = [
   // `useMenu` keeps it because it has children (it drops items that have
   // neither a `list` route nor children), and the sidebar renders it as a
   // section because of `meta.group`.
+  // A customer's own appointments. Only the CUSTOMER role holds
+  // `my_appointments:read`, so staff never see it in the menu — and a
+  // customer sees little else.
+  {
+    name: "my_appointments",
+    list: "/my-appointments",
+    create: "/my-appointments/create",
+    // The appointment slip, with its code and QR.
+    show: "/my-appointments/show/:id",
+    meta: {
+      label: "Lịch hẹn của tôi",
+      icon: <CalendarCheck className="h-4 w-4" />,
+    },
+  },
+
+  // The clinic's side: everybody who registered, and the appointment book whose
+  // check-in turns a neutral customer into a patient. No create for customers
+  // (they register themselves) and no edit for appointments (a booking changes
+  // by being checked in or cancelled, not by being rewritten).
+  {
+    name: "clinic",
+    meta: {
+      label: "Phòng khám",
+      group: true,
+    },
+  },
+  {
+    name: "appointments",
+    list: "/appointments",
+    create: "/appointments/create",
+    show: "/appointments/show/:id",
+    meta: {
+      label: "Lịch hẹn",
+      icon: <CalendarDays className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  {
+    name: "customers",
+    list: "/customers",
+    edit: "/customers/edit/:id",
+    show: "/customers/show/:id",
+    meta: {
+      label: "Khách hàng",
+      icon: <Contact className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // Read by every booking screen without a permission; `clinics:read` only
+  // decides who sees this screen in the menu, `clinics:write` who may change
+  // the opening hours on it.
+  {
+    name: "clinics",
+    list: "/clinics",
+    show: "/clinics/show/:id",
+    meta: {
+      label: "Phòng khám & giờ làm việc",
+      icon: <Hospital className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+
   {
     name: "content",
     meta: {

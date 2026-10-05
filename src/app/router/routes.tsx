@@ -44,7 +44,21 @@ import {
   RowLevelPolicyEdit,
   RowLevelPolicyShow,
 } from "@/features/administration";
-import { Login, Profile } from "@/features/identity";
+import { Login, Profile, Register } from "@/features/identity";
+import {
+  AppointmentCreate,
+  AppointmentList,
+  AppointmentShow,
+  ClinicList,
+  ClinicShow,
+  CustomerEdit,
+  CustomerList,
+  CustomerShow,
+  MyAppointmentCreate,
+  MyAppointmentList,
+  MyAppointmentShow,
+  QuickCheckIn,
+} from "@/features/clinic";
 import { ErrorComponent } from "@/shared/components/layout/error-component";
 import { Forbidden } from "@/shared/components/layout/forbidden";
 import { Layout } from "@/shared/components/layout/layout";
@@ -243,6 +257,87 @@ export function AppRoutes() {
         </Route>
 
         {/*
+          The clinic. Guarded like the administration routes: the sidebar hides
+          what an account may not open, and these stop a typed URL rendering a
+          screen whose first request would 403.
+        */}
+        <Route
+          path="/appointments"
+          element={
+            <CanAccess
+              resource="appointments"
+              action="list"
+              fallback={<Forbidden resource="appointments" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<AppointmentList />} />
+          <Route path="create" element={<AppointmentCreate />} />
+          <Route path="show/:id" element={<AppointmentShow />} />
+          <Route
+            path="check-in"
+            element={
+              <CanAccess
+                resource="appointments"
+                action="check_in"
+                fallback={<Forbidden resource="appointments" />}
+              >
+                <QuickCheckIn />
+              </CanAccess>
+            }
+          />
+        </Route>
+        <Route
+          path="/clinics"
+          element={
+            <CanAccess
+              resource="clinics"
+              action="list"
+              fallback={<Forbidden resource="clinics" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<ClinicList />} />
+          <Route path="show/:id" element={<ClinicShow />} />
+        </Route>
+        <Route
+          path="/customers"
+          element={
+            <CanAccess
+              resource="customers"
+              action="list"
+              fallback={<Forbidden resource="customers" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<CustomerList />} />
+          <Route path="edit/:id" element={<CustomerEdit />} />
+          <Route path="show/:id" element={<CustomerShow />} />
+        </Route>
+        <Route
+          path="/my-appointments"
+          element={
+            <CanAccess
+              resource="my_appointments"
+              action="list"
+              fallback={<Forbidden resource="my_appointments" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<MyAppointmentList />} />
+          <Route path="create" element={<MyAppointmentCreate />} />
+          <Route path="show/:id" element={<MyAppointmentShow />} />
+        </Route>
+
+        {/*
           Notifications have a list and nothing else. No create screen, because
           the application raises a notification rather than a person writing
           one; no edit screen, because the only change a recipient may make is
@@ -261,7 +356,8 @@ export function AppRoutes() {
       {/*
         The unauthenticated half. `fallback` is what renders when there is no
         session; a signed-in visitor is sent to the dashboard instead, so the
-        login URL never shows a form to someone who is already past it.
+        login and registration URLs never show a form to someone who is already
+        past it.
       */}
       <Route
         element={
@@ -271,6 +367,7 @@ export function AppRoutes() {
         }
       >
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       </Route>
     </Routes>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Link } from "react-router";
 
 import { useLogin, useRefineOptions } from "@refinedev/core";
 import { Button } from "@/shared/ui/button";
@@ -23,10 +24,11 @@ import { cn } from "@/shared/lib/utils";
  * account -- 0901234567 and +84901234567 alike -- because the server
  * normalises before it looks anything up, so this form sends what was typed.
  *
- * There is no self-registration and no password-reset link: accounts are
- * created by an administrator on the Users screen, and a forgotten password is
- * reset there too. Offering either link would send people to a page that cannot
- * help them.
+ * Self-registration is linked from here: anybody may create an account with a
+ * phone number they can receive a code on. There is still no password-reset
+ * link — a forgotten password is reset by an administrator on the Users
+ * screen, and offering the link would send people to a page that cannot help
+ * them.
  *
  * The screen sits on `gradient-hero` rather than the page background, and that
  * is the one place in the application where a surface is a picture rather than
@@ -148,8 +150,10 @@ export const SignInForm = () => {
                 "text-center text-xs"
               )}
             >
-              Tài khoản do quản trị viên tạo. Hãy liên hệ quản trị viên nếu bạn
-              không đăng nhập được.
+              Chưa có tài khoản?{" "}
+              <Link to="/register" className="text-primary font-medium hover:underline">
+                Đăng ký bằng số điện thoại
+              </Link>
             </p>
           </CardContent>
         </Card>
