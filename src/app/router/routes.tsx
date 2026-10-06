@@ -58,6 +58,16 @@ import {
   MyAppointmentList,
   MyAppointmentShow,
   QuickCheckIn,
+  StaffList,
+  StaffCreate,
+  StaffEdit,
+  StaffShow,
+  DeviceList,
+  DeviceCreate,
+  DeviceEdit,
+  DeviceShow,
+  MyPatientList,
+  MyPatientShow,
 } from "@/features/clinic";
 import { ErrorComponent } from "@/shared/components/layout/error-component";
 import { Forbidden } from "@/shared/components/layout/forbidden";
@@ -288,6 +298,43 @@ export function AppRoutes() {
               </CanAccess>
             }
           />
+        </Route>
+        <Route
+          path="/employees"
+          element={
+            <CanAccess resource="employees" action="list" fallback={<Forbidden resource="employees" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<StaffList />} />
+          <Route path="create" element={<StaffCreate />} />
+          <Route path="edit/:id" element={<StaffEdit />} />
+          <Route path="show/:id" element={<StaffShow />} />
+        </Route>
+        <Route
+          path="/devices"
+          element={
+            <CanAccess resource="devices" action="list" fallback={<Forbidden resource="devices" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<DeviceList />} />
+          <Route path="create" element={<DeviceCreate />} />
+          <Route path="edit/:id" element={<DeviceEdit />} />
+          <Route path="show/:id" element={<DeviceShow />} />
+        </Route>
+        <Route
+          path="/my-patients"
+          element={
+            <CanAccess resource="my_patients" action="list" fallback={<Forbidden resource="my_patients" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<MyPatientList />} />
+          <Route path="show/:id" element={<MyPatientShow />} />
         </Route>
         <Route
           path="/clinics"

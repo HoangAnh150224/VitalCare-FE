@@ -10,3 +10,6 @@ export * from "./customers";
 export * from "./appointments";
 export * from "./my-appointments";
 export * from "./clinics";
+export * from "./staff";
+export * from "./devices";
+export * from "./my-patients";

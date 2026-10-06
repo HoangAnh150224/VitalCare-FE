@@ -25,8 +25,10 @@
  */
 export const ACTION_TO_PERMISSION: Record<
   string,
-  "read" | "write" | "delete" | "activate" | "check_in"
+  "read" | "write" | "delete" | "activate" | "check_in" | "assign"
 > = {
+  // customers:assign — putting a patient in somebody's care and on a device.
+  assign: "assign",
   list: "read",
   show: "read",
   create: "write",

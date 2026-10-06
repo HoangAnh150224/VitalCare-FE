@@ -27,6 +27,8 @@ import {
   CUSTOMER_STATUS_VARIANTS,
 } from "@/shared/lib/status-variants";
 import { ActivatePatientCard } from "./activate-patient-card";
+import { CareTeamPanel } from "./care-team-panel";
+import { DevicePanel } from "./device-panel";
 
 /**
  * One customer: who they are, whether they are a patient yet and how they
@@ -152,6 +154,15 @@ export const CustomerShow = () => {
 
         {record && <ActivatePatientCard customer={record} />}
       </div>
+
+      {/* Who follows the patient and what they wear — the two things the
+          monitoring that follows activation depends on. */}
+      {record && (
+        <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+          <CareTeamPanel customer={record} />
+          <DevicePanel customer={record} />
+        </div>
+      )}
 
       {canReadAppointments?.can && (
         <DetailPanel

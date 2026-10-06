@@ -3,6 +3,8 @@ import type { ComponentProps } from "react";
 import type { AppointmentStatus } from "@/domains/appointment/types";
 import type { CustomerStatus } from "@/domains/customer/types";
 import type { DepartmentStatus } from "@/domains/department/types";
+import type { DeviceStatus } from "@/domains/device/types";
+import type { EmployeeStatus } from "@/domains/employee/types";
 import type { OrganizationStatus } from "@/domains/organization/types";
 import type { TaskPriority, TaskStatus } from "@/domains/task/types";
 import type { UserStatus } from "@/domains/user/types";
@@ -97,6 +99,22 @@ export const APPOINTMENT_STATUS_VARIANTS: Record<AppointmentStatus, BadgeVariant
   scheduled: "info",
   checked_in: "success",
   cancelled: "neutral",
+};
+
+export const EMPLOYEE_STATUS_VARIANTS: Record<EmployeeStatus, BadgeVariant> = {
+  active: "success",
+  inactive: "neutral",
+};
+
+/**
+ * Available is the one a desk is looking for, so it is the green one; assigned
+ * is busy rather than wrong; maintenance wants attention; retired is over.
+ */
+export const DEVICE_STATUS_VARIANTS: Record<DeviceStatus, BadgeVariant> = {
+  available: "success",
+  assigned: "info",
+  maintenance: "warning",
+  retired: "neutral",
 };
 
 /**

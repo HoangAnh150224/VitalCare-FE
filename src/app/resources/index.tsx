@@ -5,7 +5,10 @@ import {
   CalendarCheck,
   CalendarDays,
   Contact,
+  HeartPulse,
   Hospital,
+  Stethoscope,
+  Watch,
   LayoutDashboard,
   KeyRound,
   ListChecks,
@@ -104,6 +107,18 @@ export const resources: ResourceProps[] = [
     },
   },
 
+  // A doctor's or nurse's own caseload. Only DOCTOR and NURSE hold
+  // `my_patients:read`, so nobody else sees it in the menu.
+  {
+    name: "my_patients",
+    list: "/my-patients",
+    show: "/my-patients/show/:id",
+    meta: {
+      label: "Bệnh nhân của tôi",
+      icon: <HeartPulse className="h-4 w-4" />,
+    },
+  },
+
   // The clinic's side: everybody who registered, and the appointment book whose
   // check-in turns a neutral customer into a patient. No create for customers
   // (they register themselves) and no edit for appointments (a booking changes
@@ -140,6 +155,30 @@ export const resources: ResourceProps[] = [
   // Read by every booking screen without a permission; `clinics:read` only
   // decides who sees this screen in the menu, `clinics:write` who may change
   // the opening hours on it.
+  {
+    name: "employees",
+    list: "/employees",
+    create: "/employees/create",
+    edit: "/employees/edit/:id",
+    show: "/employees/show/:id",
+    meta: {
+      label: "Nhân viên y tế",
+      icon: <Stethoscope className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  {
+    name: "devices",
+    list: "/devices",
+    create: "/devices/create",
+    edit: "/devices/edit/:id",
+    show: "/devices/show/:id",
+    meta: {
+      label: "Thiết bị IoMT",
+      icon: <Watch className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
   {
     name: "clinics",
     list: "/clinics",
