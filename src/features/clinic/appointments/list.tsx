@@ -29,6 +29,7 @@ import { Button } from "@/shared/ui/button";
 import { CUSTOMER_STATUS_LABELS } from "@/domains/customer/types";
 import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatLocalDate, formatLocalTime } from "@/shared/lib/format";
+import { useClinicOptions } from "../clinics/use-clinic-options";
 import { AppointmentActions } from "./appointment-actions";
 
 const FILTER_FIELDS: AdvancedFilterField[] = [
@@ -42,14 +43,34 @@ const FILTER_FIELDS: AdvancedFilterField[] = [
 ];
 
 /**
+ * `clinicId` locks the list to one clinic and `readOnly` drops the actions
+ * that change something: together, an administrator looking at what that
+ * clinic's front desk sees. Left out, the list is the screen it always was.
+ */
+type FrontDeskListProps = {
+  clinicId?: string;
+  readOnly?: boolean;
+};
+
+/**
  * The clinic's appointment book.
  *
  * Check-in sits on the row itself, beside the name: at the front desk the
  * person is standing there, and opening a detail page first is one step too
  * many. The row says when that check-in will also make somebody a patient.
  */
-export const AppointmentList = () => {
+export const AppointmentList = ({ clinicId, readOnly = false }: FrontDeskListProps = {}) => {
   const { data: canCheckIn } = useCan({ resource: "appointments", action: "check_in" });
+  const clinics = useClinicOptions();
+  // A clinic filter only says something when there is more than one clinic,
+  // and none when the list is already locked to one.
+  const filterFields = React.useMemo<AdvancedFilterField[]>(
+    () =>
+      clinics.several && !clinicId
+        ? [...FILTER_FIELDS, { field: "clinicId", label: "Phòng khám", type: "select", options: clinics.options }]
+        : FILTER_FIELDS,
+    [clinics.several, clinics.options, clinicId],
+  );
 
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<Appointment>();
@@ -99,6 +120,16 @@ export const AppointmentList = () => {
           );
         },
       }),
+      ...(clinics.several && !clinicId
+        ? [
+            columnHelper.display({
+              id: "clinic",
+              header: "Phòng khám",
+              enableSorting: false,
+              cell: ({ row }) => <span className="text-sm">{row.original.clinic.name}</span>,
+            }),
+          ]
+        : []),
       columnHelper.accessor("reason", {
         id: "reason",
         header: "Lý do",
@@ -125,15 +156,15 @@ export const AppointmentList = () => {
         header: "Thao tác",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
-            <AppointmentActions appointment={row.original} resource="appointments" size="sm" />
-            <ShowButton recordItemId={row.original.id} iconOnly size="icon-sm" />
+            {!readOnly && <AppointmentActions appointment={row.original} resource="appointments" size="sm" />}
+            <ShowButton resource="appointments" recordItemId={row.original.id} iconOnly size="icon-sm" />
           </div>
         ),
         enableSorting: false,
         ...actionsColumnWidth(4),
       }),
     ];
-  }, []);
+  }, [clinics.several, clinicId, readOnly]);
 
   const table = useTable({
     columns,
@@ -143,17 +174,20 @@ export const AppointmentList = () => {
     initialState: {
       columnPinning: { right: ["actions"] },
     },
-    refineCoreProps: {
-      syncWithLocation: true,
-    },
+    refineCoreProps: clinicId
+      ? // Locked to one clinic: off the URL, so nothing there can unlock it.
+        { resource: "appointments", syncWithLocation: false, filters: { permanent: [{ field: "clinicId", operator: "eq", value: clinicId }] } }
+      : { resource: "appointments", syncWithLocation: true },
   });
 
   return (
     <ListView>
       <ListViewHeader
+        resource="appointments"
+        canCreate={readOnly ? false : undefined}
         description="Lịch hẹn của phòng khám. Check-in một khách chưa kích hoạt sẽ đồng thời kích hoạt hồ sơ bệnh nhân."
         actions={
-          canCheckIn?.can ? (
+          canCheckIn?.can && !readOnly ? (
             <Button asChild variant="outline">
               <Link to="/appointments/check-in">
                 <ScanLineIcon />
@@ -170,9 +204,9 @@ export const AppointmentList = () => {
             <ListToolbar
               table={table}
               search={<DataTableQuickFilter table={table} />}
-              filters={<DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />}
+              filters={<DataTableAdvancedFilter table={table} fields={filterFields} />}
             />
-            <DataTableFilterChips table={table} fields={FILTER_FIELDS} />
+            <DataTableFilterChips table={table} fields={filterFields} />
           </>
         }
       />

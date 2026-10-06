@@ -13,3 +13,4 @@ export * from "./clinics";
 export * from "./staff";
 export * from "./devices";
 export * from "./my-patients";
+export * from "./view-as";

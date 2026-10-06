@@ -9,6 +9,8 @@ export type Device = {
   status: DeviceStatus;
   lastSeenAt: string | null;
   registeredAt: string | null;
+  /** The clinic it belongs to; a receptionist sees only their clinic's devices. */
+  clinicId: string | null;
   /** Who is wearing it now, if anybody. */
   currentPatient: {
     customerId: number;

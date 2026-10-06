@@ -1,4 +1,4 @@
-import { useShow } from "@refinedev/core";
+import { useShow, type BaseKey } from "@refinedev/core";
 
 import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
@@ -20,13 +20,21 @@ import { STAFF_TYPE_LABELS } from "@/domains/employee/types";
  * One patient the caller follows: who they are, who else is on their team and
  * what they wear. Read-only; the vital-signs charts join this screen with the
  * data they need.
+ *
+ * `resource` and `id` point it at an administrator's view-as copy.
  */
-export const MyPatientShow = () => {
-  const { result: record, query } = useShow<MyPatient>({});
+type MyPatientShowProps = {
+  resource?: string;
+  id?: BaseKey;
+  title?: string;
+};
+
+export const MyPatientShow = ({ resource, id, title }: MyPatientShowProps = {}) => {
+  const { result: record, query } = useShow<MyPatient>({ resource, id });
 
   return (
     <ShowView>
-      <ShowViewHeader />
+      <ShowViewHeader resource={resource} title={title} />
 
       <Card className="py-4">
         <LoadingOverlay loading={query.isLoading}>

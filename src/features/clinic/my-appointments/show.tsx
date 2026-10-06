@@ -1,4 +1,4 @@
-import { useShow } from "@refinedev/core";
+import { useShow, type BaseKey } from "@refinedev/core";
 import { PrinterIcon } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -21,14 +21,23 @@ import { AppointmentActions } from "../appointments/appointment-actions";
  * read aloud, and carried by a QR the desk can scan. The QR holds nothing but
  * the code: looking it up needs a staff account, so the image on its own
  * gives nothing away.
+ *
+ * `resource` and `id` point it at an administrator's view-as copy, which is
+ * read-only: printing stays, cancelling does not.
  */
-export const MyAppointmentShow = () => {
-  const { result: record, query } = useShow<Appointment>({});
+type MyAppointmentShowProps = {
+  resource?: string;
+  id?: BaseKey;
+  readOnly?: boolean;
+};
+
+export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointmentShowProps = {}) => {
+  const { result: record, query } = useShow<Appointment>({ resource, id });
   const status = record?.status;
 
   return (
     <ShowView>
-      <ShowViewHeader title="Phiếu khám" />
+      <ShowViewHeader title="Phiếu khám" resource={resource} />
 
       <Card className="mx-auto w-full max-w-md py-6">
         <LoadingOverlay loading={query.isLoading}>
@@ -88,7 +97,7 @@ export const MyAppointmentShow = () => {
                 <PrinterIcon />
                 In phiếu
               </Button>
-              {record && <AppointmentActions appointment={record} resource="my_appointments" />}
+              {record && !readOnly && <AppointmentActions appointment={record} resource="my_appointments" />}
             </div>
           </div>
         </LoadingOverlay>

@@ -25,6 +25,7 @@ import {
   STAFF_TYPE_OPTIONS,
 } from "@/domains/employee/types";
 import { EMPLOYEE_STATUS_VARIANTS } from "@/shared/lib/status-variants";
+import { useClinicOptions } from "../clinics/use-clinic-options";
 
 const FILTER_FIELDS: AdvancedFilterField[] = [
   { field: "staffType", label: "Loại", type: "select", options: STAFF_TYPE_OPTIONS },
@@ -33,6 +34,8 @@ const FILTER_FIELDS: AdvancedFilterField[] = [
 
 /** Clinical staff — the people a patient's care team is made of. */
 export const StaffList = () => {
+  const clinics = useClinicOptions();
+  const { several: severalClinics, nameOf: clinicName } = clinics;
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<Employee>();
     return [
@@ -66,6 +69,16 @@ export const StaffList = () => {
         enableSorting: false,
         cell: ({ getValue }) => <span className="text-sm">{getValue() ?? "—"}</span>,
       }),
+      ...(severalClinics
+        ? [
+            columnHelper.accessor("clinicId", {
+              id: "clinic",
+              header: "Phòng khám",
+              enableSorting: false,
+              cell: ({ getValue }) => <span className="text-sm">{clinicName(getValue())}</span>,
+            }),
+          ]
+        : []),
       columnHelper.accessor("status", {
         id: "status",
         header: "Trạng thái",
@@ -89,7 +102,7 @@ export const StaffList = () => {
         ...actionsColumnWidth(2),
       }),
     ];
-  }, []);
+  }, [severalClinics, clinicName]);
 
   const table = useTable({
     columns,
@@ -102,7 +115,7 @@ export const StaffList = () => {
 
   return (
     <ListView>
-      <ListViewHeader description="Bác sĩ và điều dưỡng. Mỗi người đăng nhập bằng tài khoản riêng và theo dõi những bệnh nhân được gán cho mình." />
+      <ListViewHeader description="Bác sĩ, điều dưỡng và lễ tân. Bác sĩ, điều dưỡng theo dõi bệnh nhân được gán; lễ tân chỉ thấy dữ liệu phòng khám của mình." />
       <DataTable
         table={table}
         toolbar={

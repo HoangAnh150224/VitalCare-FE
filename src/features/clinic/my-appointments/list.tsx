@@ -1,6 +1,7 @@
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 import React from "react";
+import { Link } from "react-router";
 
 import {
   DataTable,
@@ -8,6 +9,7 @@ import {
 } from "@/shared/components/data-table/data-table";
 import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import type { Appointment } from "@/domains/appointment/types";
 import { APPOINTMENT_STATUS_LABELS, formatBookingCode } from "@/domains/appointment/types";
 import { ShowButton } from "@/shared/components/buttons/show";
@@ -21,8 +23,27 @@ import { AppointmentActions } from "../appointments/appointment-actions";
  * The API answers this from the signed-in account alone, so there is nothing
  * here to filter by customer and nothing a URL could change to see somebody
  * else's. No search either: a person's own appointments fit on a page.
+ *
+ * An administrator viewing as a customer gets the same table from
+ * `view_as`: `resource` points it there and `slipPath` links each row to that
+ * screen's slip, with no cancel button — viewing as somebody is read-only.
+ * `showCustomer` adds whose appointment it is, for the view of everybody's.
  */
-export const MyAppointmentList = () => {
+type MyAppointmentListProps = {
+  resource?: string;
+  slipPath?: (appointment: Appointment) => string;
+  showCustomer?: boolean;
+  title?: string;
+  description?: string;
+};
+
+export const MyAppointmentList = ({
+  resource,
+  slipPath,
+  showCustomer = false,
+  title,
+  description = "Lịch khám bạn đã đặt. Khi đến phòng khám, nhân viên sẽ check-in cho bạn.",
+}: MyAppointmentListProps = {}) => {
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<Appointment>();
 
@@ -41,6 +62,21 @@ export const MyAppointmentList = () => {
           </div>
         ),
       }),
+      ...(showCustomer
+        ? [
+            columnHelper.display({
+              id: "customer",
+              header: "Khách hàng",
+              enableSorting: false,
+              cell: ({ row }) => (
+                <div className="flex flex-col">
+                  <span className="font-medium">{row.original.customer.fullName}</span>
+                  <span className="text-muted-foreground font-mono text-xs">{row.original.customer.customerCode}</span>
+                </div>
+              ),
+            }),
+          ]
+        : []),
       columnHelper.accessor("bookingCode", {
         id: "bookingCode",
         header: "Mã lịch hẹn",
@@ -80,25 +116,39 @@ export const MyAppointmentList = () => {
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
-            <ShowButton recordItemId={row.original.id} size="sm" variant="outline">
-              Xem phiếu
-            </ShowButton>
-            <AppointmentActions appointment={row.original} resource="my_appointments" size="sm" />
+            {slipPath ? (
+              <Button asChild size="sm" variant="outline">
+                <Link to={slipPath(row.original)}>Xem phiếu</Link>
+              </Button>
+            ) : (
+              <>
+                <ShowButton recordItemId={row.original.id} size="sm" variant="outline">
+                  Xem phiếu
+                </ShowButton>
+                <AppointmentActions appointment={row.original} resource="my_appointments" size="sm" />
+              </>
+            )}
           </div>
         ),
       }),
     ];
-  }, []);
+  }, [slipPath, showCustomer]);
 
   const table = useTable({
     columns,
     defaultColumn: RESIZABLE_COLUMN_DEFAULTS,
-    refineCoreProps: { syncWithLocation: true },
+    // Off the URL when it is somebody else's list: the page's own URL is the
+    // view-as path, not this resource's.
+    refineCoreProps: { resource, syncWithLocation: !resource },
   });
 
   return (
     <ListView>
-      <ListViewHeader description="Lịch khám bạn đã đặt. Khi đến phòng khám, nhân viên sẽ check-in cho bạn." />
+      <ListViewHeader
+        title={title}
+        canCreate={resource ? false : undefined}
+        description={description}
+      />
       <DataTable table={table} />
     </ListView>
   );

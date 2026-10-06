@@ -24,7 +24,7 @@ import { formatDate } from "@/shared/lib/format";
 import type { Customer } from "@/domains/customer/types";
 import type { CareTeamMember } from "@/domains/assignment/types";
 import type { Employee } from "@/domains/employee/types";
-import { STAFF_TYPE_LABELS } from "@/domains/employee/types";
+import { isClinicalStaff, STAFF_TYPE_LABELS } from "@/domains/employee/types";
 
 const JSON_HEADERS = { headers: { "Content-Type": "application/json" } };
 
@@ -57,7 +57,9 @@ export function CareTeamPanel({ customer }: { customer: Customer }) {
     queryOptions: { enabled: isPatient && canAssign },
   });
   const onTeam = new Set(current.map((row) => row.employeeId));
-  const candidates = (staff?.data ?? []).filter((employee) => !onTeam.has(employee.id));
+  const candidates = (staff?.data ?? []).filter(
+    (employee) => isClinicalStaff(employee.staffType) && !onTeam.has(employee.id),
+  );
 
   const [chosen, setChosen] = useState("");
   const { mutate, mutation } = useCustomMutation<CareTeamMember>();

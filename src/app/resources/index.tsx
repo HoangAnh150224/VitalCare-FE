@@ -18,6 +18,7 @@ import {
   ShieldHalf,
   Tags,
   Users,
+  Eye,
 } from "lucide-react";
 
 /**
@@ -116,6 +117,17 @@ export const resources: ResourceProps[] = [
     meta: {
       label: "Bệnh nhân của tôi",
       icon: <HeartPulse className="h-4 w-4" />,
+    },
+  },
+
+  // An administrator looking at a customer's or a member of staff's own
+  // screens, read-only. Only ADMIN holds `view_as:read`.
+  {
+    name: "view_as",
+    list: "/view-as",
+    meta: {
+      label: "Xem dưới vai trò",
+      icon: <Eye className="h-4 w-4" />,
     },
   },
 

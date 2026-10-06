@@ -68,6 +68,14 @@ import {
   DeviceShow,
   MyPatientList,
   MyPatientShow,
+  ViewAsPick,
+  ViewAsCustomerAppointments,
+  ViewAsCustomerAppointment,
+  ViewAsEmployeePatients,
+  ViewAsEmployeePatient,
+  ViewAsAllAppointments,
+  ViewAsAllPatients,
+  ViewAsFrontDesk,
 } from "@/features/clinic";
 import { ErrorComponent } from "@/shared/components/layout/error-component";
 import { Forbidden } from "@/shared/components/layout/forbidden";
@@ -335,6 +343,24 @@ export function AppRoutes() {
         >
           <Route index element={<MyPatientList />} />
           <Route path="show/:id" element={<MyPatientShow />} />
+        </Route>
+        <Route
+          path="/view-as"
+          element={
+            <CanAccess resource="view_as" action="list" fallback={<Forbidden resource="view_as" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<ViewAsPick />} />
+          <Route path="front-desk" element={<ViewAsFrontDesk />} />
+          <Route path="front-desk/:employeeId" element={<ViewAsFrontDesk />} />
+          <Route path="patients" element={<ViewAsAllPatients />} />
+          <Route path="appointments" element={<ViewAsAllAppointments />} />
+          <Route path="customers/:customerId" element={<ViewAsCustomerAppointments />} />
+          <Route path="customers/:customerId/appointments/:id" element={<ViewAsCustomerAppointment />} />
+          <Route path="employees/:employeeId" element={<ViewAsEmployeePatients />} />
+          <Route path="employees/:employeeId/patients/:customerId" element={<ViewAsEmployeePatient />} />
         </Route>
         <Route
           path="/clinics"

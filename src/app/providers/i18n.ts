@@ -52,6 +52,7 @@ const MESSAGES: Record<string, string> = {
   "employees.employees": "nhân viên",
   "devices.devices": "thiết bị",
   "my_patients.my_patients": "bệnh nhân",
+  "view_as.view_as": "xem dưới vai trò",
 };
 
 function interpolate(text: string, values: unknown): string {

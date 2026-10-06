@@ -28,6 +28,7 @@ import {
 } from "@/domains/customer/types";
 import { CUSTOMER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatDate } from "@/shared/lib/format";
+import { useClinicOptions } from "../clinics/use-clinic-options";
 
 const FILTER_FIELDS: AdvancedFilterField[] = [
   {
@@ -40,13 +41,34 @@ const FILTER_FIELDS: AdvancedFilterField[] = [
 ];
 
 /**
+ * `clinicId` locks the list to one clinic and `readOnly` drops the actions
+ * that change something: together, an administrator looking at what that
+ * clinic's front desk sees. Left out, the list is the screen it always was.
+ */
+type FrontDeskListProps = {
+  clinicId?: string;
+  readOnly?: boolean;
+};
+
+/**
  * Everybody who registered, neutral and patient alike.
  *
  * The quick search matches name, phone number and customer code — the three
  * things a receptionist has in front of them when somebody walks in. No create
  * button: a customer comes into being by registering.
  */
-export const CustomerList = () => {
+export const CustomerList = ({ clinicId, readOnly = false }: FrontDeskListProps = {}) => {
+  const clinics = useClinicOptions();
+  // A clinic filter only says something when there is more than one clinic,
+  // and none when the list is already locked to one.
+  const filterFields = React.useMemo<AdvancedFilterField[]>(
+    () =>
+      clinics.several && !clinicId
+        ? [...FILTER_FIELDS, { field: "clinicId", label: "Phòng khám", type: "select", options: clinics.options }]
+        : FILTER_FIELDS,
+    [clinics.several, clinics.options, clinicId],
+  );
+
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<Customer>();
 
@@ -107,15 +129,15 @@ export const CustomerList = () => {
         header: "Thao tác",
         cell: ({ row }) => (
           <div className="flex gap-1">
-            <EditButton recordItemId={row.original.id} iconOnly size="icon-sm" />
-            <ShowButton recordItemId={row.original.id} iconOnly size="icon-sm" />
+            {!readOnly && <EditButton resource="customers" recordItemId={row.original.id} iconOnly size="icon-sm" />}
+            <ShowButton resource="customers" recordItemId={row.original.id} iconOnly size="icon-sm" />
           </div>
         ),
         enableSorting: false,
         ...actionsColumnWidth(2),
       }),
     ];
-  }, []);
+  }, [readOnly]);
 
   const table = useTable({
     columns,
@@ -125,14 +147,17 @@ export const CustomerList = () => {
     initialState: {
       columnPinning: { right: ["actions"] },
     },
-    refineCoreProps: {
-      syncWithLocation: true,
-    },
+    refineCoreProps: clinicId
+      ? // Locked to one clinic: off the URL, so nothing there can unlock it.
+        { resource: "customers", syncWithLocation: false, filters: { permanent: [{ field: "clinicId", operator: "eq", value: clinicId }] } }
+      : { resource: "customers", syncWithLocation: true },
   });
 
   return (
     <ListView>
-      <ListViewHeader description="Người đã đăng ký tài khoản. Khách chưa kích hoạt trở thành bệnh nhân khi check-in lịch hẹn hoặc khi nhân viên kích hoạt." />
+      <ListViewHeader
+        resource="customers"
+        description="Người đã đăng ký tài khoản. Khách chưa kích hoạt trở thành bệnh nhân khi check-in lịch hẹn hoặc khi nhân viên kích hoạt." />
       <DataTable
         table={table}
         toolbar={
@@ -140,9 +165,9 @@ export const CustomerList = () => {
             <ListToolbar
               table={table}
               search={<DataTableQuickFilter table={table} />}
-              filters={<DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />}
+              filters={<DataTableAdvancedFilter table={table} fields={filterFields} />}
             />
-            <DataTableFilterChips table={table} fields={FILTER_FIELDS} />
+            <DataTableFilterChips table={table} fields={filterFields} />
           </>
         }
       />

@@ -28,6 +28,7 @@ import {
   SectionedFormPanel,
 } from "@/shared/components/form/form-section";
 import { STAFF_TYPE_OPTIONS, type StaffType } from "@/domains/employee/types";
+import { useClinicOptions } from "../clinics/use-clinic-options";
 import { ProfileFields } from "./profile-fields";
 
 type StaffFormValues = {
@@ -39,6 +40,7 @@ type StaffFormValues = {
   professionalTitle: string;
   licenseNo: string;
   clinicPosition: string;
+  clinicId: string;
 };
 
 const DEFAULT_VALUES: StaffFormValues = {
@@ -50,6 +52,7 @@ const DEFAULT_VALUES: StaffFormValues = {
   professionalTitle: "",
   licenseNo: "",
   clinicPosition: "",
+  clinicId: "",
 };
 
 /**
@@ -66,12 +69,17 @@ export const StaffCreate = () => {
     refineCoreProps: { redirect: "show" },
     defaultValues: DEFAULT_VALUES,
   });
+  const clinics = useClinicOptions();
 
   return (
     <CreateView>
       <CreateViewHeader />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="min-w-0">
+        <form
+          // An empty clinic is left to the API: the creator's own clinic, or the first one.
+          onSubmit={form.handleSubmit((values) => onFinish({ ...values, clinicId: values.clinicId || null } as never))}
+          className="min-w-0"
+        >
           <SectionedFormPanel>
             <FormSection title="Tài khoản đăng nhập" description="Nhân viên đăng nhập bằng số điện thoại này.">
               <FormField
@@ -154,6 +162,34 @@ export const StaffCreate = () => {
                   </FormItem>
                 )}
               />
+              {clinics.several && (
+                <FormField
+                  control={form.control}
+                  name="clinicId"
+                  rules={{ required: "Vui lòng chọn phòng khám" }}
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-4">
+                      <FormLabel>Phòng khám</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Chọn phòng khám" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {clinics.options.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Lễ tân chỉ thấy dữ liệu của phòng khám này.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <ProfileFields control={form.control} />
             </FormSection>
 

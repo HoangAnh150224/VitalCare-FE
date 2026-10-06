@@ -22,13 +22,36 @@ import type { Device } from "@/domains/device/types";
 import { DEVICE_STATUS_LABELS, DEVICE_STATUS_OPTIONS } from "@/domains/device/types";
 import { DEVICE_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatDate } from "@/shared/lib/format";
+import { useClinicOptions } from "../clinics/use-clinic-options";
 
 const FILTER_FIELDS: AdvancedFilterField[] = [
   { field: "status", label: "Trạng thái", type: "select", options: DEVICE_STATUS_OPTIONS },
 ];
 
+/**
+ * `clinicId` locks the list to one clinic and `readOnly` drops the actions
+ * that change something: together, an administrator looking at what that
+ * clinic's front desk sees. Left out, the list is the screen it always was.
+ */
+type FrontDeskListProps = {
+  clinicId?: string;
+  readOnly?: boolean;
+};
+
 /** The clinic's monitoring devices, and who is wearing each one now. */
-export const DeviceList = () => {
+export const DeviceList = ({ clinicId, readOnly = false }: FrontDeskListProps = {}) => {
+  const clinics = useClinicOptions();
+  // A clinic filter only says something when there is more than one clinic,
+  // and none when the list is already locked to one.
+  const filterFields = React.useMemo<AdvancedFilterField[]>(
+    () =>
+      clinics.several && !clinicId
+        ? [...FILTER_FIELDS, { field: "clinicId", label: "Phòng khám", type: "select", options: clinics.options }]
+        : FILTER_FIELDS,
+    [clinics.several, clinics.options, clinicId],
+  );
+
+  const { several: severalClinics, nameOf: clinicName } = clinics;
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<Device>();
     return [
@@ -59,6 +82,16 @@ export const DeviceList = () => {
           </Badge>
         ),
       }),
+      ...(severalClinics && !clinicId
+        ? [
+            columnHelper.accessor("clinicId", {
+              id: "clinic",
+              header: "Phòng khám",
+              enableSorting: false,
+              cell: ({ getValue }) => <span className="text-sm">{clinicName(getValue())}</span>,
+            }),
+          ]
+        : []),
       columnHelper.display({
         id: "currentPatient",
         header: "Người đang đeo",
@@ -82,14 +115,14 @@ export const DeviceList = () => {
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex gap-1">
-            <EditButton recordItemId={row.original.id} iconOnly size="icon-sm" />
-            <ShowButton recordItemId={row.original.id} iconOnly size="icon-sm" />
+            {!readOnly && <EditButton resource="devices" recordItemId={row.original.id} iconOnly size="icon-sm" />}
+            <ShowButton resource="devices" recordItemId={row.original.id} iconOnly size="icon-sm" />
           </div>
         ),
         ...actionsColumnWidth(2),
       }),
     ];
-  }, []);
+  }, [severalClinics, clinicName, clinicId, readOnly]);
 
   const table = useTable({
     columns,
@@ -97,12 +130,19 @@ export const DeviceList = () => {
     columnResizeMode: "onChange",
     defaultColumn: RESIZABLE_COLUMN_DEFAULTS,
     initialState: { columnPinning: { right: ["actions"] } },
-    refineCoreProps: { syncWithLocation: true },
+    refineCoreProps: clinicId
+      ? // Locked to one clinic: off the URL, so nothing there can unlock it.
+        { resource: "devices", syncWithLocation: false, filters: { permanent: [{ field: "clinicId", operator: "eq", value: clinicId }] } }
+      : { resource: "devices", syncWithLocation: true },
   });
 
   return (
     <ListView>
-      <ListViewHeader description="Thiết bị IoMT của phòng khám. Gán thiết bị cho bệnh nhân ở trang chi tiết khách hàng." />
+      <ListViewHeader
+        resource="devices"
+        canCreate={readOnly ? false : undefined}
+        description="Thiết bị IoMT của phòng khám. Gán thiết bị cho bệnh nhân ở trang chi tiết khách hàng."
+      />
       <DataTable
         table={table}
         toolbar={
@@ -110,9 +150,9 @@ export const DeviceList = () => {
             <ListToolbar
               table={table}
               search={<DataTableQuickFilter table={table} />}
-              filters={<DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />}
+              filters={<DataTableAdvancedFilter table={table} fields={filterFields} />}
             />
-            <DataTableFilterChips table={table} fields={FILTER_FIELDS} />
+            <DataTableFilterChips table={table} fields={filterFields} />
           </>
         }
       />
