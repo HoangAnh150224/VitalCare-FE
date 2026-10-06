@@ -1,5 +1,4 @@
 import { Refine } from "@refinedev/core";
-import { DevtoolsProvider } from "@refinedev/devtools";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
 
 import { BrowserRouter } from "react-router";
@@ -31,7 +30,9 @@ function App() {
     <BrowserRouter>
       <RefineKbarProvider>
         <ThemeProvider>
-          <DevtoolsProvider>
+          {/* No DevtoolsProvider: the floating Refine Devtools control is a
+              development aid that has no place on the screens people use, and
+              `npm run dev` no longer starts its server either. */}
             <Refine
               dataProvider={dataProvider}
               // Signing in, renewing and identifying the current user. Its
@@ -66,8 +67,6 @@ function App() {
               <AuthoritiesSync />
               <DocumentTitleHandler />
             </Refine>
-            {/* <DevtoolsPanel /> */}
-          </DevtoolsProvider>
         </ThemeProvider>
       </RefineKbarProvider>
     </BrowserRouter>

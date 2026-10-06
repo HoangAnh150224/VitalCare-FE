@@ -90,7 +90,7 @@
     "vite": "^6.3.5"
   },
   "scripts": {
-    "dev": "refine dev",
+    "dev": "refine dev --devtools false",
     "build": "tsc && refine build",
     "start": "refine start",
     "refine": "refine",
