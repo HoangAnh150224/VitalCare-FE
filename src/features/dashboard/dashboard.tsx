@@ -13,10 +13,18 @@
  */
 export const Dashboard = () => {
   return (
-    <div className="flex min-h-[70dvh] items-center justify-center">
+    <div className="flex min-h-[70dvh] flex-col items-center justify-center gap-4 text-center">
+      <img
+        src="/vitalcare-mark.png"
+        alt=""
+        className="size-28 rounded-3xl bg-white p-3 shadow-sm sm:size-32"
+      />
       <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-        HoangAnh-FrameWork
+        VitalCare
       </h1>
+      <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+        Care today. Healthier tomorrow
+      </p>
     </div>
   );
 };
