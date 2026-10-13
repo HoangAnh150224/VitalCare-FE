@@ -161,7 +161,7 @@ export const AppointmentList = ({ clinicId, readOnly = false }: FrontDeskListPro
           </div>
         ),
         enableSorting: false,
-        ...actionsColumnWidth(4),
+        ...actionsColumnWidth(6),
       }),
     ];
   }, [clinics.several, clinicId, readOnly]);

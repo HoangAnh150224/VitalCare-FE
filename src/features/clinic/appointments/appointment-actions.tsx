@@ -1,5 +1,5 @@
 import { useCan, useCustomMutation, useInvalidate, useNotification } from "@refinedev/core";
-import { LogInIcon, XIcon } from "lucide-react";
+import { CalendarClockIcon, LogInIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 
 import { API_URL } from "@/shared/api/constants";
@@ -14,15 +14,26 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
 import { Button } from "@/shared/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog";
+import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import type { Appointment } from "@/domains/appointment/types";
 import { clinicToday } from "./clinic-day";
+import { SlotPicker } from "./slot-picker";
 
 type Props = {
   appointment: Appointment;
   /**
    * Which side of the book this is: the front desk (`appointments`) may check
-   * in and cancel; a customer (`my_appointments`) may only cancel their own.
+   * in, reschedule and cancel; a customer (`my_appointments`) may reschedule
+   * and cancel their own.
    */
   resource: "appointments" | "my_appointments";
   size?: "sm" | "default";
@@ -31,7 +42,7 @@ type Props = {
 };
 
 /**
- * Check-in and cancel, for one appointment.
+ * Check-in, reschedule and cancel, for one appointment.
  *
  * Each button shows only when it would succeed: the right permission, a
  * scheduled appointment, and — for check-in — today being its date in the
@@ -47,6 +58,11 @@ export function AppointmentActions({ appointment, resource, size = "default", on
   // The clinic cancelling a customer's visit has to say why; the API refuses
   // it otherwise. A customer cancelling their own only confirms.
   const reasonRequired = resource === "appointments";
+  // Rescheduling: another day and slot of the same clinic.
+  const [rescheduling, setRescheduling] = useState(false);
+  const [newDate, setNewDate] = useState("");
+  const [newStart, setNewStart] = useState("");
+  const [lastBookableDate, setLastBookableDate] = useState<string | undefined>();
 
   const { data: canCheckIn } = useCan({ resource: "appointments", action: "check_in" });
   const { data: canCancel } = useCan({ resource, action: "cancel" });
@@ -62,6 +78,29 @@ export function AppointmentActions({ appointment, resource, size = "default", on
   if (!showCheckIn && !showCancel) {
     return null;
   }
+
+  // Same rule as cancel on both sides: still scheduled, and the API holds it
+  // to two hours before the start (SRS BR-26).
+  const sameSlot = newDate === appointment.appointmentDate && newStart === appointment.startTime;
+  const reschedule = () => {
+    mutate(
+      {
+        url: `${API_URL}/${resource}/${appointment.id}/reschedule`,
+        method: "post",
+        values: { appointmentDate: newDate, startTime: newStart },
+        config: { headers: { "Content-Type": "application/json" } },
+        successNotification: false,
+      },
+      {
+        onSuccess: ({ data }) => {
+          setRescheduling(false);
+          invalidate({ resource, invalidates: ["detail", "list"], id: appointment.id });
+          open?.({ type: "success", message: "Đã đổi lịch hẹn" });
+          if (data) onDone?.(data);
+        },
+      }
+    );
+  };
 
   const run = (action: "check-in" | "cancel") => {
     mutate(
@@ -109,6 +148,21 @@ export function AppointmentActions({ appointment, resource, size = "default", on
           size={size}
           variant="outline"
           onClick={() => {
+            setNewDate(appointment.appointmentDate);
+            setNewStart("");
+            setRescheduling(true);
+          }}
+          disabled={mutation.isPending}
+        >
+          <CalendarClockIcon />
+          Đổi lịch
+        </Button>
+      )}
+      {showCancel && (
+        <Button
+          size={size}
+          variant="outline"
+          onClick={() => {
             setReason("");
             setConfirming(true);
           }}
@@ -118,6 +172,48 @@ export function AppointmentActions({ appointment, resource, size = "default", on
           Huỷ lịch
         </Button>
       )}
+
+      <Dialog open={rescheduling} onOpenChange={setRescheduling}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Đổi lịch hẹn</DialogTitle>
+            <DialogDescription>
+              {appointment.customer.fullName} · đang hẹn {appointment.appointmentDate}{" "}
+              {appointment.startTime.slice(0, 5)} tại {appointment.clinic.name}. Mã đặt lịch giữ nguyên.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3">
+            <Input
+              type="date"
+              aria-label="Ngày khám mới"
+              className="w-48"
+              min={clinicToday()}
+              max={lastBookableDate}
+              value={newDate}
+              onChange={(event) => {
+                setNewDate(event.target.value);
+                setNewStart("");
+              }}
+            />
+            <SlotPicker
+              clinicId={appointment.clinic.id}
+              date={newDate}
+              value={newStart}
+              onChange={setNewStart}
+              onWindow={setLastBookableDate}
+            />
+            {sameSlot && <p className="text-muted-foreground text-sm">Đây là khung giờ hiện tại của lịch hẹn.</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRescheduling(false)} disabled={mutation.isPending}>
+              Đóng
+            </Button>
+            <Button onClick={reschedule} disabled={!newDate || !newStart || sameSlot || mutation.isPending}>
+              {mutation.isPending ? "Đang lưu..." : "Xác nhận đổi lịch"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
