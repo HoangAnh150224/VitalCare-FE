@@ -12,7 +12,7 @@ import type { Clinic } from "@/domains/clinic/types";
 export function useClinicOptions() {
   const { result } = useList<Clinic>({ resource: "clinics", pagination: { mode: "off" } });
   // A receptionist's lists only ever hold their own clinic's rows, so a clinic
-  // column would repeat one name. Whoever may edit every clinic's hours works
+  // column would repeat one name. Whoever may edit every clinic works
   // across clinics; that is who gets the column and the filter.
   const { data: acrossClinics } = useCan({ resource: "clinics", action: "edit" });
   const clinics = useMemo(() => result?.data ?? [], [result?.data]);

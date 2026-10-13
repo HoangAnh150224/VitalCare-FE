@@ -179,7 +179,7 @@ export const resources: ResourceProps[] = [
   },
   // Read by every booking screen without a permission; `clinics:read` only
   // decides who sees this screen in the menu, `clinics:write` who may change
-  // the opening hours on it.
+  // its details.
   {
     name: "employees",
     list: "/employees",
@@ -248,7 +248,7 @@ export const resources: ResourceProps[] = [
     edit: "/clinics/edit/:id",
     show: "/clinics/show/:id",
     meta: {
-      label: "Phòng khám & giờ làm việc",
+      label: "Cơ sở",
       icon: <Hospital className="h-4 w-4" />,
       parent: "clinic",
     },
