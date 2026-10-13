@@ -191,6 +191,20 @@ export const resources: ResourceProps[] = [
       parent: "clinic",
     },
   },
+  // Opened from a patient, so the list has no create button; the create route
+  // exists for the links on a patient's page and on a checked-in appointment.
+  {
+    name: "clinical_encounters",
+    list: "/clinical-encounters",
+    create: "/clinical-encounters/create",
+    edit: "/clinical-encounters/edit/:id",
+    show: "/clinical-encounters/show/:id",
+    meta: {
+      label: "Lần khám",
+      icon: <Stethoscope className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
   {
     name: "clinics",
     list: "/clinics",

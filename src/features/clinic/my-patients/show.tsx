@@ -15,6 +15,8 @@ import {
 import { formatDate, formatLocalDate } from "@/shared/lib/format";
 import type { MyPatient } from "@/domains/assignment/types";
 import { STAFF_TYPE_LABELS } from "@/domains/employee/types";
+import { EncounterHistoryPanel } from "../encounters/encounter-history-panel";
+import { MedicalRecordPanel } from "../encounters/medical-record-panel";
 
 /**
  * One patient the caller follows: who they are, who else is on their team and
@@ -87,6 +89,13 @@ export const MyPatientShow = ({ resource, id, title }: MyPatientShowProps = {}) 
           </ul>
         </DetailPanel>
       </div>
+
+      {record && (
+        <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+          <MedicalRecordPanel key={record.id} customerId={record.id} />
+          <EncounterHistoryPanel customerId={record.id} patientName={record.fullName} />
+        </div>
+      )}
     </ShowView>
   );
 };

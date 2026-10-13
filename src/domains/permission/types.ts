@@ -64,6 +64,8 @@ const RESOURCE_LABELS: Record<string, string> = {
   appointments: "Lịch hẹn",
   devices: "Thiết bị",
   clinics: "Cơ sở",
+  clinical_encounters: "Lần khám",
+  medical_records: "Hồ sơ bệnh án",
 };
 
 /** `blog_posts` reads better as "Blog posts" in a group heading. */

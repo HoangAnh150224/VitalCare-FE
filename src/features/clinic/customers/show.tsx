@@ -29,6 +29,8 @@ import {
 import { ActivatePatientCard } from "./activate-patient-card";
 import { CareTeamPanel } from "./care-team-panel";
 import { DevicePanel } from "./device-panel";
+import { EncounterHistoryPanel } from "../encounters/encounter-history-panel";
+import { MedicalRecordPanel } from "../encounters/medical-record-panel";
 
 /**
  * One customer: who they are, whether they are a patient yet and how they
@@ -161,6 +163,15 @@ export const CustomerShow = () => {
         <div className="grid min-w-0 gap-4 lg:grid-cols-2">
           <CareTeamPanel customer={record} />
           <DevicePanel customer={record} />
+        </div>
+      )}
+
+      {/* The clinical side: both panels hide themselves from anybody without
+          the permission, so the front desk and the doctor see what is theirs. */}
+      {record && record.status === "patient" && (
+        <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+          <MedicalRecordPanel key={record.id} customerId={record.id} />
+          <EncounterHistoryPanel customerId={record.id} patientName={record.fullName} />
         </div>
       )}
 

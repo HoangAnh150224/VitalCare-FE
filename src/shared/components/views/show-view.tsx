@@ -41,6 +41,8 @@ export function ShowView({ children, className }: ShowViewProps) {
 type ShowViewHeaderProps = PropsWithChildren<{
   resource?: string;
   title?: string;
+  /** False hides Edit for a record that can no longer change, whatever the permission says. */
+  canEdit?: boolean;
   wrapperClassName?: string;
   headerClassName?: string;
 }>;
@@ -48,6 +50,7 @@ type ShowViewHeaderProps = PropsWithChildren<{
 export const ShowViewHeader = ({
   resource: resourceFromProps,
   title: titleFromProps,
+  canEdit,
   wrapperClassName,
   headerClassName,
 }: ShowViewHeaderProps) => {
@@ -120,7 +123,7 @@ export const ShowViewHeader = ({
             books and cancels -- and a button that navigates to a route nobody
             declared lands on the 404 page.
           */}
-          {resource?.edit && (
+          {resource?.edit && canEdit !== false && (
             <EditButton recordItemId={recordItemId} resource={resourceName} />
           )}
           {/*
