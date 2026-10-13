@@ -154,7 +154,7 @@ export function AppointmentActions({ appointment, resource, size = "default", co
         onSuccess: ({ data }) => {
           setRescheduling(false);
           finish(
-            "Đã đổi lịch khám",
+            "Đã đổi đăng ký khám",
             data,
             data?.queueNumber != null ? `Số khám mới: ${formatQueueNumber(data.queueNumber)}.` : undefined
           );
@@ -192,7 +192,7 @@ export function AppointmentActions({ appointment, resource, size = "default", co
           disabled={busy}
         >
           <CalendarClockIcon />
-          Đổi lịch
+          Đổi ngày khám
         </Button>
       )}
       {showNoShow && (
@@ -219,7 +219,7 @@ export function AppointmentActions({ appointment, resource, size = "default", co
       <Dialog open={rescheduling} onOpenChange={setRescheduling}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Đổi lịch khám</DialogTitle>
+            <DialogTitle>Đổi đăng ký khám</DialogTitle>
             <DialogDescription>
               {visit}
               {appointment.doctor ? ` với ${appointment.doctor.fullName}` : ""}. Đổi bác sĩ hoặc ngày sẽ được cấp
@@ -259,7 +259,7 @@ export function AppointmentActions({ appointment, resource, size = "default", co
               Đóng
             </Button>
             <Button onClick={reschedule} disabled={samePlace || !doctor?.day?.bookable || busy}>
-              {busy ? "Đang lưu..." : "Xác nhận đổi lịch"}
+              {busy ? "Đang lưu..." : "Xác nhận đổi"}
             </Button>
           </DialogFooter>
         </DialogContent>

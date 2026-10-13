@@ -255,7 +255,7 @@ function EditVisitDialog({ appointment, onClose }: { appointment: Appointment; o
         <DialogHeader>
           <DialogTitle>Cập nhật đăng ký khám</DialogTitle>
           <DialogDescription>
-            Sửa lý do khám và ghi chú. Đổi bác sĩ hoặc ngày khám thì dùng "Đổi lịch".
+            Sửa lý do khám và ghi chú. Đổi bác sĩ hoặc ngày khám thì dùng "Đổi ngày khám".
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">

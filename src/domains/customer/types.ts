@@ -45,7 +45,7 @@ export const CUSTOMER_STATUS_OPTIONS: { label: string; value: CustomerStatus }[]
 ];
 
 export const ACTIVATION_SOURCE_LABELS: Record<PatientActivationSource, string> = {
-  check_in: "Check-in lịch hẹn",
+  check_in: "Tiếp nhận khi đến khám",
   manual: "Nhân viên kích hoạt",
 };
 
