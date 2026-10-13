@@ -37,7 +37,7 @@ const JSON_HEADERS = { headers: { "Content-Type": "application/json" } };
  */
 export function CareTeamPanel({ customer }: { customer: Customer }) {
   const { open } = useNotification();
-  const { data: access } = useCan({ resource: "customers", action: "assign" });
+  const { data: access } = useCan({ resource: "customers", action: "assign_staff" });
   const canAssign = access?.can ?? false;
   const isPatient = customer.status === "patient";
 
