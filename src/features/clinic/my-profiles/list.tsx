@@ -8,7 +8,7 @@ import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { GENDER_LABELS } from "@/domains/customer/types";
 import type { Profile } from "@/domains/profile/types";
-import { profileKind } from "@/domains/profile/types";
+import { fullAddress, ID_TYPE_LABELS, profileKind } from "@/domains/profile/types";
 import { formatLocalDate } from "@/shared/lib/format";
 
 /**
@@ -60,10 +60,22 @@ export const MyProfileList = () => {
               <dd>{profile.gender ? GENDER_LABELS[profile.gender] : "—"}</dd>
               <dt className="text-muted-foreground">Điện thoại</dt>
               <dd className="font-mono">{profile.phone}</dd>
+              <dt className="text-muted-foreground">{ID_TYPE_LABELS[profile.nationalIdType ?? "cccd"]}</dt>
+              <dd className="font-mono">{profile.nationalId ?? "—"}</dd>
+              <dt className="text-muted-foreground">Ngày cấp</dt>
+              <dd>{profile.nationalIdIssuedOn ? formatLocalDate(profile.nationalIdIssuedOn) : "—"}</dd>
+              <dt className="text-muted-foreground">Dân tộc</dt>
+              <dd>{profile.ethnicity ?? "—"}</dd>
+              <dt className="text-muted-foreground">Quốc tịch</dt>
+              <dd>{profile.nationality ?? "—"}</dd>
+              <dt className="text-muted-foreground">Nghề nghiệp</dt>
+              <dd>{profile.occupation ?? "—"}</dd>
+              <dt className="text-muted-foreground">Địa chỉ</dt>
+              <dd>{fullAddress(profile) ?? "—"}</dd>
             </dl>
             {!profile.complete && (
               <p className="text-destructive text-sm">
-                Cần bổ sung ngày sinh và giới tính trước khi đăng ký khám cho hồ sơ này.
+                Cần bổ sung ngày sinh, giới tính và số CCCD trước khi đăng ký khám cho hồ sơ này.
               </p>
             )}
           </Card>

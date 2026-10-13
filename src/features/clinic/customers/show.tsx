@@ -21,6 +21,7 @@ import {
   GENDER_LABELS,
 } from "@/domains/customer/types";
 import type { Appointment } from "@/domains/appointment/types";
+import { fullAddress, ID_TYPE_LABELS } from "@/domains/profile/types";
 import { APPOINTMENT_STATUS_LABELS } from "@/domains/appointment/types";
 import {
   APPOINTMENT_STATUS_VARIANTS,
@@ -99,7 +100,16 @@ export const CustomerShow = () => {
             <DetailRow label="Giới tính">
               {record?.gender ? GENDER_LABELS[record.gender] : <EmptyValue />}
             </DetailRow>
-            <DetailRow label="Địa chỉ">{record?.address ?? <EmptyValue />}</DetailRow>
+            <DetailRow label={record ? ID_TYPE_LABELS[record.nationalIdType ?? "cccd"] : "CCCD"}>
+              {record?.nationalId ? <span className="font-mono">{record.nationalId}</span> : <EmptyValue />}
+            </DetailRow>
+            <DetailRow label="Ngày cấp">
+              {record?.nationalIdIssuedOn ? formatLocalDate(record.nationalIdIssuedOn) : <EmptyValue />}
+            </DetailRow>
+            <DetailRow label="Dân tộc">{record?.ethnicity ?? <EmptyValue />}</DetailRow>
+            <DetailRow label="Quốc tịch">{record?.nationality ?? <EmptyValue />}</DetailRow>
+            <DetailRow label="Nghề nghiệp">{record?.occupation ?? <EmptyValue />}</DetailRow>
+            <DetailRow label="Địa chỉ">{(record && fullAddress(record)) ?? <EmptyValue />}</DetailRow>
             <DetailRow label="Liên hệ khẩn cấp">
               {record?.emergencyContactName ? (
                 <span>
