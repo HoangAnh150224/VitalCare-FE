@@ -82,6 +82,7 @@ export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointm
 
             <div className="w-full text-left">
               <DetailList>
+                <DetailRow label="Người tới khám">{record?.customer.fullName ?? <EmptyValue />}</DetailRow>
                 <DetailRow label="Bác sĩ">{record?.doctor?.fullName ?? <EmptyValue />}</DetailRow>
                 <DetailRow label="Phòng khám">{record?.clinic.name ?? <EmptyValue />}</DetailRow>
                 <DetailRow label="Ngày khám">

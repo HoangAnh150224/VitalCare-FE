@@ -109,6 +109,17 @@ export const resources: ResourceProps[] = [
       icon: <CalendarCheck className="h-4 w-4" />,
     },
   },
+  // The patient profiles under the account: the owner's own and their relatives'.
+  {
+    name: "my_profiles",
+    list: "/my-profiles",
+    create: "/my-profiles/create",
+    edit: "/my-profiles/edit/:id",
+    meta: {
+      label: "Hồ sơ người bệnh",
+      icon: <ClipboardList className="h-4 w-4" />,
+    },
+  },
 
   // A doctor's or nurse's own caseload. Only DOCTOR and NURSE hold
   // `my_patients:read`, so nobody else sees it in the menu.

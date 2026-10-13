@@ -47,9 +47,9 @@ export const MyAppointmentCreate = () => {
           <SectionedFormPanel>
             <FormSection
               title="Đăng ký khám"
-              description="Chọn bác sĩ và ngày khám. Bạn sẽ nhận số khám ngay; đến phòng khám, đưa phiếu cho lễ tân để được tiếp nhận."
+              description="Chọn người tới khám, bác sĩ và ngày khám. Bạn sẽ nhận số khám ngay; đến phòng khám, đưa phiếu cho lễ tân để được tiếp nhận."
             >
-              <BookingFields control={form.control} />
+              <BookingFields control={form.control} forOwnAccount />
             </FormSection>
 
             <FormSectionActions>

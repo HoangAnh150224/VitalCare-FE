@@ -9,7 +9,12 @@ export type Customer = {
   id: number;
   customerCode: string;
   status: CustomerStatus;
-  userId: number;
+  /** The profile's own account; null for a relative, who has none. */
+  userId: number | null;
+  /** Whose relative this is; null on an account owner's own profile. */
+  guardian: { id: number; customerCode: string; fullName: string; phone: string } | null;
+  relationship: string | null;
+  nationalId: string | null;
   fullName: string;
   phone: string;
   email: string | null;
