@@ -120,13 +120,13 @@ export const ViewAsFrontDesk = () => {
           <TabsTrigger value="devices">Thiết bị</TabsTrigger>
         </TabsList>
         <TabsContent value="appointments">
-          <AppointmentList clinicId={clinicId} readOnly />
+          <AppointmentList clinicId={clinicId} readOnly resource="view_as/appointments" />
         </TabsContent>
         <TabsContent value="customers">
           <CustomerList clinicId={clinicId} readOnly />
         </TabsContent>
         <TabsContent value="devices">
-          <DeviceList clinicId={clinicId} readOnly />
+          <DeviceList clinicId={clinicId} readOnly resource="view_as/devices" />
         </TabsContent>
       </Tabs>
     </div>

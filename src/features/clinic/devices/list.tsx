@@ -36,10 +36,12 @@ const FILTER_FIELDS: AdvancedFilterField[] = [
 type FrontDeskListProps = {
   clinicId?: string;
   readOnly?: boolean;
+  /** Where the rows come from; an administrator's view reads `view_as/devices`. See `AppointmentList`. */
+  resource?: string;
 };
 
 /** The clinic's monitoring devices, and who is wearing each one now. */
-export const DeviceList = ({ clinicId, readOnly = false }: FrontDeskListProps = {}) => {
+export const DeviceList = ({ clinicId, readOnly = false, resource = "devices" }: FrontDeskListProps = {}) => {
   const clinics = useClinicOptions();
   // A clinic filter only says something when there is more than one clinic,
   // and none when the list is already locked to one.
@@ -116,7 +118,7 @@ export const DeviceList = ({ clinicId, readOnly = false }: FrontDeskListProps = 
         cell: ({ row }) => (
           <div className="flex gap-1">
             {!readOnly && <EditButton resource="devices" recordItemId={row.original.id} iconOnly size="icon-sm" />}
-            <ShowButton resource="devices" recordItemId={row.original.id} iconOnly size="icon-sm" />
+            {!readOnly && <ShowButton resource="devices" recordItemId={row.original.id} iconOnly size="icon-sm" />}
           </div>
         ),
         ...actionsColumnWidth(2),
@@ -132,8 +134,8 @@ export const DeviceList = ({ clinicId, readOnly = false }: FrontDeskListProps = 
     initialState: { columnPinning: { right: ["actions"] } },
     refineCoreProps: clinicId
       ? // Locked to one clinic: off the URL, so nothing there can unlock it.
-        { resource: "devices", syncWithLocation: false, filters: { permanent: [{ field: "clinicId", operator: "eq", value: clinicId }] } }
-      : { resource: "devices", syncWithLocation: true },
+        { resource, syncWithLocation: false, filters: { permanent: [{ field: "clinicId", operator: "eq", value: clinicId }] } }
+      : { resource, syncWithLocation: resource === "devices" },
   });
 
   return (
