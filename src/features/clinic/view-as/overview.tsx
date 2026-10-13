@@ -33,7 +33,7 @@ export const ViewAsAllAppointments = () => {
       <MyAppointmentList
         title="Đăng ký khám của tôi"
         description="Đăng ký khám của mọi khách hàng, ở dạng khách nhìn thấy (không có ghi chú nội bộ). Mở phiếu để xem đúng như khách đó."
-        resource="appointments"
+        resource="view_as/appointments"
         showCustomer
         slipPath={slipPath}
       />
