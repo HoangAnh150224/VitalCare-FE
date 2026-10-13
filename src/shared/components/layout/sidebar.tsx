@@ -254,8 +254,9 @@ function BrandMark({
     <div
       className={cn(
         "flex size-8 shrink-0 items-center justify-center rounded-lg",
-        "bg-sidebar-primary text-sidebar-primary-foreground",
-        "[&_svg]:size-4"
+        // White in either sidebar tone: the logo's blues and greens disappear
+        // into the navy rail otherwise.
+        "bg-white p-0.5 shadow-sm"
       )}
     >
       {icon}

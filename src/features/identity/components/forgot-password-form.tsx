@@ -49,7 +49,7 @@ export const ForgotPasswordForm = () => {
       <div className={cn("flex", "items-center", "justify-center", "gap-2")}>
         {title.icon && (
           <div
-            className={cn("text-foreground", "[&>svg]:w-12", "[&>svg]:h-12")}
+            className={cn("size-12", "rounded-xl", "bg-white", "p-1")}
           >
             {title.icon}
           </div>

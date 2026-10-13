@@ -125,9 +125,8 @@ export const SignUpForm = () => {
           {title.icon && (
             <div
               className={cn(
-                "gradient-gold flex size-14 items-center justify-center rounded-xl",
-                "shadow-e4 [&>svg]:size-7",
-                "text-sidebar-primary-foreground"
+                "flex size-14 items-center justify-center rounded-xl",
+                "bg-white p-1.5 shadow-e4"
               )}
             >
               {title.icon}
