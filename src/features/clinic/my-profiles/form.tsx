@@ -28,8 +28,8 @@ import {
   SectionedFormPanel,
 } from "@/shared/components/form/form-section";
 import { GENDER_LABELS, type Gender } from "@/domains/customer/types";
-import type { Profile, Relationship } from "@/domains/profile/types";
-import { RELATIONSHIP_OPTIONS } from "@/domains/profile/types";
+import type { IdType, Profile, Relationship } from "@/domains/profile/types";
+import { ID_TYPE_LABELS, RELATIONSHIP_OPTIONS } from "@/domains/profile/types";
 import { clinicToday } from "../appointments/clinic-day";
 
 type ProfileFormValues = {
@@ -38,7 +38,14 @@ type ProfileFormValues = {
   dateOfBirth: string;
   gender: Gender | "";
   relationship: Relationship | "";
+  nationalIdType: IdType;
   nationalId: string;
+  nationalIdIssuedOn: string;
+  province: string;
+  ward: string;
+  ethnicity: string;
+  nationality: string;
+  occupation: string;
   address: string;
 };
 
@@ -65,7 +72,15 @@ function ProfileForm({ submitLabel, creating }: { submitLabel: string; creating:
       dateOfBirth: "",
       gender: "",
       relationship: "",
+      nationalIdType: "cccd",
       nationalId: "",
+      nationalIdIssuedOn: "",
+      province: "",
+      ward: "",
+      // What nearly everybody enters; there to be changed, not typed.
+      ethnicity: "Kinh",
+      nationality: "Việt Nam",
+      occupation: "",
       address: "",
     },
   });
@@ -84,7 +99,14 @@ function ProfileForm({ submitLabel, creating }: { submitLabel: string; creating:
               : {}),
             dateOfBirth: values.dateOfBirth,
             gender: values.gender,
-            nationalId: values.nationalId ?? "",
+            nationalIdType: values.nationalIdType || "cccd",
+            nationalId: values.nationalId.trim(),
+            province: values.province ?? "",
+            ward: values.ward ?? "",
+            nationalIdIssuedOn: values.nationalIdIssuedOn || null,
+            ethnicity: values.ethnicity ?? "",
+            nationality: values.nationality ?? "",
+            occupation: values.occupation ?? "",
             address: values.address ?? "",
           } as unknown as ProfileFormValues)
         )}
@@ -93,7 +115,7 @@ function ProfileForm({ submitLabel, creating }: { submitLabel: string; creating:
         <SectionedFormPanel>
           <FormSection
             title={relative ? "Hồ sơ người thân" : "Hồ sơ của bạn"}
-            description="Ngày sinh và giới tính là bắt buộc để đăng ký khám. Thông tin cần khớp với giấy tờ tuỳ thân."
+            description="Ngày sinh, giới tính và số CCCD là bắt buộc. Thông tin cần khớp với giấy tờ tuỳ thân."
           >
             {relative ? (
               <>
@@ -203,15 +225,125 @@ function ProfileForm({ submitLabel, creating }: { submitLabel: string; creating:
             )}
             <FormField
               control={form.control}
+              name="nationalIdType"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Loại giấy tờ</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value ?? "cccd"}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(Object.keys(ID_TYPE_LABELS) as IdType[]).map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {ID_TYPE_LABELS[type]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="nationalId"
-              rules={{ maxLength: { value: 32, message: "Tối đa 32 ký tự" } }}
+              rules={{
+                validate: (value) => (value ?? "").trim() !== "" || "Vui lòng nhập số CCCD hoặc mã định danh",
+                maxLength: { value: 32, message: "Tối đa 32 ký tự" },
+              }}
               render={({ field }) => (
                 <FormItem className="md:col-span-3">
-                  <FormLabel>Số CCCD</FormLabel>
+                  <FormLabel>Số giấy tờ</FormLabel>
                   <FormControl>
-                    <Input {...field} value={field.value ?? ""} inputMode="numeric" />
+                    <Input {...field} value={field.value ?? ""} />
                   </FormControl>
-                  <FormDescription>Không bắt buộc.</FormDescription>
+                  <FormDescription>Trẻ chưa có CCCD dùng mã định danh trên giấy khai sinh; hoặc số hộ chiếu.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="nationalIdIssuedOn"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Ngày cấp</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="date" max={clinicToday()} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="occupation"
+              rules={{ maxLength: { value: 128, message: "Tối đa 128 ký tự" } }}
+              render={({ field }) => (
+                <FormItem className="md:col-span-3">
+                  <FormLabel>Nghề nghiệp</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value ?? ""} placeholder="Sinh viên, học sinh" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="ethnicity"
+              rules={{ maxLength: { value: 64, message: "Tối đa 64 ký tự" } }}
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Dân tộc</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="nationality"
+              rules={{ maxLength: { value: 64, message: "Tối đa 64 ký tự" } }}
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Quốc tịch</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="province"
+              rules={{ maxLength: { value: 128, message: "Tối đa 128 ký tự" } }}
+              render={({ field }) => (
+                <FormItem className="md:col-span-4">
+                  <FormLabel>Tỉnh / Thành phố</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="ward"
+              rules={{ maxLength: { value: 128, message: "Tối đa 128 ký tự" } }}
+              render={({ field }) => (
+                <FormItem className="md:col-span-4">
+                  <FormLabel>Xã / Phường</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value ?? ""} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -221,12 +353,11 @@ function ProfileForm({ submitLabel, creating }: { submitLabel: string; creating:
               name="address"
               rules={{ maxLength: { value: 500, message: "Tối đa 500 ký tự" } }}
               render={({ field }) => (
-                <FormItem className="md:col-span-5">
-                  <FormLabel>Địa chỉ</FormLabel>
+                <FormItem className="md:col-span-8">
+                  <FormLabel>Địa chỉ cụ thể</FormLabel>
                   <FormControl>
-                    <Input {...field} value={field.value ?? ""} />
+                    <Input {...field} value={field.value ?? ""} placeholder="Số nhà, đường, thôn / xóm" />
                   </FormControl>
-                  <FormDescription>Không bắt buộc.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

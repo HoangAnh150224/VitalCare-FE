@@ -15,6 +15,14 @@ export type Customer = {
   guardian: { id: number; customerCode: string; fullName: string; phone: string } | null;
   relationship: string | null;
   nationalId: string | null;
+  nationalIdType: "cccd" | "personal_id" | "passport" | null;
+  /** `YYYY-MM-DD`. */
+  nationalIdIssuedOn: string | null;
+  ethnicity: string | null;
+  nationality: string | null;
+  occupation: string | null;
+  province: string | null;
+  ward: string | null;
   fullName: string;
   phone: string;
   email: string | null;
