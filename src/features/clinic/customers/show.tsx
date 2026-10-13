@@ -115,7 +115,7 @@ export const CustomerShow = () => {
               )}
             </DetailRow>
             <DetailRow label="Tài khoản">
-              {record && canReadUsers?.can ? (
+              {record?.userId && canReadUsers?.can ? (
                 <Link to={`/users/show/${record.userId}`} className="hover:underline">
                   Xem tài khoản đăng nhập
                 </Link>

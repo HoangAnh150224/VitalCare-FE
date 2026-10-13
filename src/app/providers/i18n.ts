@@ -52,6 +52,7 @@ const MESSAGES: Record<string, string> = {
   "customers.customers": "khách hàng",
   "appointments.appointments": "lượt đăng ký khám",
   "my_appointments.my_appointments": "lượt đăng ký khám",
+  "my_profiles.my_profiles": "hồ sơ người bệnh",
   "clinics.clinics": "phòng khám",
   "employees.employees": "nhân viên",
   "devices.devices": "thiết bị",

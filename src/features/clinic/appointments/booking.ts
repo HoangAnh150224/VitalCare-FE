@@ -9,6 +9,8 @@
  */
 export type BookingFormValues = {
   customerId?: number | string;
+  /** The customer's side: which of the account's profiles the visit is for. */
+  patientId?: string;
   clinicId: string;
   employeeId: string;
   appointmentDate: string;
@@ -27,6 +29,7 @@ export const EMPTY_BOOKING: BookingFormValues = {
 /** Who, which day and why, as the API reads them. */
 export function toBookingPayload(values: BookingFormValues) {
   return {
+    ...(values.patientId ? { patientId: Number(values.patientId) } : {}),
     employeeId: Number(values.employeeId),
     appointmentDate: values.appointmentDate,
     reason: values.reason.trim(),

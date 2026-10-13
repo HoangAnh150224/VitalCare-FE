@@ -1,5 +1,6 @@
-import { useEffect } from "react";
-import { useSelect } from "@refinedev/core";
+import { useEffect, useMemo } from "react";
+import { useList, useSelect } from "@refinedev/core";
+import { Link } from "react-router";
 import { useFormContext, useWatch, type Control } from "react-hook-form";
 
 import { Input } from "@/shared/ui/input";
@@ -18,6 +19,8 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 import type { Clinic } from "@/domains/clinic/types";
+import type { Profile } from "@/domains/profile/types";
+import { profileKind } from "@/domains/profile/types";
 import type { BookingFormValues } from "./booking";
 import { clinicToday } from "./clinic-day";
 import { DoctorDayHint, doctorLabel, useClinicDoctors } from "./doctor-day";
@@ -26,12 +29,39 @@ import { DoctorDayHint, doctorLabel, useClinicDoctors } from "./doctor-day";
  * With whom, which day and why — the part of a registration both the front
  * desk and a customer fill in. No time is chosen: the visit gets the doctor's
  * next queue number for the day, and the hint under the fields says which.
+ *
+ * `forOwnAccount` is the customer's side: it asks first who the visit is for,
+ * among the profiles under the account — the owner or a relative. The front
+ * desk picks the person another way and leaves it off.
  */
-export function BookingFields({ control }: { control: Control<BookingFormValues> }) {
+export function BookingFields({
+  control,
+  forOwnAccount = false,
+}: {
+  control: Control<BookingFormValues>;
+  forOwnAccount?: boolean;
+}) {
   const { setValue, getValues } = useFormContext<BookingFormValues>();
   const clinicId = useWatch({ control, name: "clinicId" });
   const employeeId = useWatch({ control, name: "employeeId" });
   const date = useWatch({ control, name: "appointmentDate" });
+
+  const patientId = useWatch({ control, name: "patientId" });
+  const { result: profilesResult } = useList<Profile>({
+    resource: "my_profiles",
+    pagination: { mode: "off" },
+    queryOptions: { enabled: forOwnAccount },
+  });
+  const profiles = useMemo(() => profilesResult?.data ?? [], [profilesResult?.data]);
+  const patient = profiles.find((profile) => String(profile.id) === patientId);
+
+  // The owner themselves until somebody chooses otherwise.
+  useEffect(() => {
+    const own = profiles.find((profile) => profile.self);
+    if (forOwnAccount && own && !getValues("patientId")) {
+      setValue("patientId", String(own.id));
+    }
+  }, [forOwnAccount, profiles, getValues, setValue]);
 
   const { options: clinicOptions } = useSelect<Clinic>({
     resource: "clinics",
@@ -58,6 +88,54 @@ export function BookingFields({ control }: { control: Control<BookingFormValues>
 
   return (
     <>
+      {forOwnAccount && (
+        <FormField
+          control={control}
+          name="patientId"
+          rules={{
+            required: "Vui lòng chọn người tới khám",
+            validate: () => patient?.complete !== false || "Hồ sơ này chưa có ngày sinh và giới tính",
+          }}
+          render={({ field }) => (
+            <FormItem className="md:col-span-8">
+              <FormLabel>Người tới khám</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn người tới khám" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {profiles.map((profile) => (
+                    <SelectItem key={profile.id} value={String(profile.id)}>
+                      {profile.fullName} · {profileKind(profile)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground text-sm">
+                {patient && !patient.complete ? (
+                  <>
+                    Hồ sơ này chưa có ngày sinh và giới tính.{" "}
+                    <Link to={`/my-profiles/edit/${patient.id}`} className="text-foreground underline">
+                      Bổ sung hồ sơ
+                    </Link>{" "}
+                    rồi quay lại đăng ký.
+                  </>
+                ) : (
+                  <>
+                    Khám cho người thân?{" "}
+                    <Link to="/my-profiles/create" className="text-foreground underline">
+                      Thêm người thân
+                    </Link>
+                  </>
+                )}
+              </p>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
       {clinicOptions.length > 1 && (
         <FormField
           control={control}

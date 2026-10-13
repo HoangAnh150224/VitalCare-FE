@@ -66,6 +66,9 @@ import {
   CustomerList,
   CustomerShow,
   MyAppointmentCreate,
+  MyProfileCreate,
+  MyProfileEdit,
+  MyProfileList,
   MyAppointmentList,
   MyAppointmentShow,
   QuickCheckIn,
@@ -469,6 +472,18 @@ export function AppRoutes() {
           <Route index element={<MyAppointmentList />} />
           <Route path="create" element={<MyAppointmentCreate />} />
           <Route path="show/:id" element={<MyAppointmentShow />} />
+        </Route>
+        <Route
+          path="/my-profiles"
+          element={
+            <CanAccess resource="my_profiles" action="list" fallback={<Forbidden resource="my_profiles" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<MyProfileList />} />
+          <Route path="create" element={<MyProfileCreate />} />
+          <Route path="edit/:id" element={<MyProfileEdit />} />
         </Route>
 
         {/*

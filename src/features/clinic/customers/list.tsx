@@ -92,6 +92,9 @@ export const CustomerList = ({ clinicId, readOnly = false }: FrontDeskListProps 
             <span className="text-muted-foreground font-mono text-xs">
               {row.original.phone}
             </span>
+            {row.original.guardian && (
+              <span className="text-muted-foreground text-xs">Người thân của {row.original.guardian.fullName}</span>
+            )}
           </div>
         ),
       }),

@@ -75,6 +75,17 @@ export const MyAppointmentList = ({
         enableSorting: false,
         cell: ({ row }) => <span className="text-sm">{row.original.doctor?.fullName ?? "—"}</span>,
       }),
+      // On the customer's own list the account may hold several people's visits.
+      ...(!showCustomer
+        ? [
+            columnHelper.display({
+              id: "patient",
+              header: "Người tới khám",
+              enableSorting: false,
+              cell: ({ row }) => <span className="text-sm">{row.original.customer.fullName}</span>,
+            }),
+          ]
+        : []),
       ...(showCustomer
         ? [
             columnHelper.display({
