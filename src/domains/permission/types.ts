@@ -59,6 +59,11 @@ const RESOURCE_LABELS: Record<string, string> = {
   departments: "Phòng ban",
   row_level_policies: "Phạm vi dữ liệu",
   notifications: "Thông báo",
+  employees: "Nhân viên",
+  customers: "Khách hàng",
+  appointments: "Lịch hẹn",
+  devices: "Thiết bị",
+  clinics: "Cơ sở",
 };
 
 /** `blog_posts` reads better as "Blog posts" in a group heading. */
