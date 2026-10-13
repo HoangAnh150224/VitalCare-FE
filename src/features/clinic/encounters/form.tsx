@@ -134,7 +134,7 @@ export const EncounterCreate = () => {
       ) : (
         <Alert>
           <AlertDescription>
-            Lần khám được tạo từ trang bệnh nhân hoặc từ lịch hẹn đã check-in, để biết đang khám cho ai.
+            Lần khám được tạo từ trang bệnh nhân hoặc từ lượt đăng ký khám đã tiếp nhận, để biết đang khám cho ai.
           </AlertDescription>
         </Alert>
       )}

@@ -137,8 +137,8 @@ export const EncounterShow = () => {
                 <EmptyValue />
               )}
             </DetailRow>
-            <DetailRow label="Lịch hẹn">
-              {record?.appointmentId ? `#${record.appointmentId}` : <EmptyValue>Không gắn lịch hẹn</EmptyValue>}
+            <DetailRow label="Đăng ký khám">
+              {record?.appointmentId ? `#${record.appointmentId}` : <EmptyValue>Không gắn lượt đăng ký khám</EmptyValue>}
             </DetailRow>
           </DetailList>
         </DetailPanel>

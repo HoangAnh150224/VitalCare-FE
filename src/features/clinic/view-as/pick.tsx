@@ -120,7 +120,7 @@ export const ViewAsPick = () => {
       <div className="grid gap-4 lg:grid-cols-3">
         <RoleCard
           title="Lễ tân"
-          description="Lịch hẹn, khách hàng và thiết bị. Mỗi lễ tân chỉ thấy phòng khám của mình."
+          description="Đăng ký khám, khách hàng và thiết bị. Mỗi lễ tân chỉ thấy phòng khám của mình."
           icon={<ConciergeBellIcon className="size-4" />}
           allLabel="Xem tất cả phòng khám"
           onViewAll={() => navigate("/view-as/front-desk")}
@@ -142,9 +142,9 @@ export const ViewAsPick = () => {
         />
         <RoleCard
           title="Khách hàng"
-          description="Màn “Lịch hẹn của tôi” và phiếu khám. Mỗi khách chỉ thấy lịch của mình."
+          description="Màn “Đăng ký khám của tôi” và phiếu khám. Mỗi khách chỉ thấy lịch của mình."
           icon={<CalendarCheckIcon className="size-4" />}
-          allLabel="Xem tất cả lịch hẹn"
+          allLabel="Xem tất cả lượt đăng ký khám"
           onViewAll={() => navigate("/view-as/appointments")}
           placeholder="Chọn khách hàng"
           options={customers.options}

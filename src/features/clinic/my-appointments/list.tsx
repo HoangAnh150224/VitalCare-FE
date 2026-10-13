@@ -11,7 +11,7 @@ import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import type { Appointment } from "@/domains/appointment/types";
-import { APPOINTMENT_STATUS_LABELS, formatBookingCode } from "@/domains/appointment/types";
+import { APPOINTMENT_STATUS_LABELS, formatBookingCode, formatQueueNumber } from "@/domains/appointment/types";
 import { ShowButton } from "@/shared/components/buttons/show";
 import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatLocalDate, formatLocalTime } from "@/shared/lib/format";
@@ -42,25 +42,38 @@ export const MyAppointmentList = ({
   slipPath,
   showCustomer = false,
   title,
-  description = "Lịch khám bạn đã đặt. Khi đến phòng khám, nhân viên sẽ check-in cho bạn.",
+  description = "Các lượt khám bạn đã đăng ký. Khi đến phòng khám, đưa phiếu cho lễ tân để được tiếp nhận.",
 }: MyAppointmentListProps = {}) => {
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<Appointment>();
 
     return [
+      columnHelper.accessor("queueNumber", {
+        id: "queueNumber",
+        header: "Số khám",
+        enableSorting: true,
+        cell: ({ getValue }) => (
+          <span className="text-lg font-semibold tabular-nums">{formatQueueNumber(getValue())}</span>
+        ),
+      }),
       columnHelper.accessor("appointmentDate", {
         id: "appointmentDate",
-        header: "Thời gian",
+        header: "Ngày khám",
         enableSorting: true,
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-medium">{formatLocalDate(row.original.appointmentDate)}</span>
             <span className="text-muted-foreground text-xs tabular-nums">
-              {formatLocalTime(row.original.startTime)}
-              {row.original.endTime ? ` – ${formatLocalTime(row.original.endTime)}` : ""}
+              dự kiến {formatLocalTime(row.original.startTime)}
             </span>
           </div>
         ),
+      }),
+      columnHelper.display({
+        id: "doctor",
+        header: "Bác sĩ",
+        enableSorting: false,
+        cell: ({ row }) => <span className="text-sm">{row.original.doctor?.fullName ?? "—"}</span>,
       }),
       ...(showCustomer
         ? [
@@ -79,7 +92,7 @@ export const MyAppointmentList = ({
         : []),
       columnHelper.accessor("bookingCode", {
         id: "bookingCode",
-        header: "Mã lịch hẹn",
+        header: "Mã phiếu",
         enableSorting: false,
         cell: ({ getValue }) => <span className="font-mono text-sm">{formatBookingCode(getValue())}</span>,
       }),

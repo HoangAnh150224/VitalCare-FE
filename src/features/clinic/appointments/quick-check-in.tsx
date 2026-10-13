@@ -88,7 +88,7 @@ export const QuickCheckIn = () => {
   return (
     <ListView>
       <ListViewHeader
-        title="Check-in nhanh"
+        title="Tiếp nhận nhanh"
         canCreate={false}
         description="Quét hoặc nhập mã trên phiếu khám của khách. Máy quét cầm tay dùng được ngay tại ô nhập mã."
       />
@@ -102,7 +102,7 @@ export const QuickCheckIn = () => {
               lookUp(code);
             }}
           >
-            <Label htmlFor="booking-code">Mã lịch hẹn</Label>
+            <Label htmlFor="booking-code">Mã phiếu</Label>
             <div className="flex gap-2">
               <Input
                 id="booking-code"
@@ -155,7 +155,7 @@ export const QuickCheckIn = () => {
             <Card className="border-success/40 mb-4 flex flex-row items-center gap-3 p-4">
               <CheckCircle2Icon className="text-success size-5 shrink-0" />
               <span className="text-sm">
-                {lastDone.status === "cancelled" ? "Đã huỷ lịch hẹn của " : "Đã check-in "}
+                {lastDone.status === "cancelled" ? "Đã huỷ lượt đăng ký khám của " : "Đã tiếp nhận "}
                 <strong>{lastDone.customer.fullName}</strong> ({formatBookingCode(lastDone.bookingCode)})
                 {lastDone.status === "checked_in" && lastDone.customer.status === "patient"
                   ? " — hồ sơ bệnh nhân đang hoạt động."
@@ -173,7 +173,7 @@ export const QuickCheckIn = () => {
               <p className="text-sm">
                 {notFound ? (
                   <>
-                    Không tìm thấy lịch hẹn với mã <span className="font-mono">{submitted}</span>. Kiểm
+                    Không tìm thấy lượt đăng ký khám với mã <span className="font-mono">{submitted}</span>. Kiểm
                     tra lại mã trên phiếu khám.
                   </>
                 ) : (
@@ -189,7 +189,7 @@ export const QuickCheckIn = () => {
 
           {!submitted && !lastDone && (
             <p className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
-              Nhập hoặc quét mã để xem thông tin lịch hẹn.
+              Nhập hoặc quét mã để xem thông tin lượt đăng ký khám.
             </p>
           )}
         </div>
@@ -234,7 +234,7 @@ function AppointmentCard({
       </div>
 
       <DetailList>
-        <DetailRow label="Mã lịch hẹn">
+        <DetailRow label="Mã phiếu">
           <span className="font-mono">{formatBookingCode(appointment.bookingCode)}</span>
         </DetailRow>
         <DetailRow label="Thời gian">
@@ -249,13 +249,13 @@ function AppointmentCard({
 
       {appointment.status === "scheduled" && !isToday && (
         <p className="text-warning text-sm">
-          Lịch hẹn này vào ngày {formatLocalDate(appointment.appointmentDate)}, chỉ check-in được
+          Lượt đăng ký này vào ngày {formatLocalDate(appointment.appointmentDate)}, chỉ tiếp nhận được
           vào đúng ngày hẹn.
         </p>
       )}
       {willActivate && isToday && (
         <p className="text-sm">
-          Khách hàng chưa là bệnh nhân — check-in sẽ <strong>kích hoạt hồ sơ bệnh nhân</strong>.
+          Khách hàng chưa là bệnh nhân — tiếp nhận sẽ <strong>kích hoạt hồ sơ bệnh nhân</strong>.
         </p>
       )}
 

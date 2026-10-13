@@ -1,35 +1,34 @@
 /**
- * The booking payload both forms send. `customerId` and `note` are the front
- * desk's; a customer's own booking never carries a customer — the API takes
- * that from the token.
+ * The registration both forms send. `customerId` and `note` are the front
+ * desk's; a customer's own registration never carries a customer — the API
+ * takes that from the token.
  *
- * There is no end time: a booking is a place in one of the clinic's slots,
- * and the slot has one.
+ * A doctor and a day, nothing finer: the visit gets that doctor's next queue
+ * number. `clinicId` only narrows the doctors to choose from; the API takes
+ * the clinic from the doctor.
  */
 export type BookingFormValues = {
   customerId?: number | string;
   clinicId: string;
+  employeeId: string;
   appointmentDate: string;
-  /** The start of the chosen slot, `HH:mm:ss` as the slots endpoint gives it. */
-  startTime: string;
   reason: string;
   note?: string;
 };
 
 export const EMPTY_BOOKING: BookingFormValues = {
   clinicId: "",
+  employeeId: "",
   appointmentDate: "",
-  startTime: "",
   reason: "",
   note: "",
 };
 
-/** Where, when and why, as the API reads them. */
+/** Who, which day and why, as the API reads them. */
 export function toBookingPayload(values: BookingFormValues) {
   return {
-    clinicId: values.clinicId,
+    employeeId: Number(values.employeeId),
     appointmentDate: values.appointmentDate,
-    startTime: values.startTime,
-    reason: values.reason || null,
+    reason: values.reason.trim(),
   };
 }

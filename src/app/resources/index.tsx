@@ -105,7 +105,7 @@ export const resources: ResourceProps[] = [
     // The appointment slip, with its code and QR.
     show: "/my-appointments/show/:id",
     meta: {
-      label: "Lịch hẹn của tôi",
+      label: "Đăng ký khám của tôi",
       icon: <CalendarCheck className="h-4 w-4" />,
     },
   },
@@ -150,7 +150,7 @@ export const resources: ResourceProps[] = [
     create: "/appointments/create",
     show: "/appointments/show/:id",
     meta: {
-      label: "Lịch hẹn",
+      label: "Đăng ký khám",
       icon: <CalendarDays className="h-4 w-4" />,
       parent: "clinic",
     },

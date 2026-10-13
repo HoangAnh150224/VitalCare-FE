@@ -43,7 +43,7 @@ export const ViewAsCustomerAppointments = () => {
       <CustomerBanner customerId={customerId} />
       <MyAppointmentList
         key={customerId}
-        title="Lịch hẹn của tôi"
+        title="Đăng ký khám của tôi"
         resource={`view_as/customers/${customerId}/appointments`}
         slipPath={slipPath}
       />

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useSelect } from "@refinedev/core";
 import { useFormContext, useWatch, type Control } from "react-hook-form";
 
@@ -20,17 +20,18 @@ import {
 import type { Clinic } from "@/domains/clinic/types";
 import type { BookingFormValues } from "./booking";
 import { clinicToday } from "./clinic-day";
-import { SlotPicker } from "./slot-picker";
+import { DoctorDayHint, doctorLabel, useClinicDoctors } from "./doctor-day";
 
 /**
- * Where, when and why — the part of a booking both the front desk and a
- * customer fill in. When is a clinic, a day, then one of that day's slots.
+ * With whom, which day and why — the part of a registration both the front
+ * desk and a customer fill in. No time is chosen: the visit gets the doctor's
+ * next queue number for the day, and the hint under the fields says which.
  */
 export function BookingFields({ control }: { control: Control<BookingFormValues> }) {
   const { setValue, getValues } = useFormContext<BookingFormValues>();
   const clinicId = useWatch({ control, name: "clinicId" });
+  const employeeId = useWatch({ control, name: "employeeId" });
   const date = useWatch({ control, name: "appointmentDate" });
-  const [lastBookableDate, setLastBookableDate] = useState<string | undefined>();
 
   const { options: clinicOptions } = useSelect<Clinic>({
     resource: "clinics",
@@ -47,33 +48,60 @@ export function BookingFields({ control }: { control: Control<BookingFormValues>
     }
   }, [clinicOptions, getValues, setValue]);
 
-  // A slot belongs to one clinic on one day; change either and the choice no
-  // longer means anything.
+  // A doctor belongs to one clinic; change it and the choice means nothing.
   useEffect(() => {
-    setValue("startTime", "");
-  }, [clinicId, date, setValue]);
+    setValue("employeeId", "");
+  }, [clinicId, setValue]);
 
-  const onWindow = useCallback((value: string) => setLastBookableDate(value), []);
+  const { doctors } = useClinicDoctors(clinicId, date);
+  const doctor = doctors.find((candidate) => String(candidate.id) === employeeId);
 
   return (
     <>
+      {clinicOptions.length > 1 && (
+        <FormField
+          control={control}
+          name="clinicId"
+          rules={{ required: "Vui lòng chọn phòng khám" }}
+          render={({ field }) => (
+            <FormItem className="md:col-span-8">
+              <FormLabel>Phòng khám</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn phòng khám" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {clinicOptions.map((option) => (
+                    <SelectItem key={String(option.value)} value={String(option.value)}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
       <FormField
         control={control}
-        name="clinicId"
-        rules={{ required: "Vui lòng chọn phòng khám" }}
+        name="employeeId"
+        rules={{ required: "Vui lòng chọn bác sĩ" }}
         render={({ field }) => (
           <FormItem className="md:col-span-5">
-            <FormLabel>Phòng khám</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value ?? ""}>
+            <FormLabel>Bác sĩ</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={!clinicId}>
               <FormControl>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn phòng khám" />
+                  <SelectValue placeholder={clinicId ? "Chọn bác sĩ" : "Chọn phòng khám trước"} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {clinicOptions.map((option) => (
-                  <SelectItem key={String(option.value)} value={String(option.value)}>
-                    {option.label}
+                {doctors.map((option) => (
+                  <SelectItem key={option.id} value={String(option.id)}>
+                    {doctorLabel(option)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -90,45 +118,27 @@ export function BookingFields({ control }: { control: Control<BookingFormValues>
           <FormItem className="md:col-span-3">
             <FormLabel>Ngày khám</FormLabel>
             <FormControl>
-              <Input
-                {...field}
-                type="date"
-                min={clinicToday()}
-                max={lastBookableDate}
-                value={field.value ?? ""}
-              />
+              <Input {...field} type="date" min={clinicToday()} value={field.value ?? ""} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
-      <FormField
-        control={control}
-        name="startTime"
-        rules={{ required: "Vui lòng chọn một khung giờ" }}
-        render={({ field }) => (
-          <FormItem className="md:col-span-8">
-            <FormLabel>Khung giờ</FormLabel>
-            <SlotPicker
-              clinicId={clinicId}
-              date={date}
-              value={field.value}
-              onChange={field.onChange}
-              onWindow={onWindow}
-            />
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="md:col-span-8">
+        <DoctorDayHint doctor={doctor} date={date} />
+      </div>
       <FormField
         control={control}
         name="reason"
-        rules={{ maxLength: { value: 255, message: "Tối đa 255 ký tự" } }}
+        rules={{
+          validate: (value) => value.trim() !== "" || "Vui lòng nhập lý do khám",
+          maxLength: { value: 255, message: "Tối đa 255 ký tự" },
+        }}
         render={({ field }) => (
           <FormItem className="md:col-span-8">
             <FormLabel>Lý do khám</FormLabel>
             <FormControl>
-              <Input {...field} value={field.value ?? ""} placeholder="Khám tổng quát" />
+              <Input {...field} value={field.value ?? ""} placeholder="Theo dõi sức khỏe định kỳ" />
             </FormControl>
             <FormMessage />
           </FormItem>

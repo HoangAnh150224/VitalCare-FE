@@ -52,7 +52,7 @@ export const ClinicList = () => {
 
   return (
     <ListView>
-      <ListViewHeader description="Các phòng khám và giờ làm việc dùng để chia khung đặt lịch." />
+      <ListViewHeader description="Các phòng khám và thông tin liên hệ của từng cơ sở." />
       <DataTable table={table} />
     </ListView>
   );
