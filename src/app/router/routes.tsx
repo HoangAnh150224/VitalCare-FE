@@ -50,6 +50,10 @@ import {
   AppointmentList,
   AppointmentShow,
   ClinicCreate,
+  EncounterCreate,
+  EncounterEdit,
+  EncounterList,
+  EncounterShow,
   ClinicEdit,
   ClinicList,
   ClinicShow,
@@ -363,6 +367,23 @@ export function AppRoutes() {
           <Route path="customers/:customerId/appointments/:id" element={<ViewAsCustomerAppointment />} />
           <Route path="employees/:employeeId" element={<ViewAsEmployeePatients />} />
           <Route path="employees/:employeeId/patients/:customerId" element={<ViewAsEmployeePatient />} />
+        </Route>
+        <Route
+          path="/clinical-encounters"
+          element={
+            <CanAccess
+              resource="clinical_encounters"
+              action="list"
+              fallback={<Forbidden resource="clinical_encounters" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<EncounterList />} />
+          <Route path="create" element={<EncounterCreate />} />
+          <Route path="edit/:id" element={<EncounterEdit />} />
+          <Route path="show/:id" element={<EncounterShow />} />
         </Route>
         <Route
           path="/clinics"

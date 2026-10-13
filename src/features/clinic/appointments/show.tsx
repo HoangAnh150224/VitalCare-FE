@@ -1,9 +1,10 @@
-import { useShow } from "@refinedev/core";
+import { useCan, useShow } from "@refinedev/core";
 import { Link } from "react-router";
 
 import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
 import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import {
   DetailList,
@@ -23,11 +24,13 @@ import {
 } from "@/shared/lib/status-variants";
 import { AppointmentActions } from "./appointment-actions";
 import { clinicToday } from "./clinic-day";
+import { newEncounterPath } from "@/domains/encounter/types";
 
 /** One appointment, with the check-in that may also activate the customer. */
 export const AppointmentShow = () => {
   const { result: record, query } = useShow<Appointment>({});
   const { isLoading } = query;
+  const { data: canRecordEncounter } = useCan({ resource: "clinical_encounters", action: "create" });
 
   const status = record?.status;
   const willActivate =
@@ -63,6 +66,20 @@ export const AppointmentShow = () => {
                 </p>
               )}
               {record && <AppointmentActions appointment={record} resource="appointments" />}
+              {/* The visit follows the check-in: open its encounter from here. */}
+              {record?.status === "checked_in" && canRecordEncounter?.can && (
+                <Button asChild variant="outline">
+                  <Link
+                    to={newEncounterPath({
+                      customerId: record.customer.id,
+                      patientName: record.customer.fullName,
+                      appointmentId: record.id,
+                    })}
+                  >
+                    Tạo lần khám
+                  </Link>
+                </Button>
+              )}
             </div>
 
             <MetaStrip className="shrink-0">

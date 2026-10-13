@@ -4,6 +4,7 @@ import type { AppointmentStatus } from "@/domains/appointment/types";
 import type { CustomerStatus } from "@/domains/customer/types";
 import type { DepartmentStatus } from "@/domains/department/types";
 import type { DeviceStatus } from "@/domains/device/types";
+import type { EncounterStatus } from "@/domains/encounter/types";
 import type { EmployeeStatus } from "@/domains/employee/types";
 import type { OrganizationStatus } from "@/domains/organization/types";
 import type { TaskPriority, TaskStatus } from "@/domains/task/types";
@@ -126,6 +127,11 @@ export const DEVICE_STATUS_VARIANTS: Record<DeviceStatus, BadgeVariant> = {
  * out of a code the catalogue returned and nothing guarantees it is one of the
  * three.
  */
+export const ENCOUNTER_STATUS_VARIANTS: Record<EncounterStatus, BadgeVariant> = {
+  in_progress: "info",
+  completed: "success",
+};
+
 export const PERMISSION_ACTION_VARIANTS: Record<string, BadgeVariant> = {
   read: "outline",
   write: "secondary",
