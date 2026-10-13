@@ -1,4 +1,4 @@
-import { useCan, useCustom } from "@refinedev/core";
+import { useCan } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 import { ScanLineIcon } from "lucide-react";
@@ -11,25 +11,17 @@ import {
   RESIZABLE_COLUMN_DEFAULTS,
 } from "@/shared/components/data-table/data-table";
 import { DataTableQuickFilter } from "@/shared/components/data-table/data-table-quick-filter";
-import {
-  DataTableAdvancedFilter,
-  DataTableFilterChips,
-  type AdvancedFilterField,
-} from "@/shared/components/data-table/data-table-advanced-filter";
 import { ListToolbar, ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { ShowButton } from "@/shared/components/buttons/show";
 import { Badge } from "@/shared/ui/badge";
 import type { Appointment } from "@/domains/appointment/types";
 import {
   APPOINTMENT_STATUS_LABELS,
-  APPOINTMENT_STATUS_OPTIONS,
   formatBookingCode,
   formatQueueNumber,
 } from "@/domains/appointment/types";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { API_URL } from "@/shared/api/constants";
-import type { DoctorAvailability } from "@/domains/schedule/types";
 import { CUSTOMER_STATUS_LABELS } from "@/domains/customer/types";
 import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatLocalDate, formatLocalTime } from "@/shared/lib/format";
@@ -45,15 +37,6 @@ function thisWeek(): [string, string] {
     new Date(today.getTime() + (offset - sinceMonday) * 86_400_000).toISOString().slice(0, 10);
   return [day(0), day(6)];
 }
-
-const FILTER_FIELDS: AdvancedFilterField[] = [
-  {
-    field: "status",
-    label: "Trạng thái",
-    type: "select",
-    options: APPOINTMENT_STATUS_OPTIONS,
-  },
-];
 
 /**
  * `clinicId` locks the list to one clinic and `readOnly` drops the actions
@@ -82,36 +65,6 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
   const { data: canCheckIn } = useCan({ resource: "appointments", action: "check_in" });
   const clinics = useClinicOptions();
   const [[from, to], setRange] = useState(thisWeek);
-  // The doctors of the caller's own clinic, for the filter.
-  const { data: canReadSchedules } = useCan({ resource: "doctor_schedules", action: "list" });
-  const { result: doctorsResult } = useCustom<DoctorAvailability[]>({
-    url: `${API_URL}/doctors`,
-    method: "get",
-    queryOptions: { enabled: canReadSchedules?.can ?? false },
-  });
-  const doctorOptions = React.useMemo(
-    () =>
-      (Array.isArray(doctorsResult?.data) ? doctorsResult.data : []).map((doctor) => ({
-        label: doctor.fullName,
-        value: String(doctor.id),
-      })),
-    [doctorsResult?.data],
-  );
-  // A clinic filter only says something when there is more than one clinic,
-  // and none when the list is already locked to one.
-  const filterFields = React.useMemo<AdvancedFilterField[]>(
-    () => [
-      ...FILTER_FIELDS,
-      ...(doctorOptions.length
-        ? [{ field: "employeeId", label: "Bác sĩ", type: "select" as const, options: doctorOptions }]
-        : []),
-      ...(clinics.several && !clinicId
-        ? [{ field: "clinicId", label: "Phòng khám", type: "select" as const, options: clinics.options }]
-        : []),
-    ],
-    [clinics.several, clinics.options, clinicId, doctorOptions],
-  );
-
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<Appointment>();
 
@@ -292,9 +245,7 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
                   <DataTableQuickFilter table={table} />
                 </div>
               }
-              filters={<DataTableAdvancedFilter table={table} fields={filterFields} />}
             />
-            <DataTableFilterChips table={table} fields={filterFields} />
           </>
         }
       />
