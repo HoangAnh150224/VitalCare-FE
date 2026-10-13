@@ -19,7 +19,6 @@ import { ThemeProvider } from "@/shared/components/theme/theme-provider";
 import { UnsavedChangesGuard } from "@/shared/components/form/unsaved-changes-guard";
 import { resources } from "./resources";
 import { AppRoutes } from "./router/routes";
-import { LayersIcon } from "lucide-react";
 // The `@font-face` behind `"Inter Variable"` in `--font-sans`. Without it the
 // name resolves only where Inter happens to be installed.
 import "@fontsource-variable/inter";
@@ -51,10 +50,19 @@ function App() {
                 syncWithLocation: true,
                 warnWhenUnsavedChanges: true,
                 projectId: "OjKL83-Rc63sQ-E2vtK1",
-                // Drives the sidebar brand block and the document title.
+                // Drives the sidebar brand block and the document title. The
+                // mark is the logo without its wordmark, cut from
+                // public/vitalcare-logo.png; every place that shows it sits it
+                // on white, the background it was drawn for.
                 title: {
-                  icon: <LayersIcon />,
-                  text: "HoangAnh-FrameWork",
+                  icon: (
+                    <img
+                      src="/vitalcare-mark.png"
+                      alt=""
+                      className="size-full object-contain"
+                    />
+                  ),
+                  text: "VitalCare",
                 },
               }}
             >

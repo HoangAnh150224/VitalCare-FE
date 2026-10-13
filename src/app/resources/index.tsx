@@ -68,7 +68,7 @@ export const resources: ResourceProps[] = [
     name: "dashboard",
     list: "/dashboard",
     meta: {
-      label: "HoangAnh-FrameWork",
+      label: "VitalCare",
       icon: <LayoutDashboard className="h-4 w-4" />,
     },
   },
