@@ -49,6 +49,8 @@ import {
   AppointmentCreate,
   AppointmentList,
   AppointmentShow,
+  ClinicCreate,
+  ClinicEdit,
   ClinicList,
   ClinicShow,
   CustomerEdit,
@@ -375,6 +377,8 @@ export function AppRoutes() {
           }
         >
           <Route index element={<ClinicList />} />
+          <Route path="create" element={<ClinicCreate />} />
+          <Route path="edit/:id" element={<ClinicEdit />} />
           <Route path="show/:id" element={<ClinicShow />} />
         </Route>
         <Route
