@@ -56,6 +56,8 @@ const MESSAGES: Record<string, string> = {
   "employees.employees": "nhân viên",
   "devices.devices": "thiết bị",
   "clinical_encounters.clinical_encounters": "lần khám",
+  "doctor_schedules.doctor_schedules": "ca làm việc",
+  "monitoring_assignments.monitoring_assignments": "phân công",
   "my_patients.my_patients": "bệnh nhân",
   "view_as.view_as": "xem dưới vai trò",
 };
