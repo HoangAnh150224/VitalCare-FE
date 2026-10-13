@@ -47,7 +47,7 @@ function ClinicForm({ submitLabel }: { submitLabel: string }) {
         className="min-w-0"
       >
         <SectionedFormPanel>
-          <FormSection title="Phòng khám" description="Giờ làm việc được đặt ở trang chi tiết sau khi lưu.">
+          <FormSection title="Phòng khám" description="Tên và thông tin liên hệ của cơ sở.">
             <FormField
               control={form.control}
               name="name"

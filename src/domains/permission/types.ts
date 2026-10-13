@@ -61,7 +61,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   notifications: "Thông báo",
   employees: "Nhân viên",
   customers: "Khách hàng",
-  appointments: "Lịch hẹn",
+  appointments: "Đăng ký khám",
   devices: "Thiết bị",
   clinics: "Cơ sở",
   clinical_encounters: "Lần khám",

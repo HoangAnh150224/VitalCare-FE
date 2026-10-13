@@ -205,6 +205,7 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
       <ListViewHeader
         resource="appointments"
         canCreate={readOnly ? false : undefined}
+        createLabel="Đăng ký khám"
         description="Các lượt đăng ký khám của phòng khám. Tiếp nhận một khách chưa kích hoạt sẽ đồng thời kích hoạt hồ sơ bệnh nhân."
         actions={
           canCheckIn?.can && !readOnly ? (

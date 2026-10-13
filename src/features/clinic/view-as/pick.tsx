@@ -142,7 +142,7 @@ export const ViewAsPick = () => {
         />
         <RoleCard
           title="Khách hàng"
-          description="Màn “Đăng ký khám của tôi” và phiếu khám. Mỗi khách chỉ thấy lịch của mình."
+          description="Màn “Đăng ký khám của tôi” và phiếu khám. Mỗi khách chỉ thấy lượt đăng ký của mình."
           icon={<CalendarCheckIcon className="size-4" />}
           allLabel="Xem tất cả lượt đăng ký khám"
           onViewAll={() => navigate("/view-as/appointments")}

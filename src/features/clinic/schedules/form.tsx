@@ -70,7 +70,7 @@ function BlockedTimeForm({ submitLabel, doctorId }: { submitLabel: string; docto
         <SectionedFormPanel>
           <FormSection
             title={doctorName ? `Chặn khoảng thời gian — ${doctorName}` : "Chặn khoảng thời gian"}
-            description="Bác sĩ không nhận khám trong khoảng này. Nếu đã có người đăng ký rơi vào đó, cần đổi lịch hoặc huỷ các lượt ấy trước."
+            description="Bác sĩ không nhận khám trong khoảng này. Nếu đã có người đăng ký rơi vào đó, cần đổi ngày khám hoặc huỷ các lượt ấy trước."
           >
             <FormField
               control={form.control}

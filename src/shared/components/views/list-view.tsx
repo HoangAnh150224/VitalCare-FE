@@ -50,6 +50,8 @@ type ListHeaderProps = PropsWithChildren<{
    */
   description?: string;
   canCreate?: boolean;
+  /** What the create button says, where "Tạo mới" is not the word for it. */
+  createLabel?: string;
   /** Extra controls beside Create — export, a bulk action, a view switch. */
   actions?: ReactNode;
   headerClassName?: string;
@@ -58,6 +60,7 @@ type ListHeaderProps = PropsWithChildren<{
 
 export const ListViewHeader = ({
   canCreate,
+  createLabel,
   resource: resourceFromProps,
   title: titleFromProps,
   description,
@@ -116,7 +119,7 @@ export const ListViewHeader = ({
         {hasActions && (
           <div data-print="hide" className="flex shrink-0 items-center gap-2">
             {actions}
-            {isCreateButtonVisible && <CreateButton resource={resourceName} />}
+            {isCreateButtonVisible && <CreateButton resource={resourceName}>{createLabel}</CreateButton>}
           </div>
         )}
       </div>

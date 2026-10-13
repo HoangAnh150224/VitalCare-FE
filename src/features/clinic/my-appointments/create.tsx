@@ -41,7 +41,7 @@ export const MyAppointmentCreate = () => {
 
   return (
     <CreateView>
-      <CreateViewHeader />
+      <CreateViewHeader title="Đăng ký khám" />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="min-w-0">
           <SectionedFormPanel>

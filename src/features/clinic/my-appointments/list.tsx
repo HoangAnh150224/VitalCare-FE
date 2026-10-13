@@ -171,6 +171,7 @@ export const MyAppointmentList = ({
       <ListViewHeader
         title={title}
         canCreate={resource ? false : undefined}
+        createLabel="Đăng ký khám"
         description={description}
       />
       <DataTable table={table} />
