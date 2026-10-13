@@ -63,6 +63,11 @@ const FILTER_FIELDS: AdvancedFilterField[] = [
 type FrontDeskListProps = {
   clinicId?: string;
   readOnly?: boolean;
+  /**
+   * Where the rows come from. An administrator holds no `appointments:read`
+   * (SRS 3.1.3), so their view of this screen reads `view_as/appointments`.
+   */
+  resource?: string;
 };
 
 /**
@@ -73,7 +78,7 @@ type FrontDeskListProps = {
  * many. The row says when that check-in will also make somebody a patient.
  * Everything else that can be done to a visit is on its own page.
  */
-export const AppointmentList = ({ clinicId, readOnly = false }: FrontDeskListProps = {}) => {
+export const AppointmentList = ({ clinicId, readOnly = false, resource = "appointments" }: FrontDeskListProps = {}) => {
   const { data: canCheckIn } = useCan({ resource: "appointments", action: "check_in" });
   const clinics = useClinicOptions();
   const [[from, to], setRange] = useState(thisWeek);
@@ -207,7 +212,10 @@ export const AppointmentList = ({ clinicId, readOnly = false }: FrontDeskListPro
             {!readOnly && (
               <AppointmentActions appointment={row.original} resource="appointments" size="sm" compact />
             )}
-            <ShowButton resource="appointments" recordItemId={row.original.id} iconOnly size="icon-sm" />
+            {/* The detail page is the desk's own; a view stops at the list. */}
+            {!readOnly && (
+              <ShowButton resource="appointments" recordItemId={row.original.id} iconOnly size="icon-sm" />
+            )}
           </div>
         ),
         enableSorting: false,
@@ -225,7 +233,7 @@ export const AppointmentList = ({ clinicId, readOnly = false }: FrontDeskListPro
       columnPinning: { right: ["actions"] },
     },
     refineCoreProps: {
-      resource: "appointments",
+      resource,
       // Off the URL: the range lives in this screen's own inputs, and a list
       // locked to one clinic must not be unlocked by anything typed there.
       syncWithLocation: false,

@@ -348,6 +348,10 @@ export function DataTableFilterChips<TData extends BaseRecord>({
   const chips = useMemo(() => {
     return entries
       .filter((entry) => entry.value != null && entry.value !== "")
+      // Only what the user set here: the search box and the fields this
+      // toolbar offers. A screen's permanent filters (a clinic it is locked
+      // to, a date range with inputs of its own) are not chips to remove.
+      .filter((entry) => entry.id === searchField || fields.some((item) => item.field === entry.id))
       .map((entry) => {
         const field = fields.find((item) => item.field === entry.id);
         const rawValue = String(entry.value);
