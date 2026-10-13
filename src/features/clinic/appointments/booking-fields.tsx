@@ -28,7 +28,7 @@ import { DoctorDayHint, doctorLabel, useClinicDoctors } from "./doctor-day";
 /**
  * With whom, which day and why — the part of a registration both the front
  * desk and a customer fill in. No time is chosen: the visit gets the doctor's
- * next queue number for the day, and the hint under the fields says which.
+ * next queue number for the day, shown on the slip once it is registered.
  *
  * `forOwnAccount` is the customer's side: it asks first who the visit is for,
  * among the profiles under the account — the owner or a relative. The front
@@ -202,9 +202,8 @@ export function BookingFields({
           </FormItem>
         )}
       />
-      <div className="md:col-span-8">
-        <DoctorDayHint doctor={doctor} date={date} />
-      </div>
+      {/* Only when that doctor and day cannot be had; it takes no row otherwise. */}
+      <DoctorDayHint doctor={doctor} date={date} />
       <FormField
         control={control}
         name="reason"

@@ -3,7 +3,6 @@ import { useCustom } from "@refinedev/core";
 import { API_URL } from "@/shared/api/constants";
 import { formatLocalTime } from "@/shared/lib/format";
 import { WEEKDAY_LABELS } from "@/domains/clinic/types";
-import { formatQueueNumber } from "@/domains/appointment/types";
 import type { DoctorAvailability } from "@/domains/schedule/types";
 
 /**
@@ -42,46 +41,35 @@ function weekSummary(doctor: DoctorAvailability): string {
 }
 
 /**
- * What registering would get, said before anybody presses the button: the
- * queue number, about when it is called and how many are left — or why that
- * doctor and that day cannot be had.
+ * Why a doctor and a day cannot be had, said before anybody presses the
+ * button: the doctor is off that day, or the day is full.
+ *
+ * Nothing when the registration would go through. The form is a doctor, a
+ * day and Register; the queue number is on the slip that follows, not
+ * previewed here.
  */
 export function DoctorDayHint({ doctor, date }: { doctor: DoctorAvailability | undefined; date: string }) {
-  if (!doctor) {
-    return <Hint>Chọn bác sĩ và ngày khám để biết số khám.</Hint>;
+  const day = doctor?.day;
+  if (!doctor || !date || !day) {
+    return null;
   }
   const week = weekSummary(doctor);
   if (!week) {
     return <Hint>Bác sĩ này chưa có giờ làm việc nên chưa nhận đăng ký.</Hint>;
   }
-  const day = doctor.day;
-  if (!date || !day) {
-    return <Hint>Lịch khám: {week}.</Hint>;
-  }
   if (!day.working) {
     return <Hint>Bác sĩ không khám ngày này. Lịch khám: {week}.</Hint>;
   }
-  if (!day.bookable || day.nextNumber == null) {
-    return <Hint>{day.remaining <= 0 ? "Ngày này đã hết lượt khám." : "Ngày này không còn nhận đăng ký."} Lịch khám: {week}.</Hint>;
+  if (!day.bookable) {
+    return (
+      <Hint>
+        {day.remaining <= 0 ? "Ngày này đã hết lượt khám." : "Ngày này không còn nhận đăng ký."} Lịch khám: {week}.
+      </Hint>
+    );
   }
-  return (
-    <div className="bg-muted/40 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border p-3">
-      <div className="flex items-baseline gap-2">
-        <span className="text-muted-foreground text-sm">Số khám</span>
-        <span className="text-2xl font-semibold tabular-nums">{formatQueueNumber(day.nextNumber)}</span>
-      </div>
-      <div className="flex items-baseline gap-2">
-        <span className="text-muted-foreground text-sm">Dự kiến</span>
-        <span className="font-medium tabular-nums">
-          {formatLocalTime(day.estimatedStart)}
-          {day.estimatedEnd ? ` – ${formatLocalTime(day.estimatedEnd)}` : ""}
-        </span>
-      </div>
-      <span className="text-muted-foreground text-sm">Còn {day.remaining} lượt trong ngày</span>
-    </div>
-  );
+  return null;
 }
 
 function Hint({ children }: { children: React.ReactNode }) {
-  return <p className="text-muted-foreground text-sm">{children}</p>;
+  return <p className="text-destructive text-sm md:col-span-8">{children}</p>;
 }
