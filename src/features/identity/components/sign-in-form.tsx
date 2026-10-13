@@ -72,12 +72,10 @@ export const SignInForm = () => {
           {title.icon && (
             <div
               className={cn(
-                "gradient-gold flex size-14 items-center justify-center rounded-xl",
-                "shadow-e4 [&>svg]:size-7",
-                // The glyph sits on gold, so it takes the dark end of the
-                // brand rather than the page's foreground colour, which is
-                // near-white here and would vanish.
-                "text-sidebar-primary-foreground"
+                // The logo is drawn for a white ground; on the dark sign-in
+                // backdrop it gets one.
+                "flex size-14 items-center justify-center rounded-xl",
+                "bg-white p-1.5 shadow-e4"
               )}
             >
               {title.icon}

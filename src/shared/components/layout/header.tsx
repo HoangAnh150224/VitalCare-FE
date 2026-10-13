@@ -72,7 +72,7 @@ export function Header() {
           {/* On mobile the sidebar brand is off-canvas, so restate it here. */}
           {isMobile && (
             <div className="flex min-w-0 items-center gap-2">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground [&_svg]:size-4">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white p-0.5 shadow-sm">
                 {title.icon}
               </div>
               <span className="truncate text-sm font-bold tracking-tight">
