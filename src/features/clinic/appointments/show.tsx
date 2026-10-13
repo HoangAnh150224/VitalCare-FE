@@ -122,6 +122,7 @@ export const AppointmentShow = () => {
             <DetailRow label="Huỷ">
               {record?.cancelledAt ? formatDateTime(record.cancelledAt) : <EmptyValue />}
             </DetailRow>
+            {record?.cancelReason && <DetailRow label="Lý do huỷ">{record.cancelReason}</DetailRow>}
           </DetailList>
         </DetailPanel>
       </div>

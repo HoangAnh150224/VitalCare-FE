@@ -29,6 +29,8 @@ export type Appointment = {
   note: string | null;
   checkedInAt: string | null;
   cancelledAt: string | null;
+  /** Why the clinic cancelled it; null when the customer cancelled their own. */
+  cancelReason: string | null;
   createdAt: string;
 };
 
