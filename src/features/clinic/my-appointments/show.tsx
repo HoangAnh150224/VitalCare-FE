@@ -89,6 +89,9 @@ export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointm
                   )}
                 </DetailRow>
                 <DetailRow label="Lý do">{record?.reason ?? <EmptyValue />}</DetailRow>
+                {record?.cancelReason && (
+                  <DetailRow label="Lý do huỷ">{record.cancelReason}</DetailRow>
+                )}
               </DetailList>
             </div>
 
