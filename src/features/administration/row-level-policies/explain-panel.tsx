@@ -214,6 +214,10 @@ export function ExplainPanel({
               <span className="font-mono text-xs">
                 {explanation.principal.departmentId ?? "—"}
               </span>
+              <span className="text-muted-foreground">Cơ sở:</span>
+              <span className="font-mono text-xs">
+                {explanation.principal.clinicId ?? "—"}
+              </span>
             </div>
 
             <div className="flex flex-col gap-2">

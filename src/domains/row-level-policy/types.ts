@@ -95,7 +95,7 @@ export type PolicyMetadata = {
 
 export type MetadataField = {
   path: string;
-  type: "enum" | "long" | "number" | "boolean" | "date" | "datetime" | "string";
+  type: "enum" | "long" | "number" | "boolean" | "date" | "datetime" | "string" | "uuid";
   nullable: boolean;
   /** Enum constants, so the value input is a dropdown rather than free text. */
   values: string[];
@@ -137,6 +137,8 @@ export type ExplainResponse = {
     organizationId: number | null;
     departmentId: number | null;
     roleCodes: string[];
+    /** The clinic the account's staff record places it at — `user.clinicId` in a policy. */
+    clinicId: string | null;
   };
   resource: string;
   action: string;
