@@ -7,6 +7,8 @@ import {
   Contact,
   HeartPulse,
   Hospital,
+  CalendarClock,
+  ClipboardList,
   Stethoscope,
   Watch,
   LayoutDashboard,
@@ -202,6 +204,29 @@ export const resources: ResourceProps[] = [
     meta: {
       label: "Lần khám",
       icon: <Stethoscope className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // No show page: a period is a row, read in the list and changed in its form.
+  {
+    name: "doctor_schedules",
+    list: "/doctor-schedules",
+    create: "/doctor-schedules/create",
+    edit: "/doctor-schedules/edit/:id",
+    meta: {
+      label: "Lịch bác sĩ",
+      icon: <CalendarClock className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // Read-only: an assignment is made and ended on the patient's page.
+  {
+    name: "monitoring_assignments",
+    list: "/monitoring-assignments",
+    show: "/monitoring-assignments/show/:id",
+    meta: {
+      label: "Phân công theo dõi",
+      icon: <ClipboardList className="h-4 w-4" />,
       parent: "clinic",
     },
   },

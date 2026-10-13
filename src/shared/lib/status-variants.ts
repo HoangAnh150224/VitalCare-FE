@@ -5,6 +5,8 @@ import type { CustomerStatus } from "@/domains/customer/types";
 import type { DepartmentStatus } from "@/domains/department/types";
 import type { DeviceStatus } from "@/domains/device/types";
 import type { EncounterStatus } from "@/domains/encounter/types";
+import type { AssignmentStatus } from "@/domains/assignment/types";
+import type { ScheduleStatus } from "@/domains/schedule/types";
 import type { EmployeeStatus } from "@/domains/employee/types";
 import type { OrganizationStatus } from "@/domains/organization/types";
 import type { TaskPriority, TaskStatus } from "@/domains/task/types";
@@ -130,6 +132,16 @@ export const DEVICE_STATUS_VARIANTS: Record<DeviceStatus, BadgeVariant> = {
 export const ENCOUNTER_STATUS_VARIANTS: Record<EncounterStatus, BadgeVariant> = {
   in_progress: "info",
   completed: "success",
+};
+
+export const SCHEDULE_STATUS_VARIANTS: Record<ScheduleStatus, BadgeVariant> = {
+  working: "success",
+  leave: "warning",
+};
+
+export const ASSIGNMENT_STATUS_VARIANTS: Record<AssignmentStatus, BadgeVariant> = {
+  active: "success",
+  ended: "neutral",
 };
 
 export const PERMISSION_ACTION_VARIANTS: Record<string, BadgeVariant> = {

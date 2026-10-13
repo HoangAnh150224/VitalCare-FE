@@ -49,7 +49,12 @@ import {
   AppointmentCreate,
   AppointmentList,
   AppointmentShow,
+  AssignmentList,
+  AssignmentShow,
   ClinicCreate,
+  DoctorScheduleCreate,
+  DoctorScheduleEdit,
+  DoctorScheduleList,
   EncounterCreate,
   EncounterEdit,
   EncounterList,
@@ -384,6 +389,37 @@ export function AppRoutes() {
           <Route path="create" element={<EncounterCreate />} />
           <Route path="edit/:id" element={<EncounterEdit />} />
           <Route path="show/:id" element={<EncounterShow />} />
+        </Route>
+        <Route
+          path="/doctor-schedules"
+          element={
+            <CanAccess
+              resource="doctor_schedules"
+              action="list"
+              fallback={<Forbidden resource="doctor_schedules" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<DoctorScheduleList />} />
+          <Route path="create" element={<DoctorScheduleCreate />} />
+          <Route path="edit/:id" element={<DoctorScheduleEdit />} />
+        </Route>
+        <Route
+          path="/monitoring-assignments"
+          element={
+            <CanAccess
+              resource="monitoring_assignments"
+              action="list"
+              fallback={<Forbidden resource="monitoring_assignments" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<AssignmentList />} />
+          <Route path="show/:id" element={<AssignmentShow />} />
         </Route>
         <Route
           path="/clinics"
