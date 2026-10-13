@@ -24,8 +24,8 @@ type ClinicFormValues = { name: string; address: string; contactPhone: string };
 
 /**
  * Creating and editing a clinic are the same three fields (`ClinicRequest`),
- * so one form serves both. Opening hours are set on the clinic's own page
- * afterwards; until then nothing can be booked there.
+ * so one form serves both. When patients are seen there is each doctor's own
+ * schedule, set once the clinic has doctors.
  */
 function ClinicForm({ submitLabel }: { submitLabel: string }) {
   const navigate = useNavigate();

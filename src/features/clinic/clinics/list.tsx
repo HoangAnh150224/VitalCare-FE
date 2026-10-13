@@ -11,7 +11,7 @@ import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { ShowButton } from "@/shared/components/buttons/show";
 import type { Clinic } from "@/domains/clinic/types";
 
-/** The clinics; open one to see or change its opening hours. */
+/** The clinics; open one to see its details. */
 export const ClinicList = () => {
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<Clinic>();
