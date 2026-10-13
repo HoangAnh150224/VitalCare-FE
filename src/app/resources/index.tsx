@@ -194,6 +194,8 @@ export const resources: ResourceProps[] = [
   {
     name: "clinics",
     list: "/clinics",
+    create: "/clinics/create",
+    edit: "/clinics/edit/:id",
     show: "/clinics/show/:id",
     meta: {
       label: "Phòng khám & giờ làm việc",
