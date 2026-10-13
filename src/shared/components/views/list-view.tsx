@@ -74,12 +74,13 @@ export const ListViewHeader = ({
 
   const isCreateButtonVisible = canCreate ?? !!resource?.create;
 
+  // A label is already what a person reads, and Vietnamese has no plural to
+  // add: pluralising "Đăng ký khám" gives "Đăng ký kháms". Only a raw
+  // resource name ("blog_posts") is made friendly.
   const title =
     titleFromProps ??
-    getUserFriendlyName(
-      resource?.meta?.label ?? identifier ?? resource?.name,
-      "plural"
-    );
+    resource?.meta?.label ??
+    getUserFriendlyName(identifier ?? resource?.name, "plural");
 
   const hasActions = isCreateButtonVisible || actions;
 
