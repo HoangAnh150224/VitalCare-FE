@@ -34,6 +34,10 @@ const MESSAGES: Record<string, string> = {
   "buttons.cancel": "Hủy",
   "buttons.undo": "Hoàn tác",
 
+  // The browser tab: "Lịch hẹn | VitalCare", and "VitalCare" where a page has no label.
+  "documentTitle.default": "VitalCare",
+  "documentTitle.suffix": " | VitalCare",
+
   // Refine writes the resource into those sentences as `<identifier>.<identifier>`.
   "users.users": "người dùng",
   "roles.roles": "vai trò",
