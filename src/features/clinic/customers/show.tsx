@@ -177,10 +177,10 @@ export const CustomerShow = () => {
 
       {canReadAppointments?.can && (
         <DetailPanel
-          title="Lịch hẹn"
+          title="Đăng ký khám"
           action={
             <span className="text-muted-foreground text-xs tabular-nums">
-              {appointments?.total ?? 0} lịch hẹn
+              {appointments?.total ?? 0} lượt đăng ký khám
             </span>
           }
           bodyClassName="p-4"
@@ -209,7 +209,7 @@ export const CustomerShow = () => {
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">Chưa có lịch hẹn nào.</p>
+            <p className="text-muted-foreground text-sm">Chưa có lượt đăng ký khám nào.</p>
           )}
         </DetailPanel>
       )}

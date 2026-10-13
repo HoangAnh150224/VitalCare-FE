@@ -31,9 +31,9 @@ import { BookingFields } from "./booking-fields";
 import { EMPTY_BOOKING, toBookingPayload, type BookingFormValues } from "./booking";
 
 /**
- * The front desk booking on a customer's behalf — somebody who phoned in or is
- * standing at the counter. Booking never makes anybody a patient; the
- * check-in does.
+ * The front desk registering a visit on a customer's behalf — somebody who
+ * phoned in or is standing at the counter. Registering never makes anybody a
+ * patient; the check-in does.
  */
 export const AppointmentCreate = () => {
   const navigate = useNavigate();
@@ -71,7 +71,7 @@ export const AppointmentCreate = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="min-w-0">
           <SectionedFormPanel>
-            <FormSection title="Khách hàng" description="Lịch hẹn này của ai.">
+            <FormSection title="Bệnh nhân" description="Đăng ký khám này của ai.">
               <FormField
                 control={form.control}
                 name="customerId"
@@ -109,7 +109,7 @@ export const AppointmentCreate = () => {
               />
             </FormSection>
 
-            <FormSection title="Lịch hẹn" description="Phòng khám, thời gian và lý do khám.">
+            <FormSection title="Đăng ký khám" description="Chọn bác sĩ và ngày khám. Số khám được cấp theo thứ tự đăng ký với bác sĩ trong ngày.">
               <BookingFields control={form.control} />
               <FormField
                 control={form.control}
@@ -130,7 +130,7 @@ export const AppointmentCreate = () => {
 
             <FormSectionActions>
               <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Đang lưu..." : "Đặt lịch"}
+                {form.formState.isSubmitting ? "Đang lưu..." : "Đăng ký khám"}
               </Button>
               <Button type="button" variant="outline" onClick={() => navigate(-1)}>
                 Hủy

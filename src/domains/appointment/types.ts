@@ -19,6 +19,14 @@ export type Appointment = {
     status: CustomerStatus;
   };
   clinic: { id: string; name: string };
+  /** Who the visit is with; null on rows from before a doctor was required. */
+  doctor: { id: number; fullName: string; specialty: string | null } | null;
+  /**
+   * The number called at the doctor's door, issued when the visit was
+   * registered. `startTime`/`endTime` are about when it is expected — nobody
+   * chose them.
+   */
+  queueNumber: number | null;
   /** `YYYY-MM-DD`, a date in the clinic's own time zone. */
   appointmentDate: string;
   /** `HH:mm:ss`. */
@@ -43,17 +51,22 @@ export function formatBookingCode(code: string | null | undefined): string {
   return code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code;
 }
 
-/** Both ways out of `scheduled` are final. */
-export type AppointmentStatus = "scheduled" | "checked_in" | "cancelled";
+/** Registered, checked in at the desk, completed — or cancelled, or never came. */
+export type AppointmentStatus = "scheduled" | "checked_in" | "completed" | "cancelled" | "no_show";
 
 export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
-  scheduled: "Đã đặt",
-  checked_in: "Đã check-in",
+  scheduled: "Đã đăng ký",
+  checked_in: "Đã tiếp nhận",
+  completed: "Hoàn tất",
   cancelled: "Đã huỷ",
+  no_show: "Không đến",
 };
 
-export const APPOINTMENT_STATUS_OPTIONS: { label: string; value: AppointmentStatus }[] = [
-  { label: "Đã đặt", value: "scheduled" },
-  { label: "Đã check-in", value: "checked_in" },
-  { label: "Đã huỷ", value: "cancelled" },
-];
+export const APPOINTMENT_STATUS_OPTIONS: { label: string; value: AppointmentStatus }[] = (
+  Object.keys(APPOINTMENT_STATUS_LABELS) as AppointmentStatus[]
+).map((value) => ({ label: APPOINTMENT_STATUS_LABELS[value], value }));
+
+/** A queue number as it is printed and called: at least two digits, `7` → `07`. */
+export function formatQueueNumber(value: number | null | undefined): string {
+  return value == null ? "—" : String(value).padStart(2, "0");
+}

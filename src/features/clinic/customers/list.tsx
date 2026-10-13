@@ -157,7 +157,7 @@ export const CustomerList = ({ clinicId, readOnly = false }: FrontDeskListProps 
     <ListView>
       <ListViewHeader
         resource="customers"
-        description="Người đã đăng ký tài khoản. Khách chưa kích hoạt trở thành bệnh nhân khi check-in lịch hẹn hoặc khi nhân viên kích hoạt." />
+        description="Người đã đăng ký tài khoản. Khách chưa kích hoạt trở thành bệnh nhân khi được tiếp nhận tại phòng khám hoặc khi nhân viên kích hoạt." />
       <DataTable
         table={table}
         toolbar={

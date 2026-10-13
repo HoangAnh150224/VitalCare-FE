@@ -1,12 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  useCan,
-  useCustom,
-  useCustomMutation,
-  useInvalidate,
-  useNotification,
-  type HttpError,
-} from "@refinedev/core";
+import { useCustomMutation, useNotification, type HttpError } from "@refinedev/core";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 
 import { API_URL } from "@/shared/api/constants";
@@ -20,8 +13,8 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import { DetailPanel } from "@/shared/components/views/record-detail";
-import type { WorkingHoursEntry } from "@/domains/clinic/types";
 import { WEEKDAY_LABELS } from "@/domains/clinic/types";
+import type { DoctorAvailability, WorkingHoursEntry } from "@/domains/schedule/types";
 
 type Row = WorkingHoursEntry & { key: number };
 
@@ -29,49 +22,54 @@ let nextKey = 1;
 const withKey = (entry: WorkingHoursEntry): Row => ({ ...entry, key: nextKey++ });
 
 const byDayThenTime = (a: WorkingHoursEntry, b: WorkingHoursEntry) =>
-  a.dayOfWeek - b.dayOfWeek || a.openTime.localeCompare(b.openTime);
+  a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime);
 
 /** `HH:mm:ss` → `HH:mm`, which is what a time input holds. */
 const hhmm = (value: string) => value.slice(0, 5);
 
+/** How many patients a session holds: whole visits only. */
+const visitsIn = (row: WorkingHoursEntry) => {
+  const minutes = (value: string) => Number(value.slice(0, 2)) * 60 + Number(value.slice(3, 5));
+  const length = minutes(row.endTime) - minutes(row.startTime);
+  return row.visitMinutes > 0 && length > 0 ? Math.floor(length / row.visitMinutes) : 0;
+};
+
 /**
- * A clinic's week: one row per session, so a lunch break is two rows on one
- * day and a closed day is a day with none.
+ * A doctor's week, repeating: one row per session, so a lunch break is two
+ * rows on one day and a day off is a day with none.
  *
- * Saved as a whole (`PUT /clinics/{id}/working-hours`) rather than row by row:
- * the rules — no overlapping sessions on a day — are about the week, not about
- * any one row. Appointments already booked keep their times; only new bookings
- * see the new slots.
+ * Saved as a whole (`PUT /doctors/{id}/working-hours`) rather than row by row:
+ * the rule — no overlapping sessions on a day — is about the week. The
+ * sessions decide how many queue numbers a day gives out; visits already
+ * registered keep their number.
  *
- * Read-only for anybody without `clinics:write`.
+ * `editable` is the caller's to work out: the permission, and that the doctor
+ * is theirs to manage.
  */
-export function WorkingHoursEditor({ clinicId }: { clinicId: string }) {
+export function WorkingHoursEditor({
+  doctor,
+  editable,
+  onSaved,
+}: {
+  doctor: DoctorAvailability;
+  editable: boolean;
+  onSaved: () => void;
+}) {
   const { open } = useNotification();
-  const invalidate = useInvalidate();
-  const { data: access } = useCan({ resource: "clinics", action: "edit" });
-  const editable = access?.can ?? false;
-
-  const { result, query } = useCustom<WorkingHoursEntry[]>({
-    url: `${API_URL}/clinics/${clinicId}/working-hours`,
-    method: "get",
-    queryOptions: { enabled: Boolean(clinicId) },
-  });
-  const loaded = Array.isArray(result?.data) ? result.data : undefined;
-
   const [rows, setRows] = useState<Row[]>([]);
   const [dirty, setDirtyState] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Read by the effect below without being one of its triggers: a refetch
-  // arriving mid-edit must not wipe what is being typed, and clearing the flag
-  // after a save must not bring back the week loaded before the edit.
+  // arriving mid-edit must not wipe what is being typed.
   const dirtyRef = useRef(false);
   const setDirty = (value: boolean) => {
     dirtyRef.current = value;
     setDirtyState(value);
   };
 
+  const loaded = doctor.workingHours;
   useEffect(() => {
-    if (loaded && !dirtyRef.current) {
+    if (!dirtyRef.current) {
       setRows([...loaded].sort(byDayThenTime).map(withKey));
     }
   }, [loaded]);
@@ -92,23 +90,33 @@ export function WorkingHoursEditor({ clinicId }: { clinicId: string }) {
     setDirty(true);
     setRows((current) => [
       ...current,
-      withKey({ dayOfWeek: 1, openTime: "08:00", closeTime: "11:00", slotMinutes: 30, capacityPerSlot: 3 }),
+      withKey({ dayOfWeek: 1, startTime: "08:00", endTime: "12:00", visitMinutes: 30 }),
     ]);
+  };
+
+  /** Monday to Friday, morning and afternoon, half an hour a patient — the usual week, to adjust from. */
+  const fillUsualWeek = () => {
+    setDirty(true);
+    setRows(
+      [1, 2, 3, 4, 5].flatMap((dayOfWeek) => [
+        withKey({ dayOfWeek, startTime: "08:00", endTime: "12:00", visitMinutes: 30 }),
+        withKey({ dayOfWeek, startTime: "13:00", endTime: "17:00", visitMinutes: 30 }),
+      ])
+    );
   };
 
   const save = () => {
     setError(null);
     mutate(
       {
-        url: `${API_URL}/clinics/${clinicId}/working-hours`,
+        url: `${API_URL}/doctors/${doctor.id}/working-hours`,
         method: "put",
         values: {
           sessions: rows.map((row) => ({
             dayOfWeek: row.dayOfWeek,
-            openTime: hhmm(row.openTime),
-            closeTime: hhmm(row.closeTime),
-            slotMinutes: row.slotMinutes,
-            capacityPerSlot: row.capacityPerSlot,
+            startTime: hhmm(row.startTime),
+            endTime: hhmm(row.endTime),
+            visitMinutes: row.visitMinutes,
           })),
         },
         // See ResetPasswordCard: without it Spring answers 415.
@@ -118,19 +126,16 @@ export function WorkingHoursEditor({ clinicId }: { clinicId: string }) {
       },
       {
         onSuccess: ({ data }) => {
-          // The saved week as the server now holds it, straight from the
-          // answer — not the copy loaded before the edit, which is what the
-          // screen would fall back to until a refetch arrived.
+          // The saved week as the server now holds it, straight from the answer.
           if (Array.isArray(data)) {
             setRows([...data].sort(byDayThenTime).map(withKey));
           }
           setDirty(false);
-          invalidate({ resource: "clinics", invalidates: ["all"] });
-          void query.refetch();
+          onSaved();
           open?.({
             type: "success",
             message: "Đã lưu giờ làm việc",
-            description: "Áp dụng cho các lượt đặt lịch mới. Lịch đã đặt giữ nguyên giờ.",
+            description: "Áp dụng cho các lượt đăng ký mới. Lượt đã đăng ký giữ nguyên số khám.",
           });
         },
         onError: (failure: HttpError) => {
@@ -138,8 +143,8 @@ export function WorkingHoursEditor({ clinicId }: { clinicId: string }) {
           setError(
             typeof message === "string" && message.includes("overlap")
               ? "Hai buổi trong cùng một ngày đang chồng giờ nhau."
-              : typeof message === "string" && message.includes("close after")
-                ? "Giờ đóng cửa phải sau giờ mở cửa."
+              : typeof message === "string" && message.includes("end after")
+                ? "Giờ kết thúc phải sau giờ bắt đầu."
                 : "Không lưu được giờ làm việc. Kiểm tra lại các dòng."
           );
         },
@@ -149,31 +154,39 @@ export function WorkingHoursEditor({ clinicId }: { clinicId: string }) {
 
   return (
     <DetailPanel
-      title="Giờ làm việc"
+      title={`Giờ làm việc — ${doctor.fullName}`}
       action={
         editable ? (
-          <Button size="sm" variant="outline" onClick={add}>
-            <PlusIcon />
-            Thêm buổi
-          </Button>
+          <div className="flex gap-2">
+            {rows.length === 0 && (
+              <Button size="sm" variant="outline" onClick={fillUsualWeek}>
+                Thứ Hai – Thứ Sáu
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={add}>
+              <PlusIcon />
+              Thêm buổi
+            </Button>
+          </div>
         ) : undefined
       }
       bodyClassName="p-4"
     >
       <div className="flex flex-col gap-3">
-        <div className="text-muted-foreground hidden grid-cols-[9rem_6.5rem_6.5rem_6rem_6rem_2.5rem] gap-2 text-xs font-medium md:grid">
+        <p className="text-muted-foreground text-sm">Lặp lại hằng tuần. Số lượt khám mỗi buổi tính từ thời lượng mỗi lượt.</p>
+        <div className="text-muted-foreground hidden grid-cols-[9rem_6.5rem_6.5rem_7rem_6rem_2.5rem] gap-2 text-xs font-medium md:grid">
           <span>Thứ</span>
-          <span>Mở cửa</span>
-          <span>Đóng cửa</span>
-          <span>Phút/khung</span>
-          <span>Chỗ/khung</span>
+          <span>Giờ bắt đầu</span>
+          <span>Giờ kết thúc</span>
+          <span>Phút mỗi lượt</span>
+          <span>Số lượt</span>
           <span />
         </div>
 
         {rows.map((row) => (
           <div
             key={row.key}
-            className="grid grid-cols-2 gap-2 md:grid-cols-[9rem_6.5rem_6.5rem_6rem_6rem_2.5rem] md:items-center"
+            className="grid grid-cols-2 gap-2 md:grid-cols-[9rem_6.5rem_6.5rem_7rem_6rem_2.5rem] md:items-center"
           >
             <Select
               disabled={!editable}
@@ -193,53 +206,40 @@ export function WorkingHoursEditor({ clinicId }: { clinicId: string }) {
             </Select>
             <Input
               type="time"
-              aria-label="Giờ mở cửa"
+              aria-label="Giờ bắt đầu"
               disabled={!editable}
-              value={hhmm(row.openTime)}
-              onChange={(e) => update(row.key, { openTime: e.target.value })}
+              value={hhmm(row.startTime)}
+              onChange={(e) => update(row.key, { startTime: e.target.value })}
             />
             <Input
               type="time"
-              aria-label="Giờ đóng cửa"
+              aria-label="Giờ kết thúc"
               disabled={!editable}
-              value={hhmm(row.closeTime)}
-              onChange={(e) => update(row.key, { closeTime: e.target.value })}
+              value={hhmm(row.endTime)}
+              onChange={(e) => update(row.key, { endTime: e.target.value })}
             />
             <Input
               type="number"
-              aria-label="Phút mỗi khung"
+              aria-label="Phút mỗi lượt khám"
               min={5}
               max={240}
               step={5}
               disabled={!editable}
-              value={row.slotMinutes}
-              onChange={(e) => update(row.key, { slotMinutes: Number(e.target.value) })}
+              value={row.visitMinutes}
+              onChange={(e) => update(row.key, { visitMinutes: Number(e.target.value) })}
             />
-            <Input
-              type="number"
-              aria-label="Số chỗ mỗi khung"
-              min={1}
-              max={100}
-              disabled={!editable}
-              value={row.capacityPerSlot}
-              onChange={(e) => update(row.key, { capacityPerSlot: Number(e.target.value) })}
-            />
+            <span className="text-muted-foreground text-sm tabular-nums">{visitsIn(row)} lượt</span>
             {editable && (
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                aria-label="Xoá buổi"
-                onClick={() => remove(row.key)}
-              >
+              <Button size="icon-sm" variant="ghost" aria-label="Xoá buổi" onClick={() => remove(row.key)}>
                 <Trash2Icon />
               </Button>
             )}
           </div>
         ))}
 
-        {rows.length === 0 && !query.isLoading && (
+        {rows.length === 0 && (
           <p className="text-muted-foreground text-sm">
-            Chưa có buổi làm việc nào — phòng khám sẽ không nhận đặt lịch ngày nào.
+            Chưa có buổi làm việc nào — bác sĩ này chưa nhận đăng ký khám ngày nào.
           </p>
         )}
 
@@ -250,11 +250,7 @@ export function WorkingHoursEditor({ clinicId }: { clinicId: string }) {
             <Button onClick={save} disabled={!dirty || mutation.isPending}>
               {mutation.isPending ? "Đang lưu..." : "Lưu giờ làm việc"}
             </Button>
-            {dirty && (
-              <span className="text-muted-foreground text-sm">
-                Thay đổi chưa lưu. Lịch đã đặt giữ nguyên giờ.
-              </span>
-            )}
+            {dirty && <span className="text-muted-foreground text-sm">Thay đổi chưa lưu.</span>}
           </div>
         )}
       </div>

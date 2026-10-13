@@ -18,8 +18,8 @@ import {
 } from "../appointments/booking";
 
 /**
- * A customer booking for themselves. There is no "who" on this form: the API
- * books under the signed-in account and nobody else.
+ * A customer registering a visit for themselves. There is no "who" on this
+ * form: the API registers under the signed-in account and nobody else.
  */
 export const MyAppointmentCreate = () => {
   const navigate = useNavigate();
@@ -34,8 +34,8 @@ export const MyAppointmentCreate = () => {
   });
 
   function onSubmit(values: BookingFormValues) {
-    // Where, when and why only: neither the customer nor an internal note is
-    // the customer's to set.
+    // With whom, which day and why only: neither the customer nor an internal
+    // note is the customer's to set.
     onFinish(toBookingPayload(values) as never);
   }
 
@@ -46,15 +46,15 @@ export const MyAppointmentCreate = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="min-w-0">
           <SectionedFormPanel>
             <FormSection
-              title="Đặt lịch khám"
-              description="Chọn phòng khám và thời gian. Lịch hẹn chưa kích hoạt hồ sơ bệnh nhân — việc đó diễn ra khi bạn check-in tại phòng khám."
+              title="Đăng ký khám"
+              description="Chọn bác sĩ và ngày khám. Bạn sẽ nhận số khám ngay; đến phòng khám, đưa phiếu cho lễ tân để được tiếp nhận."
             >
               <BookingFields control={form.control} />
             </FormSection>
 
             <FormSectionActions>
               <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Đang đặt..." : "Đặt lịch"}
+                {form.formState.isSubmitting ? "Đang đăng ký..." : "Đăng ký khám"}
               </Button>
               <Button type="button" variant="outline" onClick={() => navigate(-1)}>
                 Hủy

@@ -31,8 +31,8 @@ export const ViewAsAllAppointments = () => {
     <div className="flex flex-col gap-4">
       <ViewAsBanner role="Khách hàng" name="tất cả khách hàng" />
       <MyAppointmentList
-        title="Lịch hẹn của tôi"
-        description="Lịch hẹn của mọi khách hàng, ở dạng khách nhìn thấy (không có ghi chú nội bộ). Mở phiếu để xem đúng như khách đó."
+        title="Đăng ký khám của tôi"
+        description="Đăng ký khám của mọi khách hàng, ở dạng khách nhìn thấy (không có ghi chú nội bộ). Mở phiếu để xem đúng như khách đó."
         resource="appointments"
         showCustomer
         slipPath={slipPath}
@@ -115,7 +115,7 @@ export const ViewAsFrontDesk = () => {
       <ViewAsBanner role="Lễ tân" name={name} />
       <Tabs defaultValue="appointments" key={clinicId ?? "all"}>
         <TabsList>
-          <TabsTrigger value="appointments">Lịch hẹn</TabsTrigger>
+          <TabsTrigger value="appointments">Đăng ký khám</TabsTrigger>
           <TabsTrigger value="customers">Khách hàng</TabsTrigger>
           <TabsTrigger value="devices">Thiết bị</TabsTrigger>
         </TabsList>

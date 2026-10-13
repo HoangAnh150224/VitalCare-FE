@@ -10,9 +10,8 @@ import {
   EmptyValue,
 } from "@/shared/components/views/record-detail";
 import type { Clinic } from "@/domains/clinic/types";
-import { WorkingHoursEditor } from "./working-hours-editor";
 
-/** One clinic: where it is, and the opening hours its booking slots are cut from. */
+/** One clinic: where it is. When patients are seen is each doctor's own schedule. */
 export const ClinicShow = () => {
   const { result: record, query } = useShow<Clinic>({});
 
@@ -29,7 +28,7 @@ export const ClinicShow = () => {
         </LoadingOverlay>
       </Card>
 
-      <div className="grid min-w-0 gap-4 xl:grid-cols-[20rem_minmax(0,1fr)] xl:items-start">
+      <div className="grid min-w-0 gap-4">
         <DetailPanel title="Thông tin">
           <DetailList>
             <DetailRow label="Địa chỉ">{record?.address ?? <EmptyValue />}</DetailRow>
@@ -39,8 +38,6 @@ export const ClinicShow = () => {
             <DetailRow label="Trạng thái">{record?.operatingStatus ?? <EmptyValue />}</DetailRow>
           </DetailList>
         </DetailPanel>
-
-        {record?.id && <WorkingHoursEditor clinicId={record.id} />}
       </div>
     </ShowView>
   );

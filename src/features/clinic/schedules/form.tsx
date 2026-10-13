@@ -1,18 +1,12 @@
-import { useCan, useSelect, type HttpError } from "@refinedev/core";
+import type { HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 import { CreateView, CreateViewHeader } from "@/shared/components/views/create-view";
 import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
 import {
   Form,
   FormControl,
@@ -26,53 +20,37 @@ import {
   FormSectionActions,
   SectionedFormPanel,
 } from "@/shared/components/form/form-section";
-import type { Employee } from "@/domains/employee/types";
-import type { DoctorSchedule, ScheduleStatus } from "@/domains/schedule/types";
-import { SCHEDULE_STATUS_OPTIONS } from "@/domains/schedule/types";
+import type { DoctorSchedule } from "@/domains/schedule/types";
 import { clinicToday } from "../appointments/clinic-day";
+import { useOwnClinicDoctors } from "./use-doctors";
 
-type ScheduleFormValues = {
-  employeeId: string;
+type BlockedTimeValues = {
   workDate: string;
   startTime: string;
   endTime: string;
-  status: ScheduleStatus;
   note: string;
 };
 
 /**
- * One period of a doctor's day, to add or to change.
+ * A period a doctor takes no patients in (SRS 3.11.7, "chặn khoảng thời
+ * gian"): a day, a range of time, and why. Its turns leave that day's queue.
  *
- * Whose it is is asked only of somebody who can pick: a clinic administrator
- * reads the staff list and chooses the doctor; a doctor cannot, and the API
- * makes the period theirs. It is fixed once saved.
+ * Whose it is comes from the schedule screen that opened the form
+ * (`?doctorId=`) and is fixed once saved. The API refuses a period that
+ * covers a visit somebody has already registered.
  */
-function ScheduleForm({ submitLabel, creating }: { submitLabel: string; creating: boolean }) {
+function BlockedTimeForm({ submitLabel, doctorId }: { submitLabel: string; doctorId?: number }) {
   const navigate = useNavigate();
   const {
     refineCore: { onFinish, query },
     ...form
-  } = useForm<DoctorSchedule, HttpError, ScheduleFormValues>({
+  } = useForm<DoctorSchedule, HttpError, BlockedTimeValues>({
     refineCoreProps: { resource: "doctor_schedules", redirect: "list" },
-    defaultValues: { employeeId: "", workDate: "", startTime: "", endTime: "", status: "working", note: "" },
+    defaultValues: { workDate: "", startTime: "", endTime: "", note: "" },
   });
   const record = query?.data?.data;
-
-  const { data: canListStaff } = useCan({ resource: "employees", action: "list" });
-  const pickDoctor = creating && (canListStaff?.can ?? false);
-  const { options: doctorOptions } = useSelect<Employee>({
-    resource: "employees",
-    optionLabel: "fullName",
-    optionValue: "id",
-    filters: [
-      { field: "staffType", operator: "eq", value: "doctor" },
-      { field: "status", operator: "eq", value: "active" },
-    ],
-    // ponytail: one page of 200. The provider always sends a window, so "off"
-    // would mean its default 10; a searchable picker when a clinic outgrows this.
-    pagination: { pageSize: 200 },
-    queryOptions: { enabled: pickDoctor },
-  });
+  const { doctors } = useOwnClinicDoctors();
+  const doctorName = record?.doctor.fullName ?? doctors.find((doctor) => doctor.id === doctorId)?.fullName;
 
   return (
     <Form {...form}>
@@ -80,48 +58,20 @@ function ScheduleForm({ submitLabel, creating }: { submitLabel: string; creating
         onSubmit={form.handleSubmit((values) =>
           // Only what the API takes: an edit's loaded record carries far more.
           onFinish({
-            ...(pickDoctor ? { employeeId: Number(values.employeeId) } : {}),
+            ...(doctorId ? { employeeId: doctorId } : {}),
             workDate: values.workDate,
             startTime: values.startTime,
             endTime: values.endTime,
-            status: values.status,
             note: values.note ?? "",
-          } as unknown as ScheduleFormValues)
+          } as unknown as BlockedTimeValues)
         )}
         className="min-w-0"
       >
         <SectionedFormPanel>
           <FormSection
-            title={record ? `Ca của ${record.doctor.fullName}` : "Ca làm việc"}
-            description="Hai ca của cùng một bác sĩ trong một ngày không được chồng giờ nhau."
+            title={doctorName ? `Chặn khoảng thời gian — ${doctorName}` : "Chặn khoảng thời gian"}
+            description="Bác sĩ không nhận khám trong khoảng này. Nếu đã có người đăng ký rơi vào đó, cần đổi lịch hoặc huỷ các lượt ấy trước."
           >
-            {pickDoctor && (
-              <FormField
-                control={form.control}
-                name="employeeId"
-                rules={{ required: "Vui lòng chọn bác sĩ" }}
-                render={({ field }) => (
-                  <FormItem className="md:col-span-6">
-                    <FormLabel>Bác sĩ</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Chọn bác sĩ" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {doctorOptions.map((option) => (
-                          <SelectItem key={String(option.value)} value={String(option.value)}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
             <FormField
               control={form.control}
               name="workDate"
@@ -169,37 +119,13 @@ function ScheduleForm({ submitLabel, creating }: { submitLabel: string; creating
             />
             <FormField
               control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem className="md:col-span-3">
-                  <FormLabel>Loại</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value ?? "working"}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {SCHEDULE_STATUS_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="note"
               rules={{ maxLength: { value: 255, message: "Tối đa 255 ký tự" } }}
               render={({ field }) => (
                 <FormItem className="md:col-span-8">
-                  <FormLabel>Ghi chú</FormLabel>
+                  <FormLabel>Lý do</FormLabel>
                   <FormControl>
-                    <Input {...field} value={field.value ?? ""} placeholder="Ví dụ: trực phòng khám số 2" />
+                    <Input {...field} value={field.value ?? ""} placeholder="Không khả dụng" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -220,16 +146,29 @@ function ScheduleForm({ submitLabel, creating }: { submitLabel: string; creating
   );
 }
 
-export const DoctorScheduleCreate = () => (
-  <CreateView>
-    <CreateViewHeader resource="doctor_schedules" />
-    <ScheduleForm submitLabel="Thêm ca" creating />
-  </CreateView>
-);
+export const DoctorScheduleCreate = () => {
+  const [params] = useSearchParams();
+  const doctorId = Number(params.get("doctorId"));
+
+  return (
+    <CreateView>
+      <CreateViewHeader resource="doctor_schedules" title="Chặn khoảng thời gian" />
+      {doctorId ? (
+        <BlockedTimeForm submitLabel="Chặn khoảng thời gian" doctorId={doctorId} />
+      ) : (
+        <Alert>
+          <AlertDescription>
+            Mở màn này từ "Lịch làm việc bác sĩ", sau khi chọn bác sĩ, để biết đang chặn giờ của ai.
+          </AlertDescription>
+        </Alert>
+      )}
+    </CreateView>
+  );
+};
 
 export const DoctorScheduleEdit = () => (
   <EditView>
-    <EditViewHeader resource="doctor_schedules" />
-    <ScheduleForm submitLabel="Lưu thay đổi" creating={false} />
+    <EditViewHeader resource="doctor_schedules" title="Sửa khoảng thời gian chặn" />
+    <BlockedTimeForm submitLabel="Lưu thay đổi" />
   </EditView>
 );

@@ -1,8 +1,8 @@
-import { useCan } from "@refinedev/core";
+import { useCan, useCustom } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 import { ScanLineIcon } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router";
 
 import {
@@ -24,13 +24,27 @@ import {
   APPOINTMENT_STATUS_LABELS,
   APPOINTMENT_STATUS_OPTIONS,
   formatBookingCode,
+  formatQueueNumber,
 } from "@/domains/appointment/types";
 import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { API_URL } from "@/shared/api/constants";
+import type { DoctorAvailability } from "@/domains/schedule/types";
 import { CUSTOMER_STATUS_LABELS } from "@/domains/customer/types";
 import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatLocalDate, formatLocalTime } from "@/shared/lib/format";
 import { useClinicOptions } from "../clinics/use-clinic-options";
 import { AppointmentActions } from "./appointment-actions";
+import { clinicToday } from "./clinic-day";
+
+/** Monday and Sunday of the clinic's current week, `YYYY-MM-DD`: the list opens on "this week". */
+function thisWeek(): [string, string] {
+  const today = new Date(`${clinicToday()}T00:00:00Z`);
+  const sinceMonday = (today.getUTCDay() + 6) % 7;
+  const day = (offset: number) =>
+    new Date(today.getTime() + (offset - sinceMonday) * 86_400_000).toISOString().slice(0, 10);
+  return [day(0), day(6)];
+}
 
 const FILTER_FIELDS: AdvancedFilterField[] = [
   {
@@ -39,7 +53,6 @@ const FILTER_FIELDS: AdvancedFilterField[] = [
     type: "select",
     options: APPOINTMENT_STATUS_OPTIONS,
   },
-  { field: "appointmentDate", label: "Ngày khám", type: "text", placeholder: "YYYY-MM-DD" },
 ];
 
 /**
@@ -53,42 +66,77 @@ type FrontDeskListProps = {
 };
 
 /**
- * The clinic's appointment book.
+ * The clinic's registered visits, this week's by default.
  *
  * Check-in sits on the row itself, beside the name: at the front desk the
  * person is standing there, and opening a detail page first is one step too
  * many. The row says when that check-in will also make somebody a patient.
+ * Everything else that can be done to a visit is on its own page.
  */
 export const AppointmentList = ({ clinicId, readOnly = false }: FrontDeskListProps = {}) => {
   const { data: canCheckIn } = useCan({ resource: "appointments", action: "check_in" });
   const clinics = useClinicOptions();
+  const [[from, to], setRange] = useState(thisWeek);
+  // The doctors of the caller's own clinic, for the filter.
+  const { data: canReadSchedules } = useCan({ resource: "doctor_schedules", action: "list" });
+  const { result: doctorsResult } = useCustom<DoctorAvailability[]>({
+    url: `${API_URL}/doctors`,
+    method: "get",
+    queryOptions: { enabled: canReadSchedules?.can ?? false },
+  });
+  const doctorOptions = React.useMemo(
+    () =>
+      (Array.isArray(doctorsResult?.data) ? doctorsResult.data : []).map((doctor) => ({
+        label: doctor.fullName,
+        value: String(doctor.id),
+      })),
+    [doctorsResult?.data],
+  );
   // A clinic filter only says something when there is more than one clinic,
   // and none when the list is already locked to one.
   const filterFields = React.useMemo<AdvancedFilterField[]>(
-    () =>
-      clinics.several && !clinicId
-        ? [...FILTER_FIELDS, { field: "clinicId", label: "Phòng khám", type: "select", options: clinics.options }]
-        : FILTER_FIELDS,
-    [clinics.several, clinics.options, clinicId],
+    () => [
+      ...FILTER_FIELDS,
+      ...(doctorOptions.length
+        ? [{ field: "employeeId", label: "Bác sĩ", type: "select" as const, options: doctorOptions }]
+        : []),
+      ...(clinics.several && !clinicId
+        ? [{ field: "clinicId", label: "Phòng khám", type: "select" as const, options: clinics.options }]
+        : []),
+    ],
+    [clinics.several, clinics.options, clinicId, doctorOptions],
   );
 
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<Appointment>();
 
     return [
+      columnHelper.accessor("queueNumber", {
+        id: "queueNumber",
+        header: "Số khám",
+        enableSorting: true,
+        cell: ({ getValue }) => (
+          <span className="text-lg font-semibold tabular-nums">{formatQueueNumber(getValue())}</span>
+        ),
+      }),
       columnHelper.accessor("appointmentDate", {
         id: "appointmentDate",
-        header: "Thời gian",
+        header: "Ngày khám",
         enableSorting: true,
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-medium">{formatLocalDate(row.original.appointmentDate)}</span>
             <span className="text-muted-foreground text-xs tabular-nums">
-              {formatLocalTime(row.original.startTime)}
-              {row.original.endTime ? ` – ${formatLocalTime(row.original.endTime)}` : ""}
+              dự kiến {formatLocalTime(row.original.startTime)}
             </span>
           </div>
         ),
+      }),
+      columnHelper.display({
+        id: "doctor",
+        header: "Bác sĩ",
+        enableSorting: false,
+        cell: ({ row }) => <span className="text-sm">{row.original.doctor?.fullName ?? "—"}</span>,
       }),
       columnHelper.accessor("bookingCode", {
         id: "bookingCode",
@@ -156,12 +204,14 @@ export const AppointmentList = ({ clinicId, readOnly = false }: FrontDeskListPro
         header: "Thao tác",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
-            {!readOnly && <AppointmentActions appointment={row.original} resource="appointments" size="sm" />}
+            {!readOnly && (
+              <AppointmentActions appointment={row.original} resource="appointments" size="sm" compact />
+            )}
             <ShowButton resource="appointments" recordItemId={row.original.id} iconOnly size="icon-sm" />
           </div>
         ),
         enableSorting: false,
-        ...actionsColumnWidth(6),
+        ...actionsColumnWidth(3),
       }),
     ];
   }, [clinics.several, clinicId, readOnly]);
@@ -174,10 +224,19 @@ export const AppointmentList = ({ clinicId, readOnly = false }: FrontDeskListPro
     initialState: {
       columnPinning: { right: ["actions"] },
     },
-    refineCoreProps: clinicId
-      ? // Locked to one clinic: off the URL, so nothing there can unlock it.
-        { resource: "appointments", syncWithLocation: false, filters: { permanent: [{ field: "clinicId", operator: "eq", value: clinicId }] } }
-      : { resource: "appointments", syncWithLocation: true },
+    refineCoreProps: {
+      resource: "appointments",
+      // Off the URL: the range lives in this screen's own inputs, and a list
+      // locked to one clinic must not be unlocked by anything typed there.
+      syncWithLocation: false,
+      filters: {
+        permanent: [
+          ...(clinicId ? [{ field: "clinicId", operator: "eq" as const, value: clinicId }] : []),
+          { field: "appointmentDate", operator: "gte" as const, value: from },
+          { field: "appointmentDate", operator: "lte" as const, value: to },
+        ],
+      },
+    },
   });
 
   return (
@@ -185,13 +244,13 @@ export const AppointmentList = ({ clinicId, readOnly = false }: FrontDeskListPro
       <ListViewHeader
         resource="appointments"
         canCreate={readOnly ? false : undefined}
-        description="Lịch hẹn của phòng khám. Check-in một khách chưa kích hoạt sẽ đồng thời kích hoạt hồ sơ bệnh nhân."
+        description="Các lượt đăng ký khám của phòng khám. Tiếp nhận một khách chưa kích hoạt sẽ đồng thời kích hoạt hồ sơ bệnh nhân."
         actions={
           canCheckIn?.can && !readOnly ? (
             <Button asChild variant="outline">
               <Link to="/appointments/check-in">
                 <ScanLineIcon />
-                Check-in nhanh
+                Tiếp nhận nhanh
               </Link>
             </Button>
           ) : undefined
@@ -203,7 +262,28 @@ export const AppointmentList = ({ clinicId, readOnly = false }: FrontDeskListPro
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Never empty: clearing a box goes back to this week's end of the range. */}
+                  <Input
+                    type="date"
+                    aria-label="Từ ngày"
+                    title="Từ ngày"
+                    className="w-40"
+                    value={from}
+                    onChange={(event) => setRange([event.target.value || thisWeek()[0], to])}
+                  />
+                  <Input
+                    type="date"
+                    aria-label="Đến ngày"
+                    title="Đến ngày"
+                    className="w-40"
+                    value={to}
+                    onChange={(event) => setRange([from, event.target.value || thisWeek()[1]])}
+                  />
+                  <DataTableQuickFilter table={table} />
+                </div>
+              }
               filters={<DataTableAdvancedFilter table={table} fields={filterFields} />}
             />
             <DataTableFilterChips table={table} fields={filterFields} />

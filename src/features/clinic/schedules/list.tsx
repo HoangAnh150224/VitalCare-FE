@@ -1,42 +1,51 @@
+import { useCan } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
+import { PlusIcon } from "lucide-react";
 import React, { useState } from "react";
+import { Link } from "react-router";
 
 import {
   actionsColumnWidth,
   DataTable,
   RESIZABLE_COLUMN_DEFAULTS,
 } from "@/shared/components/data-table/data-table";
-import { DataTableQuickFilter } from "@/shared/components/data-table/data-table-quick-filter";
-import {
-  DataTableAdvancedFilter,
-  DataTableFilterChips,
-  type AdvancedFilterField,
-} from "@/shared/components/data-table/data-table-advanced-filter";
-import { ListToolbar, ListView, ListViewHeader } from "@/shared/components/views/list-view";
+import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { DeleteButton } from "@/shared/components/buttons/delete";
 import { EditButton } from "@/shared/components/buttons/edit";
-import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/select";
 import type { DoctorSchedule } from "@/domains/schedule/types";
-import { SCHEDULE_STATUS_LABELS, SCHEDULE_STATUS_OPTIONS } from "@/domains/schedule/types";
-import { SCHEDULE_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatLocalDate, formatLocalTime } from "@/shared/lib/format";
 import { clinicToday } from "../appointments/clinic-day";
-
-const FILTER_FIELDS: AdvancedFilterField[] = [
-  { field: "status", label: "Loại", type: "select", options: SCHEDULE_STATUS_OPTIONS },
-];
+import { doctorLabel } from "../appointments/doctor-day";
+import { useOwnClinicDoctors } from "./use-doctors";
+import { WorkingHoursEditor } from "./working-hours-editor";
 
 /**
- * The clinic's doctors' working periods and time off, from a chosen day on —
- * today by default, because a schedule is read forwards.
+ * A doctor's schedule (SRS 3.11.7): the week they work, repeating, and under
+ * it the periods they have blocked.
  *
- * Everybody at the clinic reads it. The row buttons follow `_can`: a doctor
- * changes their own periods, the clinic administrator anybody's.
+ * Everybody at the clinic reads it. A doctor changes their own; the clinic
+ * administrator, any doctor's.
  */
 export const DoctorScheduleList = () => {
+  const { doctors, refetch } = useOwnClinicDoctors();
+  const { data: canWrite } = useCan({ resource: "doctor_schedules", action: "edit" });
+  const [chosen, setChosen] = useState("");
   const [from, setFrom] = useState(clinicToday());
+
+  // Until somebody picks: the doctor the caller manages — themselves, for a
+  // doctor — or the first on the list.
+  const selectedId = chosen || String((doctors.find((doctor) => doctor.manageable) ?? doctors[0])?.id ?? "");
+  const doctor = doctors.find((candidate) => String(candidate.id) === selectedId);
 
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<DoctorSchedule>();
@@ -49,7 +58,7 @@ export const DoctorScheduleList = () => {
       }),
       columnHelper.display({
         id: "time",
-        header: "Giờ",
+        header: "Khoảng thời gian",
         enableSorting: false,
         cell: ({ row }) => (
           <span className="text-sm tabular-nums">
@@ -57,34 +66,11 @@ export const DoctorScheduleList = () => {
           </span>
         ),
       }),
-      columnHelper.display({
-        id: "doctor",
-        header: "Bác sĩ",
-        enableSorting: false,
-        cell: ({ row }) => (
-          <div className="flex flex-col">
-            <span className="font-medium">{row.original.doctor.fullName}</span>
-            {row.original.doctor.specialty && (
-              <span className="text-muted-foreground text-xs">{row.original.doctor.specialty}</span>
-            )}
-          </div>
-        ),
-      }),
-      columnHelper.accessor("status", {
-        id: "status",
-        header: "Loại",
-        enableSorting: true,
-        cell: ({ getValue }) => (
-          <Badge variant={SCHEDULE_STATUS_VARIANTS[getValue()] ?? "secondary"}>
-            {SCHEDULE_STATUS_LABELS[getValue()]}
-          </Badge>
-        ),
-      }),
       columnHelper.accessor("note", {
         id: "note",
-        header: "Ghi chú",
+        header: "Lý do",
         enableSorting: false,
-        cell: ({ getValue }) => <span className="text-muted-foreground line-clamp-1 text-sm">{getValue() ?? ""}</span>,
+        cell: ({ getValue }) => <span className="text-sm">{getValue() ?? "Không khả dụng"}</span>,
       }),
       columnHelper.display({
         id: "actions",
@@ -111,7 +97,13 @@ export const DoctorScheduleList = () => {
     refineCoreProps: {
       resource: "doctor_schedules",
       syncWithLocation: false,
-      filters: { permanent: [{ field: "workDate", operator: "gte", value: from }] },
+      queryOptions: { enabled: Boolean(selectedId) },
+      filters: {
+        permanent: [
+          { field: "employee.id", operator: "eq", value: selectedId },
+          { field: "workDate", operator: "gte", value: from },
+        ],
+      },
     },
   });
 
@@ -119,35 +111,66 @@ export const DoctorScheduleList = () => {
     <ListView>
       <ListViewHeader
         resource="doctor_schedules"
-        description="Ca làm việc và ngày nghỉ của bác sĩ trong cơ sở. Bác sĩ tự quản lý ca của mình; quản trị phòng khám quản lý ca của mọi bác sĩ."
+        title="Lịch làm việc bác sĩ"
+        canCreate={false}
+        description="Giờ làm việc lặp lại hằng tuần và các khoảng thời gian không nhận khám. Số khám mỗi ngày tính từ đây."
+        actions={
+          <Select value={selectedId} onValueChange={setChosen}>
+            <SelectTrigger className="w-72" aria-label="Bác sĩ">
+              <SelectValue placeholder="Chọn bác sĩ" />
+            </SelectTrigger>
+            <SelectContent>
+              {doctors.map((option) => (
+                <SelectItem key={option.id} value={String(option.id)}>
+                  {doctorLabel(option)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        }
       />
-      <DataTable
-        table={table}
-        toolbar={
-          <>
-            <ListToolbar
-              table={table}
-              search={
+
+      {doctor ? (
+        <>
+          <WorkingHoursEditor
+            // A fresh editor per doctor: one doctor's unsaved rows must not follow to the next.
+            key={doctor.id}
+            doctor={doctor}
+            editable={(canWrite?.can ?? false) && doctor.manageable === true}
+            onSaved={refetch}
+          />
+          <DataTable
+            table={table}
+            toolbar={
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium">Chặn khoảng thời gian</span>
                   <Input
                     type="date"
                     aria-label="Từ ngày"
                     title="Từ ngày"
                     className="w-40"
                     value={from}
-                    // Never empty: clearing it goes back to today rather than
-                    // leaving the box blank over a list that is still filtered.
+                    // Never empty: clearing it goes back to today.
                     onChange={(event) => setFrom(event.target.value || clinicToday())}
                   />
-                  <DataTableQuickFilter table={table} />
                 </div>
-              }
-              filters={<DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />}
-            />
-            <DataTableFilterChips table={table} fields={FILTER_FIELDS} />
-          </>
-        }
-      />
+                {/* Not the header's Create: that one would not know which doctor. */}
+                {(canWrite?.can ?? false) && doctor.manageable === true && (
+                  <Button asChild size="sm" variant="outline">
+                    <Link to={`/doctor-schedules/create?doctorId=${doctor.id}`}>
+                      <PlusIcon />
+                      Chặn khoảng thời gian
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            }
+          />
+        </>
+      ) : (
+        <p className="text-muted-foreground text-sm">Cơ sở chưa có bác sĩ nào đang làm việc.</p>
+      )}
     </ListView>
   );
 };

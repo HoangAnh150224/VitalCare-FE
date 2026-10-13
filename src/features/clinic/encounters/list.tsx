@@ -98,7 +98,7 @@ export const EncounterList = () => {
       <ListViewHeader
         resource="clinical_encounters"
         canCreate={false}
-        description="Các lần khám tại phòng khám. Tạo lần khám mới từ trang bệnh nhân hoặc từ lịch hẹn đã check-in."
+        description="Các lần khám tại phòng khám. Tạo lần khám mới từ trang bệnh nhân hoặc từ lượt đăng ký khám đã tiếp nhận."
       />
       <DataTable
         table={table}

@@ -10,15 +10,16 @@ import { Card } from "@/shared/ui/card";
 import { DetailList, DetailRow, EmptyValue } from "@/shared/components/views/record-detail";
 import { formatLocalDate, formatLocalTime } from "@/shared/lib/format";
 import type { Appointment } from "@/domains/appointment/types";
-import { APPOINTMENT_STATUS_LABELS, formatBookingCode } from "@/domains/appointment/types";
+import { APPOINTMENT_STATUS_LABELS, formatBookingCode, formatQueueNumber } from "@/domains/appointment/types";
 import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { AppointmentActions } from "../appointments/appointment-actions";
 
 /**
  * The appointment slip: what the customer shows at the front desk.
  *
- * The code is the point of the page — large, grouped in fours so it can be
- * read aloud, and carried by a QR the desk can scan. The QR holds nothing but
+ * The queue number is the point of the page — it is what gets called at the
+ * doctor's door — with the code under it, grouped in fours so it can be read
+ * aloud, and carried by a QR the desk can scan. The QR holds nothing but
  * the code: looking it up needs a staff account, so the image on its own
  * gives nothing away.
  *
@@ -43,8 +44,11 @@ export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointm
         <LoadingOverlay loading={query.isLoading}>
           <div className="flex flex-col items-center gap-5 px-6 text-center">
             <div className="flex flex-col items-center gap-1">
-              <span className="text-overline text-muted-foreground">Mã lịch hẹn</span>
-              <span className="font-mono text-3xl font-semibold tracking-widest">
+              <span className="text-overline text-muted-foreground">Số khám</span>
+              <span className="text-6xl leading-none font-semibold tabular-nums">
+                {formatQueueNumber(record?.queueNumber)}
+              </span>
+              <span className="text-muted-foreground font-mono text-lg tracking-widest">
                 {formatBookingCode(record?.bookingCode)}
               </span>
               {status && (
@@ -65,20 +69,25 @@ export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointm
             {status && (
               <p className="text-muted-foreground text-sm">
                 {status === "scheduled"
-                  ? "Đưa mã này cho lễ tân khi đến phòng khám để check-in."
+                  ? "Đến phòng khám, đưa phiếu này cho lễ tân để được tiếp nhận, rồi chờ gọi số."
                   : status === "checked_in"
-                    ? "Bạn đã check-in cho lịch hẹn này."
-                    : "Lịch hẹn này đã huỷ."}
+                    ? "Bạn đã được tiếp nhận. Vui lòng chờ gọi số."
+                    : status === "completed"
+                      ? "Lượt khám này đã hoàn tất."
+                      : status === "no_show"
+                        ? "Bạn đã không đến lượt khám này."
+                        : "Lượt đăng ký này đã huỷ."}
               </p>
             )}
 
             <div className="w-full text-left">
               <DetailList>
+                <DetailRow label="Bác sĩ">{record?.doctor?.fullName ?? <EmptyValue />}</DetailRow>
                 <DetailRow label="Phòng khám">{record?.clinic.name ?? <EmptyValue />}</DetailRow>
                 <DetailRow label="Ngày khám">
                   {record ? formatLocalDate(record.appointmentDate) : <EmptyValue />}
                 </DetailRow>
-                <DetailRow label="Khung giờ">
+                <DetailRow label="Giờ dự kiến">
                   {record ? (
                     <span className="tabular-nums">
                       {formatLocalTime(record.startTime)}

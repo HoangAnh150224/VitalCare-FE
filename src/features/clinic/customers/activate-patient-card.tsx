@@ -58,8 +58,8 @@ export function ActivatePatientCard({ customer }: { customer: Customer }) {
       <div className="flex flex-col gap-4">
         <p className="text-muted-foreground text-sm">
           Khách hàng này chưa là bệnh nhân. Thông thường hồ sơ được kích hoạt
-          tự động khi check-in lịch hẹn; chỉ kích hoạt tay khi tiếp nhận bệnh
-          nhân ngoài lịch hẹn. Thao tác được ghi lại kèm tên người thực hiện.
+          tự động khi được tiếp nhận tại phòng khám; chỉ kích hoạt tay khi tiếp nhận bệnh
+          nhân ngoài lượt đăng ký khám. Thao tác được ghi lại kèm tên người thực hiện.
         </p>
         <Button onClick={activate} disabled={mutation.isPending} className="w-full">
           {mutation.isPending ? "Đang kích hoạt..." : "Kích hoạt hồ sơ bệnh nhân"}
