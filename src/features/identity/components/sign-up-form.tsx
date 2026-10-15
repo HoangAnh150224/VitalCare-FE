@@ -133,7 +133,7 @@ export const SignUpForm = () => {
             </div>
           )}
           {title.text && (
-            <h1 className="text-xl font-bold tracking-tight text-white">{title.text}</h1>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">{title.text}</h1>
           )}
         </div>
 
@@ -290,7 +290,7 @@ export const SignUpForm = () => {
               )}
             >
               Đã có tài khoản?{" "}
-              <Link to="/login" className="text-primary font-medium hover:underline">
+              <Link to="/login" className="text-link font-medium hover:underline">
                 Đăng nhập
               </Link>
             </p>

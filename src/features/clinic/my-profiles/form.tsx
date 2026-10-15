@@ -386,7 +386,7 @@ export const MyProfileCreate = () => (
 
 export const MyProfileEdit = () => (
   <EditView>
-    <EditViewHeader resource="my_profiles" title="Hồ sơ người bệnh" />
+    <EditViewHeader resource="my_profiles" title="Hồ sơ cá nhân" />
     <ProfileForm submitLabel="Lưu hồ sơ" creating={false} />
   </EditView>
 );

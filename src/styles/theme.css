@@ -11,10 +11,10 @@
      data-sidebar-tone    sidebar surface  dark (default) | light
      data-density         layout rhythm    compact | comfortable | spacious
 
-   Every preset declares only a handful of numbers. All semantic tokens below
-   are derived from them in OKLCH, so adding a brand colour is a six-line
-   change and never requires touching a component. Density works the same way:
-   one number that the whole spacing scale is built on.
+   Alternate presets declare only a handful of numbers and derive their
+   semantic tokens in OKLCH. The default light preset is explicitly mapped to
+   VitalCare Mobile's palette near the end of this file. Density works the same
+   way: one number that the whole spacing scale is built on.
 
      --preset-h            brand hue angle
      --preset-c            brand chroma, light mode
@@ -27,42 +27,25 @@
      --preset-on           optional: text colour on top of the brand colour,
                            only needed for light brands such as amber
 
-   Contrast is a floor, not a taste setting. Every pair below is measured
-   against the surface it actually lands on, and the numbers the palette is
-   tuned to are:
-
-     body text on its surface          >= 15:1
-     muted / secondary text            >=  6:1
-     brand, and every status colour,
-       used as text                    >=  4.5:1 in both modes
-     dividers (`--border`)             >=  1.4:1
-     control edges (`--input`)         >=  2.1:1
-
-   That is why `--preset-l` differs from the hue's "natural" lightness on the
-   brighter presets: emerald, teal, rose, orange and amber are all pulled down
-   until `text-primary` clears 4.5:1 on a card. Amber cannot reach it and never
-   will — it carries `--preset-on` instead and is the one preset where the
-   brand colour is a surface, not a label.
+   Keep contrast in mind when changing the palette: status fills and their
+   foregrounds are separate tokens so each can be tuned for its actual use.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   1. Brand presets — the only place raw brand numbers live.
+   1. Base brand presets.
 
-   `navy` is the institutional default and is a literal transcription of the
-   reference system's navy-800 (#0b2e5c): a deep, low-chroma blue that reads
-   as a government/enterprise surface rather than a product accent. Everything
-   neutral in the theme carries a trace of its hue, which is what gives the
-   greys their slate cast instead of a flat camera grey.
+   The `navy` key stays in place for saved settings. Its default light palette
+   is overridden at the bottom of this file to match VitalCare Mobile.
    -------------------------------------------------------------------------- */
 
 :root,
 :root[data-color-preset="navy"] {
-  --preset-h: 257;
-  --preset-c: 0.091;
+  --preset-h: 199.23;
+  --preset-c: 0.0989;
   --preset-c-dark: 0.13;
-  --preset-l: 0.306;
+  --preset-l: 0.5814;
   --preset-l-dark: 0.72;
-  --preset-sidebar-c: 0.091;
+  --preset-sidebar-c: 0.0567;
 }
 
 :root[data-color-preset="blue"] {
@@ -149,31 +132,19 @@
 }
 
 /* --------------------------------------------------------------------------
-   2. The institutional accent — fixed, and deliberately not derived.
-
-   Gold is the one colour in the system that does *not* follow the preset. It
-   is not the brand hue; it is the seal on the letterhead. It appears in three
-   places only — the brand mark, the marker on the active nav row, and the
-   `gold` badge variant — which is exactly why it survives being fixed: a
-   deployment that picks `rose` still gets a gold seal, the way a rebranded
-   department still gets the national emblem.
-
-   Derived from the reference ramp (#f1cf72 / #e5b74c / #d4a72c / #8a6614), so
-   the hue is one number and the four steps are that hue at four lightnesses.
+   2. The warm accent from the mobile palette.
    -------------------------------------------------------------------------- */
 
 :root {
   --gold-h: 87;
 
-  --gold-300: oklch(0.865 0.119 var(--gold-h));
-  --gold-400: oklch(0.801 0.134 var(--gold-h));
-  --gold-500: oklch(0.75 0.141 var(--gold-h));
-  --gold-600: oklch(0.533 0.103 var(--gold-h));
+  --gold-300: #c58b35;
+  --gold-400: #c58b35;
+  --gold-500: #c58b35;
+  --gold-600: #9a6a18;
 
-  /* Gold as a *label* on a light surface needs the dark step: `--gold-500` on
-     white is 1.9:1 and unreadable, `--gold-600` is 4.9:1. */
-  --gold-subtle: oklch(0.965 0.045 var(--gold-h));
-  --gold-text: var(--gold-600);
+  --gold-subtle: #fff5de;
+  --gold-text: #9a6a18;
 }
 
 .dark {
@@ -184,13 +155,23 @@
 }
 
 /* --------------------------------------------------------------------------
-   3. Light mode — semantic tokens derived from the preset.
-   The neutrals carry a trace of the brand hue, so the whole UI shifts
-   together when the preset changes instead of only the accents.
+   3. Light mode — semantic tokens derived from the active preset.
+   The default VitalCare palette overrides these values near the end.
    -------------------------------------------------------------------------- */
 
 :root {
   --radius: 0.5rem;
+  --brand-seed: #008ba8;
+  --link: var(--primary);
+  --placeholder: var(--muted-foreground);
+  --auth-description: var(--muted-foreground);
+  --button-shadow: var(--elevation-1);
+  --secondary-border: var(--border);
+  --home-gradient: linear-gradient(180deg, var(--accent) 0%, var(--surface-subtle) 100%);
+  --chart-grid: var(--border);
+  --chart-area: color-mix(in oklab, var(--primary) 20%, transparent);
+  --chart-highlight: color-mix(in oklab, var(--primary) 40%, transparent);
+  --chart-gradient-end: color-mix(in oklab, var(--primary) 0%, transparent);
 
   /* The page is a tinted surface and a card is white, so a card reads as a
      sheet laid on a desk rather than a rectangle drawn on the same paper.
@@ -305,6 +286,10 @@
    -------------------------------------------------------------------------- */
 
 .dark {
+  --link: var(--primary);
+  --placeholder: var(--muted-foreground);
+  --auth-description: rgb(255 255 255 / 55%);
+
   --background: oklch(0.135 0.016 var(--preset-h));
   --foreground: oklch(0.955 0.008 var(--preset-h));
 
@@ -411,6 +396,102 @@
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-ring: var(--ring);
+}
+
+/* The default light preset follows the exact palette used by VitalCare Mobile.
+   Other saved color presets and the dark-mode token set remain supported. */
+:root:not(.dark):not([data-color-preset]),
+:root:not(.dark)[data-color-preset="navy"] {
+  --brand-seed: #008ba8;
+  --link: #007c80;
+  --placeholder: #778a91;
+  --auth-description: #597677;
+
+  --background: #f6fbf9;
+  --foreground: #164e50;
+  --card: #ffffff;
+  --card-foreground: #164e50;
+  --popover: #ffffff;
+  --popover-foreground: #164e50;
+  --surface-subtle: #f5faf8;
+
+  --primary: #008c91;
+  --primary-foreground: #ffffff;
+  --primary-hover: #007c80;
+  --secondary: #eef8f5;
+  --secondary-foreground: #164e50;
+  --muted: #eef8f5;
+  --muted-foreground: #657e80;
+  --accent: #dff3ef;
+  --accent-foreground: #164e50;
+  --home-gradient: linear-gradient(180deg, #dff3ef 0%, #f5faf8 100%);
+
+  --destructive: #b24c4c;
+  --destructive-foreground: #ffffff;
+  --destructive-subtle: #fff5f2;
+  --destructive-text: #ac4949;
+
+  --success: #33846b;
+  --success-foreground: #ffffff;
+  --success-subtle: #e8f5ef;
+  --success-text: #33846b;
+
+  --warning: #9a6a18;
+  --warning-foreground: #ffffff;
+  --warning-subtle: #fff5de;
+  --warning-text: #9a6a18;
+
+  --info: #007c80;
+  --info-foreground: #ffffff;
+  --info-subtle: #eef8f5;
+  --info-text: #298cab;
+
+  --neutral: #657e80;
+  --neutral-foreground: #ffffff;
+  --neutral-subtle: #eef8f5;
+  --neutral-text: #657e80;
+
+  --border: #e0ece9;
+  --input: #ccdadc;
+  --ring: #008ba8;
+  --secondary-border: #bbddd6;
+
+  --chart-1: #298cab;
+  --chart-2: #d0767f;
+  --chart-3: #c28b3a;
+  --chart-4: #33846b;
+  --chart-5: #008c91;
+  --chart-grid: #e5efeb;
+  --chart-area: rgb(0 140 145 / 20%);
+  --chart-highlight: rgb(0 140 145 / 40%);
+  --chart-gradient-end: rgb(0 140 145 / 0%);
+  --button-shadow: 0 4px 8px rgb(0 140 145 / 25%);
+}
+
+:root:not(.dark):not([data-color-preset])[data-sidebar-tone="dark"],
+:root:not(.dark)[data-color-preset="navy"][data-sidebar-tone="dark"],
+:root:not(.dark):not([data-color-preset]):not([data-sidebar-tone="light"]),
+:root:not(.dark)[data-color-preset="navy"]:not([data-sidebar-tone="light"]) {
+  --sidebar: #164e50;
+  --sidebar-foreground: #ffffff;
+  --sidebar-accent: #dff3ef;
+  --sidebar-accent-foreground: #164e50;
+  --sidebar-border: #20536b;
+  --sidebar-primary: #c58b35;
+  --sidebar-primary-foreground: #164e50;
+  --sidebar-ring: #008ba8;
+}
+
+:root:not(.dark):not([data-color-preset])[data-sidebar-tone="light"],
+:root:not(.dark)[data-color-preset="navy"][data-sidebar-tone="light"] {
+  --sidebar: #ffffff;
+  --sidebar-foreground: #164e50;
+  --sidebar-accent: #dff3ef;
+  --sidebar-accent-foreground: #164e50;
+  --sidebar-border: #e0ece9;
+  --sidebar-primary: #008c91;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-ring: #008ba8;
 }
 
 /* --------------------------------------------------------------------------

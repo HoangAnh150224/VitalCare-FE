@@ -68,7 +68,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   medical_records: "Hồ sơ bệnh án",
   doctor_schedules: "Lịch bác sĩ",
   monitoring_assignments: "Phân công theo dõi",
-  my_profiles: "Hồ sơ người bệnh",
+  my_profiles: "Hồ sơ cá nhân",
 };
 
 /** `blog_posts` reads better as "Blog posts" in a group heading. */
