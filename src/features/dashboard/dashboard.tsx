@@ -13,7 +13,7 @@
  */
 export const Dashboard = () => {
   return (
-    <div className="flex min-h-[70dvh] flex-col items-center justify-center gap-4 text-center">
+    <div className="bg-transparent flex min-h-[70dvh] flex-col items-center justify-center gap-4 text-center">
       <img
         src="/vitalcare-mark.png"
         alt=""

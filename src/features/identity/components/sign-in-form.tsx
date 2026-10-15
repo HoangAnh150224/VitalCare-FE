@@ -72,8 +72,7 @@ export const SignInForm = () => {
           {title.icon && (
             <div
               className={cn(
-                // The logo is drawn for a white ground; on the dark sign-in
-                // backdrop it gets one.
+                // The logo is drawn for a white ground; keep that ground here.
                 "flex size-14 items-center justify-center rounded-xl",
                 "bg-white p-1.5 shadow-e4"
               )}
@@ -82,11 +81,11 @@ export const SignInForm = () => {
             </div>
           )}
           {title.text && (
-            <h1 className="text-xl font-bold tracking-tight text-white">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
               {title.text}
             </h1>
           )}
-          <p className="text-overline text-white/55">Quản trị</p>
+          <p className="text-overline text-auth-description">Quản trị</p>
         </div>
 
         <Card className={cn("mt-8 w-full p-8 shadow-e4", "sm:w-[420px]")}>
@@ -149,7 +148,7 @@ export const SignInForm = () => {
               )}
             >
               Chưa có tài khoản?{" "}
-              <Link to="/register" className="text-primary font-medium hover:underline">
+              <Link to="/register" className="text-link font-medium hover:underline">
                 Đăng ký bằng số điện thoại
               </Link>
             </p>

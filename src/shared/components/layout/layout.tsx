@@ -53,7 +53,7 @@ export function Layout({ children }: PropsWithChildren) {
 
       <Sidebar />
 
-      <SidebarInset className="min-w-0 bg-background">
+      <SidebarInset className="min-w-0 bg-background vitalcare-outside-background">
         <Header />
 
         <main

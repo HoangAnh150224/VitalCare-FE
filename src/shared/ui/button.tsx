@@ -37,13 +37,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-e1 hover:bg-primary-hover",
+          "bg-primary text-primary-foreground shadow-button hover:bg-primary-hover",
         destructive:
           "bg-destructive text-destructive-foreground shadow-e1 hover:bg-destructive/90 focus-visible:ring-destructive/40",
         success:
           "bg-success text-success-foreground shadow-e1 hover:bg-success/90",
         outline:
-          "border border-input bg-card text-foreground shadow-e1 hover:bg-accent hover:text-accent-foreground dark:bg-transparent",
+          "border border-secondary-border bg-card text-foreground shadow-e1 hover:bg-accent hover:text-accent-foreground dark:bg-transparent",
         secondary:
           "bg-secondary text-secondary-foreground shadow-e1 hover:bg-accent",
         /** A quiet brand-tinted fill, for a repeated action inside a panel. */
@@ -51,7 +51,7 @@ const buttonVariants = cva(
           "bg-accent text-accent-foreground hover:bg-accent/70 dark:bg-accent/60 dark:hover:bg-accent",
         ghost:
           "text-foreground hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/60",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-link underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

@@ -86,8 +86,8 @@ export function Header() {
 
         <div className="flex items-center gap-1">
           <NotificationBell />
-          <ThemeToggle />
-          <ThemeCustomizer />
+          <ThemeToggle className="hidden" />
+          <ThemeCustomizer className="hidden" />
           <UserMenu />
         </div>
       </div>

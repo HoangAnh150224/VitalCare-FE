@@ -46,12 +46,12 @@ colour of its own.
 
 | File | Role |
 | --- | --- |
-| `src/styles/theme.css` | Every design token. Brand presets at the top, semantic tokens derived from them below. |
-| `src/App.css` | Maps the tokens onto Tailwind (`bg-primary`, `text-success`, `shadow-e3`, …), base layer and custom utilities. |
-| `src/lib/theme.ts` | Theme state: types, presets, storage keys, and the `apply*` helpers. |
-| `src/components/refine-ui/theme/theme-provider.tsx` | React binding for that state. |
-| `src/components/refine-ui/theme/theme-customizer.tsx` | The "Customize" panel behind the brush icon. |
-| `src/components/refine-ui/layout/` | `layout.tsx` (shell), `sidebar.tsx`, `header.tsx`. |
+| `src/styles/theme.css` | Base presets and semantic tokens; the default light preset matches the VitalCare mobile palette. |
+| `src/styles/index.css` | Maps tokens onto Tailwind (`bg-primary`, `text-success`, `shadow-e3`, …), base layer and custom utilities. |
+| `src/shared/lib/theme.ts` | Theme state: types, presets, storage keys, and the `apply*` helpers. |
+| `src/shared/components/theme/theme-provider.tsx` | React binding for that state. |
+| `src/shared/components/theme/theme-customizer.tsx` | The theme customization panel. |
+| `src/shared/components/layout/` | `layout.tsx` (shell), `sidebar.tsx`, `header.tsx`. |
 | `index.html` | Inline bootstrap that replays the saved theme before first paint. |
 
 ### The four knobs
@@ -61,7 +61,7 @@ All four are state on `<html>`, persisted to `localStorage`:
 | Setting | Attribute | Values | Default |
 | --- | --- | --- | --- |
 | Mode | `class="dark"` | light / dark / system | system |
-| Brand colour | `data-color-preset` | navy, blue, indigo, violet, emerald, teal, rose, orange, amber, slate | **navy** |
+| Brand colour | `data-color-preset` | VitalCare (stored as `navy`), blue, indigo, violet, emerald, teal, rose, orange, amber, slate | **VitalCare** |
 | Corner radius | `data-radius` | none / sm / md / lg / xl | md |
 | Sidebar tone | `data-sidebar-tone` | dark / light | dark |
 

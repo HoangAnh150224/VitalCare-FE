@@ -25,6 +25,11 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
+  --color-brand-seed: var(--brand-seed);
+  --color-link: var(--link);
+  --color-placeholder: var(--placeholder);
+  --color-auth-description: var(--auth-description);
+  --color-secondary-border: var(--secondary-border, var(--border));
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -77,6 +82,10 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-grid: var(--chart-grid, var(--border));
+  --color-chart-area: var(--chart-area);
+  --color-chart-highlight: var(--chart-highlight);
+  --color-chart-gradient-end: var(--chart-gradient-end);
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -102,6 +111,7 @@
   --shadow-e2: var(--elevation-2);
   --shadow-e3: var(--elevation-3);
   --shadow-e4: var(--elevation-4);
+  --shadow-button: var(--button-shadow);
 
   --ease-settle: var(--ease-settle);
   --ease-standard: var(--ease-standard);
@@ -135,6 +145,10 @@
        `rem` is root-relative, so no spacing or type utility moves. */
     font-size: 0.875rem;
     line-height: 1.25rem;
+  }
+
+  a[href] {
+    color: var(--link);
   }
 
   /* Tabular figures wherever numbers are meant to line up in a column. Set
@@ -184,6 +198,36 @@
   [data-slot="app-header"] {
     transition: background-color 200ms ease, border-color 200ms ease,
       color 200ms ease;
+  }
+
+  /* A deep teal sidebar keeps white navigation labels legible; the selected
+     row uses the mobile palette's mint surface and dark text. */
+  [data-slot="app-sidebar"] > [data-slot="sidebar-inner"],
+  [data-mobile="true"][data-slot="sidebar"] {
+    --sidebar: #0b3440;
+    --sidebar-foreground: #ffffff;
+    --sidebar-accent: #dff3ef;
+    --sidebar-accent-foreground: #0b3440;
+    --sidebar-border: #20536b;
+    --sidebar-primary: #c58b35;
+    --sidebar-primary-foreground: #0b3440;
+    --sidebar-ring: #008ba8;
+
+    background-color: var(--sidebar);
+  }
+
+  .vitalcare-outside-background {
+    background-image: url("/bg-doan.png");
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+  }
+
+  @media (max-width: 767px) {
+    .vitalcare-outside-background {
+      background-attachment: scroll;
+    }
   }
 
   .theme-transition-suppressed *,
@@ -250,17 +294,8 @@
 }
 
 /* --------------------------------------------------------------------------
-   The institutional ground.
-
-   The one surface in the application that is not a token but a picture: a deep
-   brand field lit from the top by the gold accent, used behind the screens
-   that sit outside the shell — sign-in, and anything else somebody meets
-   before they have an account to theme.
-
-   Built out of the preset and the gold hue rather than fixed hex, so it
-   repaints with the brand like everything else, and it is dark in both modes
-   on purpose: an auth screen that flips with the OS theme is a login form that
-   looks like two different products.
+   Authentication background. The default light preset below uses the same
+   three-stop mint gradient as the mobile sign-in and detail screens.
    -------------------------------------------------------------------------- */
 
 @utility gradient-hero {
@@ -293,14 +328,34 @@
     );
 }
 
-/* A surveyor's grid over the hero — the texture that stops a large flat field
-   from looking like an unpainted div. Both patterns are white at low alpha, so
-   they only read on a dark ground. */
+@utility gradient-home {
+  background-image: var(--home-gradient);
+}
+
+:root:not(.dark)[data-color-preset="navy"] .gradient-hero,
+:root:not(.dark):not([data-color-preset]) .gradient-hero {
+  background-color: #f6fbf9;
+  background-image: linear-gradient(
+    180deg,
+    #dff3ef 0%,
+    #eef9f6 50%,
+    #f6fbf9 100%
+  );
+}
+
+/* A subtle grid texture over the authentication background. */
 @utility grid-pattern {
   background-image:
     linear-gradient(oklch(1 0 0 / 0.04) 1px, transparent 1px),
     linear-gradient(90deg, oklch(1 0 0 / 0.04) 1px, transparent 1px);
   background-size: 56px 56px;
+}
+
+:root:not(.dark)[data-color-preset="navy"] .grid-pattern,
+:root:not(.dark):not([data-color-preset]) .grid-pattern {
+  background-image:
+    linear-gradient(rgb(0 140 145 / 6%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(0 140 145 / 6%) 1px, transparent 1px);
 }
 
 /* Gold as a fill, for the one element on a screen that is the seal. */
@@ -315,7 +370,7 @@
 
 /* The frosted bar the shell uses for its sticky header. */
 @utility surface-blur {
-  background-color: color-mix(in oklab, var(--card) 86%, transparent);
+  background-color: color-mix(in oklab, var(--accent) 86%, transparent);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
 }

@@ -9,9 +9,9 @@ import { cn } from "@/shared/lib/utils";
 /**
  * A segmented control whose selected tab is obvious.
  *
- * The stock primitive separates the two states by a single signal — the active
- * trigger swaps `bg-muted` for `bg-background` — and those two tokens are one
- * step apart on the neutral ramp, so the whole control reads as one flat block.
+ * The stock primitive separates the two states by a single signal: the active
+ * trigger swaps the gradient track for a white card. Text weight and a border
+ * add two more clear signals without making either tab too loud.
  * Worse, both states resolve to `text-foreground` in light mode, so the label
  * carries no information either.
  *
@@ -35,7 +35,7 @@ function TabsList({
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        "bg-muted text-muted-foreground border-border inline-flex h-9 w-fit items-center justify-center rounded-lg border p-[3px]",
+        "bg-muted gradient-home text-muted-foreground border-border inline-flex h-9 w-fit items-center justify-center rounded-lg border p-[3px]",
         className
       )}
       {...props}

@@ -74,8 +74,8 @@ export function ErrorComponent() {
                 y2="88"
                 gradientUnits="userSpaceOnUse"
               >
-                <stop stopColor="#D4D4D8" />
-                <stop offset="1" stopColor="#E4E4E7" stopOpacity="0.25" />
+                <stop stopColor="var(--input)" />
+                <stop offset="1" stopColor="var(--surface-subtle)" stopOpacity="0.25" />
               </linearGradient>
             </defs>
           </svg>

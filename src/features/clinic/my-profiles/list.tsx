@@ -25,7 +25,7 @@ export const MyProfileList = () => {
       <ListViewHeader
         resource="my_profiles"
         canCreate={false}
-        description="Hồ sơ của bạn và của người thân. Mỗi lượt đăng ký khám là cho một hồ sơ ở đây."
+        description="Hồ sơ của bạn và người thân, dùng khi đăng ký khám. Mỗi lượt đăng ký khám gắn với một hồ sơ."
         actions={
           <Button asChild>
             <Link to="/my-profiles/create">

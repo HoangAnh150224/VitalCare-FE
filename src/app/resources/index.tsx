@@ -116,7 +116,7 @@ export const resources: ResourceProps[] = [
     create: "/my-profiles/create",
     edit: "/my-profiles/edit/:id",
     meta: {
-      label: "Hồ sơ người bệnh",
+      label: "Hồ sơ cá nhân",
       icon: <ClipboardList className="h-4 w-4" />,
     },
   },
