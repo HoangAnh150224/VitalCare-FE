@@ -1,0 +1,179 @@
+/* The public landing page. Its own small palette, drawn from the app's mobile
+   brand (teal on mist), with one red kept for the heartbeat trace alone. */
+.landing {
+  --landing-ink: #0f3d3f;
+  --landing-teal: #008c91;
+  --landing-teal-deep: #0b5f63;
+  --landing-mist: #f3faf8;
+  --landing-mint: #dff3ef;
+  --landing-paper: #ffffff;
+  --landing-muted: #4f6b6d;
+  --landing-pulse: #d6455d;
+
+  background-color: var(--landing-mist);
+  color: var(--landing-ink);
+}
+
+.landing-display {
+  font-family: "Be Vietnam Pro", var(--font-sans);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.landing-ink {
+  color: var(--landing-ink);
+}
+
+.landing-muted {
+  color: var(--landing-muted);
+}
+
+.landing a:focus-visible {
+  outline: 2px solid var(--landing-teal);
+  outline-offset: 3px;
+}
+
+.landing-hero-title {
+  font-size: clamp(2.25rem, 1.4rem + 3.6vw, 4rem);
+  line-height: 1.08;
+}
+
+.landing-section-title {
+  font-size: clamp(1.625rem, 1.2rem + 1.6vw, 2.375rem);
+  line-height: 1.15;
+}
+
+/* --- the queue slip ------------------------------------------------------- */
+.landing-ticket {
+  background: var(--landing-paper);
+  border-radius: 18px;
+  box-shadow:
+    0 1px 0 rgb(15 61 63 / 0.06),
+    0 24px 48px -24px rgb(11 95 99 / 0.35);
+  position: relative;
+  z-index: 1;
+}
+
+@media (min-width: 1024px) {
+  .landing-ticket {
+    transform: rotate(-2.5deg);
+  }
+}
+
+.landing-ticket-number {
+  font-size: clamp(6rem, 4rem + 8vw, 8.5rem);
+  line-height: 0.9;
+  margin: 0.75rem 0 0.5rem -0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--landing-teal);
+}
+
+/* Torn-off line between the stub and the details: two notches and a dashed rule. */
+.landing-perforation {
+  position: relative;
+  height: 0;
+  margin: 0 22px;
+  border-top: 2px dashed var(--landing-mint);
+}
+
+.landing-perforation::before,
+.landing-perforation::after {
+  content: "";
+  position: absolute;
+  top: -12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--landing-mist);
+}
+
+.landing-perforation::before {
+  left: -34px;
+}
+
+.landing-perforation::after {
+  right: -34px;
+}
+
+.landing-ticket-foot {
+  border-radius: 0 0 18px 18px;
+  background: var(--landing-mint);
+  color: var(--landing-teal-deep);
+}
+
+/* --- the heartbeat, drawn once ------------------------------------------- */
+.landing-heartbeat {
+  display: block;
+  width: 100%;
+  height: 80px;
+  pointer-events: none;
+}
+
+.landing-heartbeat path {
+  fill: none;
+  stroke: var(--landing-pulse);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: landing-trace 2.4s cubic-bezier(0.45, 0, 0.2, 1) 0.3s forwards;
+}
+
+@keyframes landing-trace {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-heartbeat path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* --- steps ---------------------------------------------------------------- */
+.landing-step {
+  border-top: 2px solid var(--landing-mint);
+  padding-top: 1.25rem;
+}
+
+.landing-step-number {
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--landing-teal);
+}
+
+/* --- monitoring band ------------------------------------------------------ */
+.landing-band {
+  background: var(--landing-mint);
+}
+
+.landing-readings {
+  background: var(--landing-paper);
+  border-radius: 14px;
+  padding: 1.75rem;
+}
+
+.landing-note {
+  border-left: 3px solid var(--landing-teal);
+  padding-left: 0.875rem;
+  color: var(--landing-ink);
+}
+
+/* --- closing call --------------------------------------------------------- */
+.landing-cta {
+  background: var(--landing-teal-deep);
+  border-radius: 24px;
+}
+
+.landing-rule {
+  border-top: 1px solid var(--landing-mint);
+}
+
+.landing-link {
+  color: var(--landing-teal-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

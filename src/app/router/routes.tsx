@@ -45,6 +45,7 @@ import {
   RowLevelPolicyShow,
 } from "@/features/administration";
 import { Login, Profile, Register } from "@/features/identity";
+import { Landing } from "@/features/landing";
 import {
   AppointmentCreate,
   AppointmentList,
@@ -108,6 +109,11 @@ import { Layout } from "@/shared/components/layout/layout";
 export function AppRoutes() {
   return (
     <Routes>
+      {/*
+        The front door, for everybody: signed in or not, the site opens on the
+        landing page, and signing in leads on to the dashboard.
+      */}
+      <Route path="/" element={<Landing />} />
       <Route
         element={
           <Authenticated key="authenticated-routes" redirectOnFail="/login">
@@ -118,12 +124,9 @@ export function AppRoutes() {
         }
       >
         {/*
-          The application opens on the dashboard rather than on a resource's
-          table. `Navigate` rather than `NavigateToResource`, because the
-          dashboard is a screen and not a resource: there is no `list` action to
-          resolve a path from beyond the one declared above.
+          A signed-in visitor opens on the dashboard (the `/` route above sends
+          them here) rather than on a resource's table.
         */}
-        <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         {/*
           Blog posts render their create / edit / show / clone actions as
@@ -511,7 +514,7 @@ export function AppRoutes() {
       <Route
         element={
           <Authenticated key="unauthenticated-routes" fallback={<Outlet />}>
-            <Navigate to="/" replace />
+            <Navigate to="/dashboard" replace />
           </Authenticated>
         }
       >
