@@ -3,6 +3,7 @@ import "@fontsource/be-vietnam-pro/latin-600.css";
 import "@fontsource/be-vietnam-pro/vietnamese-800.css";
 import "@fontsource/be-vietnam-pro/latin-800.css";
 import { useIsAuthenticated } from "@refinedev/core";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
 import "./landing.css";
@@ -19,9 +20,26 @@ export function Landing() {
   // Everybody opens here; somebody already signed in goes on to the app instead of signing in again.
   const { data: auth } = useIsAuthenticated();
   const signedIn = auth?.authenticated ?? false;
+  const root = useRef<HTMLDivElement>(null);
+
+  // Sections below the fold rise in once, the first time they scroll into view.
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.15 },
+    );
+    root.current?.querySelectorAll(".landing-reveal").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="landing min-h-svh">
+    <div ref={root} className="landing min-h-svh">
       <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-8">
         <Link to="/" className="landing-display flex items-center gap-2.5 text-lg rounded-md">
           <img src="/vitalcare-mark.png" alt="" className="size-9" />
@@ -48,7 +66,7 @@ export function Landing() {
       <main>
         <section className="overflow-hidden">
           <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-10 pb-10 sm:px-8 lg:grid-cols-[1.15fr_1fr] lg:pt-16 lg:pb-14">
-            <div className="max-w-xl">
+            <div className="landing-enter max-w-xl">
               <h1 className="landing-display landing-hero-title">
                 Đăng ký khám, nhận số, và được theo dõi cả khi đã về nhà.
               </h1>
@@ -66,16 +84,28 @@ export function Landing() {
               </div>
             </div>
 
-            <QueueTicket />
+            {/* The visit, and the slip it starts with laid over it. */}
+            <div className="landing-stage relative mx-auto w-full max-w-md lg:mb-72 lg:max-w-none">
+              <div className="landing-photo landing-photo-hero aspect-[4/3]">
+                <img
+                  src="/landing/consult.webp"
+                  alt="Bác sĩ trao đổi với bệnh nhân trong phòng khám"
+                  className="size-full object-cover"
+                />
+              </div>
+              <div className="relative -mt-16 px-5 lg:absolute lg:top-[58%] lg:-left-6 lg:mt-0 lg:w-80 lg:px-0">
+                <QueueTicket />
+              </div>
+            </div>
           </div>
           <Heartbeat />
         </section>
 
-        <section className="mx-auto max-w-6xl px-4 py-20 sm:px-8">
+        <section className="landing-reveal mx-auto max-w-6xl px-4 py-20 sm:px-8">
           <h2 className="landing-display landing-section-title">Một lượt khám đi qua năm bước</h2>
           <ol className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-5">
             {STEPS.map(({ title, body }, index) => (
-              <li key={title} className="landing-step">
+              <li key={title} className="landing-step" style={{ "--i": index } as CSSProperties}>
                 <span className="landing-display landing-step-number" aria-hidden="true">
                   {index + 1}
                 </span>
@@ -87,7 +117,7 @@ export function Landing() {
         </section>
 
         <section className="landing-band">
-          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-8 lg:grid-cols-2">
+          <div className="landing-reveal mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-8 lg:grid-cols-2">
             <div className="max-w-lg">
               <h2 className="landing-display landing-section-title">Sau buổi khám, phòng khám vẫn ở bên bạn</h2>
               <p className="landing-muted mt-5 leading-7">
@@ -98,13 +128,33 @@ export function Landing() {
                 Hồ sơ khám và lịch sử đo luôn được lưu lại, kể cả khi bạn tạm dừng theo dõi.
               </p>
             </div>
-            <Readings />
+            <div>
+              <div className="landing-photo aspect-[3/2]">
+                <img
+                  src="/landing/care.webp"
+                  alt="Điều dưỡng nắm tay hỏi han một bệnh nhân lớn tuổi"
+                  loading="lazy"
+                  className="size-full object-cover"
+                />
+              </div>
+              <div className="relative -mt-16 px-4 sm:px-8">
+                <Readings />
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="mx-auto grid max-w-6xl gap-10 px-4 py-20 sm:px-8 lg:grid-cols-[1fr_1.2fr]">
-          <h2 className="landing-display landing-section-title max-w-md">Một tài khoản cho cả nhà</h2>
+        <section className="landing-reveal mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:px-8 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
+          <div className="landing-photo aspect-[3/2]">
+            <img
+              src="/landing/phone.webp"
+              alt="Một phụ nữ cầm điện thoại, mỉm cười"
+              loading="lazy"
+              className="size-full object-cover"
+            />
+          </div>
           <div className="landing-muted max-w-xl leading-7">
+            <h2 className="landing-display landing-section-title landing-ink mb-6">Một tài khoản cho cả nhà</h2>
             <p>
               Thêm hồ sơ cho bố mẹ, con cái hay người thân bạn đưa đi khám, tối đa mười người. Mỗi hồ sơ có họ tên,
               ngày sinh, giới tính và giấy tờ tùy thân riêng, nên bác sĩ luôn biết mình đang khám cho ai.
@@ -113,7 +163,7 @@ export function Landing() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-8">
+        <section className="landing-reveal mx-auto max-w-6xl px-4 pb-24 sm:px-8">
           <div className="landing-cta flex flex-col items-start justify-between gap-6 px-6 py-10 sm:px-10 md:flex-row md:items-center">
             <div>
               <h2 className="landing-display text-2xl text-white sm:text-3xl">Bắt đầu với số điện thoại của bạn</h2>
@@ -153,7 +203,7 @@ function QueueTicket() {
       <div className="px-7 pt-7 pb-6">
         <p className="landing-muted text-sm">Phiếu đăng ký khám</p>
         <p className="landing-display landing-ticket-number" aria-label="Số thứ tự 7">
-          07
+          <CountUp value="07" delay={400} />
         </p>
         <p className="landing-ink font-semibold">Số thứ tự của bạn</p>
       </div>
@@ -175,7 +225,7 @@ function QueueTicket() {
   );
 }
 
-/** The one moving thing on the page: a trace drawn once across the hero. */
+/** A monitor trace sweeping across the hero, over and over. */
 function Heartbeat() {
   return (
     <svg
@@ -202,12 +252,14 @@ const READINGS = [
 function Readings() {
   return (
     <figure className="landing-readings" aria-label="Ví dụ chỉ số gửi từ thiết bị đo">
-      <figcaption className="landing-muted text-sm">Lần đo gần nhất, 07:15 sáng nay</figcaption>
+      <figcaption className="landing-muted landing-live text-sm">Lần đo gần nhất, 07:15 sáng nay</figcaption>
       <dl className="mt-5 grid grid-cols-3 gap-4">
         {READINGS.map(({ label, value, unit }) => (
           <div key={label}>
             <dt className="landing-muted text-sm">{label}</dt>
-            <dd className="landing-display landing-ink mt-1 text-2xl tabular-nums sm:text-3xl">{value}</dd>
+            <dd className="landing-display landing-ink mt-1 text-2xl tabular-nums sm:text-3xl">
+              <CountUp value={value} />
+            </dd>
             <dd className="landing-muted text-xs">{unit}</dd>
           </div>
         ))}
@@ -217,4 +269,47 @@ function Readings() {
       </p>
     </figure>
   );
+}
+
+/**
+ * Counts every number in `value` up from zero the first time it scrolls into
+ * view ("128/82" counts both halves), keeping a number's leading zero ("07").
+ * `delay` lets it wait for an entrance animation. Shows the
+ * final value straight away to anybody who asked for less motion.
+ */
+function CountUp({ value, duration = 1200, delay = 0 }: { value: string; duration?: number; delay?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [progress, setProgress] = useState(() =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : 0,
+  );
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || progress === 1) return;
+    let frame = 0;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      observer.disconnect();
+      const start = performance.now() + delay;
+      const tick = (now: number) => {
+        const t = Math.min(Math.max((now - start) / duration, 0), 1);
+        setProgress(1 - (1 - t) ** 3);
+        if (t < 1) frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
+    });
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+    // Runs once: progress only moves forward from here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duration, delay]);
+
+  const shown = value.replace(/\d+/g, (n) => {
+    const shown = String(Math.round(Number(n) * progress));
+    return n.startsWith("0") ? shown.padStart(n.length, "0") : shown;
+  });
+  return <span ref={ref}>{shown}</span>;
 }
