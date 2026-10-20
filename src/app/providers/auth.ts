@@ -73,7 +73,7 @@ async function startSession(tokens: TokenPair, errorName: string): Promise<AuthA
   // it here rather than from a component keeps it one connection for the
   // session instead of one per mount.
   connect();
-  return { success: true, redirectTo: "/" };
+  return { success: true, redirectTo: "/dashboard" };
 }
 
 export const authProvider: AuthProvider = {
