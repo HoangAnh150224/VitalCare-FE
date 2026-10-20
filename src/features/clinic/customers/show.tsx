@@ -28,10 +28,12 @@ import {
   CUSTOMER_STATUS_VARIANTS,
 } from "@/shared/lib/status-variants";
 import { ActivatePatientCard } from "./activate-patient-card";
+import { ActivityStatusCard } from "./activity-status-card";
 import { CareTeamPanel } from "./care-team-panel";
 import { DevicePanel } from "./device-panel";
 import { EncounterHistoryPanel } from "../encounters/encounter-history-panel";
 import { MedicalRecordPanel } from "../encounters/medical-record-panel";
+import { MonitoringNotesPanel } from "../encounters/monitoring-notes-panel";
 
 /**
  * One customer: who they are, whether they are a patient yet and how they
@@ -165,6 +167,7 @@ export const CustomerShow = () => {
         </DetailPanel>
 
         {record && <ActivatePatientCard customer={record} />}
+        {record && <ActivityStatusCard customer={record} />}
       </div>
 
       {/* Who follows the patient and what they wear — the two things the
@@ -181,6 +184,7 @@ export const CustomerShow = () => {
       {record && record.status === "patient" && (
         <div className="grid min-w-0 gap-4 lg:grid-cols-2">
           <MedicalRecordPanel key={record.id} customerId={record.id} />
+          <MonitoringNotesPanel key={`notes-${record.id}`} customerId={record.id} />
           <EncounterHistoryPanel customerId={record.id} patientName={record.fullName} />
         </div>
       )}

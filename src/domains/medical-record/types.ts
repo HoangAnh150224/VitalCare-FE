@@ -28,7 +28,8 @@ export const MEDICAL_RECORD_FIELDS: {
   { name: "medicalHistory", label: "Tiền sử bệnh", rows: 3, max: 10000 },
   { name: "familyHistory", label: "Tiền sử gia đình", rows: 2, max: 10000 },
   { name: "currentMedications", label: "Thuốc đang dùng", rows: 2, max: 5000 },
-  { name: "note", label: "Ghi chú theo dõi", rows: 3, max: 10000 },
+  // The running "ghi chú theo dõi" is a list of signed notes of its own now (SRS 3.9.3).
+  { name: "note", label: "Ghi chú khác", rows: 3, max: 10000 },
 ];
 
 export type MedicalRecordValues = Record<

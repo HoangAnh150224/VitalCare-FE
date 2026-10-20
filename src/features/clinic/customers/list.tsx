@@ -23,10 +23,11 @@ import { ShowButton } from "@/shared/components/buttons/show";
 import { Badge } from "@/shared/ui/badge";
 import type { Customer } from "@/domains/customer/types";
 import {
+  ACTIVITY_STATUS_LABELS,
   CUSTOMER_STATUS_LABELS,
   CUSTOMER_STATUS_OPTIONS,
 } from "@/domains/customer/types";
-import { CUSTOMER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
+import { ACTIVITY_STATUS_VARIANTS, CUSTOMER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatDate } from "@/shared/lib/format";
 import { useClinicOptions } from "../clinics/use-clinic-options";
 
@@ -102,12 +103,20 @@ export const CustomerList = ({ clinicId, readOnly = false }: FrontDeskListProps 
         id: "status",
         header: "Trạng thái",
         enableSorting: true,
-        cell: ({ getValue }) => {
+        cell: ({ getValue, row }) => {
           const status = getValue();
           return (
-            <Badge variant={CUSTOMER_STATUS_VARIANTS[status] ?? "secondary"}>
-              {CUSTOMER_STATUS_LABELS[status] ?? status}
-            </Badge>
+            <div className="flex flex-wrap gap-1">
+              <Badge variant={CUSTOMER_STATUS_VARIANTS[status] ?? "secondary"}>
+                {CUSTOMER_STATUS_LABELS[status] ?? status}
+              </Badge>
+              {/* Only when it says something: most people are simply active. */}
+              {row.original.activityStatus && row.original.activityStatus !== "active" && (
+                <Badge variant={ACTIVITY_STATUS_VARIANTS[row.original.activityStatus]}>
+                  {ACTIVITY_STATUS_LABELS[row.original.activityStatus]}
+                </Badge>
+              )}
+            </div>
           );
         },
       }),

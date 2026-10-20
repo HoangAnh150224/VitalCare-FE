@@ -1,3 +1,5 @@
+import type { ActivityStatus } from "@/domains/customer/types";
+import type { ClinicStatus } from "@/domains/clinic/types";
 import type { ComponentProps } from "react";
 
 import type { AppointmentStatus } from "@/domains/appointment/types";
@@ -138,6 +140,17 @@ export const ENCOUNTER_STATUS_VARIANTS: Record<EncounterStatus, BadgeVariant> = 
 export const ASSIGNMENT_STATUS_VARIANTS: Record<AssignmentStatus, BadgeVariant> = {
   active: "success",
   ended: "neutral",
+};
+
+export const ACTIVITY_STATUS_VARIANTS: Record<ActivityStatus, BadgeVariant> = {
+  active: "success",
+  inactive: "neutral",
+  paused: "warning",
+};
+
+export const CLINIC_STATUS_VARIANTS: Record<ClinicStatus, BadgeVariant> = {
+  OPERATING: "success",
+  INACTIVE: "neutral",
 };
 
 export const PERMISSION_ACTION_VARIANTS: Record<string, BadgeVariant> = {
