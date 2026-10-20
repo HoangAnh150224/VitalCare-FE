@@ -31,12 +31,26 @@ export type Customer = {
   address: string | null;
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
+  /** Whether the clinic is still looking after this person (SRS 3.8.5). */
+  activityStatus: ActivityStatus;
+  activityReason: string | null;
+  activityChangedAt: string | null;
+  /** Who made the last change; only on a single customer's answer. */
+  activityChangedBy: string | null;
   patientActivatedAt: string | null;
   patientActivationSource: PatientActivationSource | null;
   createdAt: string;
 };
 
 export type CustomerStatus = "neutral" | "patient";
+
+export type ActivityStatus = "active" | "inactive" | "paused";
+
+export const ACTIVITY_STATUS_LABELS: Record<ActivityStatus, string> = {
+  active: "Đang hoạt động",
+  inactive: "Ngừng hoạt động",
+  paused: "Tạm dừng theo dõi",
+};
 
 export type PatientActivationSource = "check_in" | "manual";
 
