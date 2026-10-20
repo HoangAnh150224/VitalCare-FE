@@ -55,9 +55,29 @@
   z-index: 1;
 }
 
+/* Arrives a beat after the headline, then breathes like a slip held in a hand. */
+.landing-ticket {
+  animation:
+    landing-rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.35s both,
+    landing-float 6s ease-in-out 1.2s infinite;
+}
+
 @media (min-width: 1024px) {
   .landing-ticket {
-    transform: rotate(-2.5deg);
+    rotate: -2.5deg;
+  }
+}
+
+/* Laid over the hero photo, the slip is smaller than on its own. */
+@media (min-width: 1024px) {
+  .landing-stage .landing-ticket-number {
+    font-size: 6rem;
+  }
+}
+
+@keyframes landing-float {
+  50% {
+    translate: 0 -10px;
   }
 }
 
@@ -102,7 +122,38 @@
   color: var(--landing-teal-deep);
 }
 
-/* --- the heartbeat, drawn once ------------------------------------------- */
+/* --- photos --------------------------------------------------------------- */
+.landing-photo {
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--landing-mint);
+}
+
+.landing-photo img {
+  transition: scale 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Not the hero photo: its drift animation owns `scale`. */
+.landing-photo:not(.landing-photo-hero):hover img {
+  scale: 1.05;
+}
+
+/* The hero photo fades in with the headline and drifts slowly closer. */
+.landing-photo-hero {
+  animation: landing-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.15s both;
+}
+
+.landing-photo-hero img {
+  animation: landing-drift 18s ease-in-out infinite alternate;
+}
+
+@keyframes landing-drift {
+  to {
+    scale: 1.08;
+  }
+}
+
+/* --- the heartbeat, a looping monitor sweep ------------------------------ */
 .landing-heartbeat {
   display: block;
   width: 100%;
@@ -117,26 +168,80 @@
   stroke-linejoin: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: landing-trace 2.4s cubic-bezier(0.45, 0, 0.2, 1) 0.3s forwards;
+  animation: landing-trace 4s cubic-bezier(0.45, 0, 0.55, 1) 0.3s infinite;
 }
 
+/* Drawn in from the left, then wiped off from the left: a monitor sweep. */
 @keyframes landing-trace {
-  to {
+  55% {
     stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -1;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .landing-heartbeat path {
-    animation: none;
-    stroke-dashoffset: 0;
+/* --- entrance and reveal ---------------------------------------------------- */
+.landing-enter > * {
+  animation: landing-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.landing-enter > :nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.landing-enter > :nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    translate: 0 24px;
   }
+}
+
+.landing-reveal {
+  opacity: 0;
+  translate: 0 32px;
+  transition:
+    opacity 0.7s ease-out,
+    translate 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.landing-reveal.is-visible {
+  opacity: 1;
+  translate: none;
+}
+
+/* Steps come in one after another once their section shows. */
+.landing-reveal .landing-step {
+  opacity: 0;
+  translate: 0 16px;
+  transition:
+    opacity 0.5s ease-out,
+    translate 0.5s ease-out,
+    border-color 0.3s;
+  /* The stagger is for the entrance only; the hover colour answers at once. */
+  transition-delay:
+    calc(0.25s + var(--i, 0) * 0.12s),
+    calc(0.25s + var(--i, 0) * 0.12s),
+    0s;
+}
+
+.landing-reveal.is-visible .landing-step {
+  opacity: 1;
+  translate: none;
 }
 
 /* --- steps ---------------------------------------------------------------- */
 .landing-step {
   border-top: 2px solid var(--landing-mint);
   padding-top: 1.25rem;
+}
+
+.landing-step:hover {
+  border-color: var(--landing-teal);
 }
 
 .landing-step-number {
@@ -172,8 +277,49 @@
   border-top: 1px solid var(--landing-mint);
 }
 
+/* The live dot beside the last reading. */
+.landing-live::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 0.5rem;
+  border-radius: 999px;
+  background: var(--landing-pulse);
+  vertical-align: 0.05em;
+  animation: landing-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes landing-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
 .landing-link {
   color: var(--landing-teal-deep);
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing *,
+  .landing *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .landing-heartbeat path {
+    stroke-dashoffset: 0;
+  }
+
+  .landing-photo img {
+    scale: none !important;
+  }
+
+  .landing-reveal,
+  .landing-reveal .landing-step {
+    opacity: 1;
+    translate: none;
+  }
 }
