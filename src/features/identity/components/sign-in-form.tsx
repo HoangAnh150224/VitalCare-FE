@@ -25,10 +25,8 @@ import { cn } from "@/shared/lib/utils";
  * normalises before it looks anything up, so this form sends what was typed.
  *
  * Self-registration is linked from here: anybody may create an account with a
- * phone number they can receive a code on. There is still no password-reset
- * link — a forgotten password is reset by an administrator on the Users
- * screen, and offering the link would send people to a page that cannot help
- * them.
+ * phone number they can receive a code on. A forgotten password is recovered
+ * the same way, with a code sent to the number, from "Quên mật khẩu?".
  *
  * The screen sits on `gradient-hero` rather than the page background, and that
  * is the one place in the application where a surface is a picture rather than
@@ -120,7 +118,12 @@ export const SignInForm = () => {
               </div>
 
               <div className={cn("relative mt-5 flex flex-col gap-2")}>
-                <Label htmlFor="password">Mật khẩu</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Mật khẩu</Label>
+                  <Link to="/forgot-password" className="text-link text-xs font-medium hover:underline">
+                    Quên mật khẩu?
+                  </Link>
+                </div>
                 <InputPassword
                   id="password"
                   name="password"
