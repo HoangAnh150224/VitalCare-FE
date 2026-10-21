@@ -1,5 +1,6 @@
-/* The public landing page. Its own small palette, drawn from the app's mobile
-   brand (teal on mist), with one red kept for the heartbeat trace alone. */
+/* The public landing page. The app's teal, deepened for the film at the top
+   and back to mist for the sections below it; one red kept for the pulse
+   and for alerts. */
 .landing {
   --landing-ink: #0f3d3f;
   --landing-teal: #008c91;
@@ -9,6 +10,8 @@
   --landing-paper: #ffffff;
   --landing-muted: #4f6b6d;
   --landing-pulse: #d6455d;
+  --cine-night: #06282a;
+  --cine-deep: #0b3b3e;
 
   background-color: var(--landing-mist);
   color: var(--landing-ink);
@@ -29,103 +32,233 @@
   color: var(--landing-muted);
 }
 
-.landing a:focus-visible {
-  outline: 2px solid var(--landing-teal);
+.landing a:focus-visible,
+.landing button:focus-visible {
+  outline: 2px solid #5fd4c7;
   outline-offset: 3px;
 }
 
-.landing-hero-title {
-  font-size: clamp(2.25rem, 1.4rem + 3.6vw, 4rem);
+.landing-section-title {
+  font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.625rem);
+  line-height: 1.12;
+}
+
+/* --- the film ------------------------------------------------------------- */
+.cine {
+  background:
+    radial-gradient(70% 60% at 75% 45%, #0f4d50 0%, transparent 70%),
+    linear-gradient(160deg, var(--cine-deep), var(--cine-night) 70%);
+  color: #fff;
+}
+
+.cine-photo-wrap {
+  overflow: hidden;
+}
+
+.cine-photo {
+  will-change: transform;
+}
+
+/* Darkens the photo where the headline sits, and towards the stage below. */
+.cine-photo-shade {
+  background:
+    linear-gradient(90deg, rgb(6 40 42 / 0.92) 0%, rgb(6 40 42 / 0.6) 42%, rgb(6 40 42 / 0.15) 75%),
+    linear-gradient(0deg, rgb(6 40 42 / 0.7), transparent 40%);
+}
+
+.cine-glow {
+  background:
+    radial-gradient(40% 40% at 70% 50%, rgb(46 196 182 / 0.12), transparent 70%),
+    linear-gradient(rgb(143 227 217 / 0.04) 1px, transparent 1px) 0 0 / 100% 64px;
+}
+
+.cine-stage {
+  transform-origin: center;
+}
+
+.cine-caption {
+  width: 470px;
+  will-change: transform, opacity;
+}
+
+.cine-title-hero {
+  font-size: 66px;
+  line-height: 1.04;
+}
+
+.cine-title {
+  font-size: 46px;
   line-height: 1.08;
 }
 
-.landing-section-title {
-  font-size: clamp(1.625rem, 1.2rem + 1.6vw, 2.375rem);
-  line-height: 1.15;
+.cine-body {
+  font-size: 19px;
+  line-height: 1.65;
+  max-width: 34em;
 }
 
-/* --- the queue slip ------------------------------------------------------- */
-.landing-ticket {
-  background: var(--landing-paper);
-  border-radius: 18px;
-  box-shadow:
-    0 1px 0 rgb(15 61 63 / 0.06),
-    0 24px 48px -24px rgb(11 95 99 / 0.35);
-  position: relative;
-  z-index: 1;
+.cine[data-layout="wide"] .cine-caption {
+  left: 110px;
+  top: 230px;
 }
 
-/* Arrives a beat after the headline, then breathes like a slip held in a hand. */
-.landing-ticket {
-  animation:
-    landing-rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.35s both,
-    landing-float 6s ease-in-out 1.2s infinite;
+.cine[data-layout="wide"] .cine-caption[data-scene="0"] {
+  top: 290px;
+  width: 660px;
 }
 
-@media (min-width: 1024px) {
-  .landing-ticket {
-    rotate: -2.5deg;
-  }
+.cine[data-layout="wide"] .cine-visual {
+  left: 600px;
+  top: 150px;
 }
 
-/* Laid over the hero photo, the slip is smaller than on its own. */
-@media (min-width: 1024px) {
-  .landing-stage .landing-ticket-number {
-    font-size: 6rem;
-  }
+/* Phones: the words above, the picture below, the picture scaled to fit. */
+.cine[data-layout="tall"] .cine-caption {
+  left: 40px;
+  top: 130px;
+  width: 640px;
 }
 
-@keyframes landing-float {
-  50% {
-    translate: 0 -10px;
-  }
+.cine[data-layout="tall"] .cine-title-hero {
+  font-size: 60px;
 }
 
-.landing-ticket-number {
-  font-size: clamp(6rem, 4rem + 8vw, 8.5rem);
-  line-height: 0.9;
-  margin: 0.75rem 0 0.5rem -0.06em;
-  font-variant-numeric: tabular-nums;
-  color: var(--landing-teal);
+.cine[data-layout="tall"] .cine-title {
+  font-size: 46px;
 }
 
-/* Torn-off line between the stub and the details: two notches and a dashed rule. */
-.landing-perforation {
-  position: relative;
-  height: 0;
-  margin: 0 22px;
-  border-top: 2px dashed var(--landing-mint);
+.cine[data-layout="tall"] .cine-body {
+  font-size: 24px;
 }
 
-.landing-perforation::before,
-.landing-perforation::after {
-  content: "";
-  position: absolute;
-  top: -12px;
-  width: 22px;
-  height: 22px;
+.cine[data-layout="tall"] .cine-visual {
+  left: 40px;
+  top: 640px;
+  transform: scale(0.68);
+  transform-origin: top left;
+}
+
+.cine-visual {
+  perspective: 1600px;
+}
+
+.cine-layer {
+  will-change: transform, opacity;
+}
+
+.cine-layer-devices,
+.cine-layer-dash {
+  perspective: 1400px;
+}
+
+/* The camera moves inside this frame: zooming on the chart must not spill
+   over the words beside it. */
+.cine-layer-dash {
+  overflow: hidden;
+  border-radius: 22px;
+}
+
+.cine-devices-rig,
+.cine-dash-rig,
+.cine-phone-rig {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.cine-glass {
+  background: rgb(13 68 71 / 0.78);
+  border: 1px solid rgb(143 227 217 / 0.28);
+  box-shadow: 0 20px 40px -24px rgb(0 0 0 / 0.6);
+}
+
+.cine-glass-light {
+  background: rgb(255 255 255 / 0.97);
+  box-shadow: 0 30px 60px -24px rgb(0 0 0 / 0.55);
+}
+
+.cine-particle {
+  filter: drop-shadow(0 0 6px rgb(95 212 199 / 0.9));
+}
+
+.cine-progress-dot {
+  color: rgb(207 233 230 / 0.45);
+  transition: color 0.3s;
+}
+
+.cine-progress-mark {
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
-  background: var(--landing-mist);
+  background: currentColor;
+  transition:
+    width 0.3s,
+    background-color 0.3s;
 }
 
-.landing-perforation::before {
-  left: -34px;
+.cine-progress-dot[data-active] {
+  color: #d9f6f2;
 }
 
-.landing-perforation::after {
-  right: -34px;
+.cine-progress-dot[data-active] .cine-progress-mark {
+  width: 22px;
+  background: #5fd4c7;
 }
 
-.landing-ticket-foot {
-  border-radius: 0 0 18px 18px;
+/* The opening words arrive once on load; everything after is scroll. */
+.cine-caption[data-scene="0"] > * {
+  animation: cine-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.cine-caption[data-scene="0"] > :nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+@keyframes cine-rise {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+  }
+}
+
+.cine-still {
+  padding-bottom: 2rem;
+}
+
+/* --- sections after the film ------------------------------------------------ */
+.landing-feature {
+  border-top: 2px solid var(--landing-mint);
+  padding-top: 1.25rem;
+}
+
+.landing-band {
   background: var(--landing-mint);
-  color: var(--landing-teal-deep);
 }
 
-/* --- photos --------------------------------------------------------------- */
+.landing-flow-track {
+  background: rgb(0 140 145 / 0.15);
+}
+
+.landing-flow-line {
+  background: var(--landing-teal);
+}
+
+.landing-flow-number {
+  position: relative;
+  display: inline-flex;
+  width: 46px;
+  height: 46px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid var(--landing-teal);
+  background: var(--landing-paper);
+  color: var(--landing-teal);
+  font-size: 1.125rem;
+}
+
 .landing-photo {
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 24px;
   background: var(--landing-mint);
 }
 
@@ -133,132 +266,15 @@
   transition: scale 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-/* Not the hero photo: its drift animation owns `scale`. */
-.landing-photo:not(.landing-photo-hero):hover img {
-  scale: 1.05;
+.landing-photo:hover img {
+  scale: 1.04;
 }
 
-/* The hero photo fades in with the headline and drifts slowly closer. */
-.landing-photo-hero {
-  animation: landing-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.15s both;
-}
-
-.landing-photo-hero img {
-  animation: landing-drift 18s ease-in-out infinite alternate;
-}
-
-@keyframes landing-drift {
-  to {
-    scale: 1.08;
-  }
-}
-
-/* --- the heartbeat, a looping monitor sweep ------------------------------ */
-.landing-heartbeat {
-  display: block;
-  width: 100%;
-  height: 80px;
-  pointer-events: none;
-}
-
-.landing-heartbeat path {
-  fill: none;
-  stroke: var(--landing-pulse);
-  stroke-width: 2;
-  stroke-linejoin: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: landing-trace 4s cubic-bezier(0.45, 0, 0.55, 1) 0.3s infinite;
-}
-
-/* Drawn in from the left, then wiped off from the left: a monitor sweep. */
-@keyframes landing-trace {
-  55% {
-    stroke-dashoffset: 0;
-  }
-  100% {
-    stroke-dashoffset: -1;
-  }
-}
-
-/* --- entrance and reveal ---------------------------------------------------- */
-.landing-enter > * {
-  animation: landing-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-
-.landing-enter > :nth-child(2) {
-  animation-delay: 0.12s;
-}
-
-.landing-enter > :nth-child(3) {
-  animation-delay: 0.24s;
-}
-
-@keyframes landing-rise {
-  from {
-    opacity: 0;
-    translate: 0 24px;
-  }
-}
-
-.landing-reveal {
-  opacity: 0;
-  translate: 0 32px;
-  transition:
-    opacity 0.7s ease-out,
-    translate 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-.landing-reveal.is-visible {
-  opacity: 1;
-  translate: none;
-}
-
-/* Steps come in one after another once their section shows. */
-.landing-reveal .landing-step {
-  opacity: 0;
-  translate: 0 16px;
-  transition:
-    opacity 0.5s ease-out,
-    translate 0.5s ease-out,
-    border-color 0.3s;
-  /* The stagger is for the entrance only; the hover colour answers at once. */
-  transition-delay:
-    calc(0.25s + var(--i, 0) * 0.12s),
-    calc(0.25s + var(--i, 0) * 0.12s),
-    0s;
-}
-
-.landing-reveal.is-visible .landing-step {
-  opacity: 1;
-  translate: none;
-}
-
-/* --- steps ---------------------------------------------------------------- */
-.landing-step {
-  border-top: 2px solid var(--landing-mint);
-  padding-top: 1.25rem;
-}
-
-.landing-step:hover {
-  border-color: var(--landing-teal);
-}
-
-.landing-step-number {
-  font-size: 2.5rem;
-  line-height: 1;
-  color: var(--landing-teal);
-}
-
-/* --- monitoring band ------------------------------------------------------ */
-.landing-band {
-  background: var(--landing-mint);
-}
-
-.landing-readings {
+.landing-ai-card {
   background: var(--landing-paper);
-  border-radius: 14px;
+  border-radius: 20px;
   padding: 1.75rem;
+  box-shadow: 0 24px 48px -32px rgb(11 95 99 / 0.45);
 }
 
 .landing-note {
@@ -267,33 +283,15 @@
   color: var(--landing-ink);
 }
 
-/* --- closing call --------------------------------------------------------- */
 .landing-cta {
-  background: var(--landing-teal-deep);
-  border-radius: 24px;
+  background:
+    radial-gradient(60% 80% at 85% 20%, rgb(46 196 182 / 0.25), transparent 70%),
+    var(--landing-teal-deep);
+  border-radius: 28px;
 }
 
 .landing-rule {
   border-top: 1px solid var(--landing-mint);
-}
-
-/* The live dot beside the last reading. */
-.landing-live::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 0.5rem;
-  border-radius: 999px;
-  background: var(--landing-pulse);
-  vertical-align: 0.05em;
-  animation: landing-blink 1.6s ease-in-out infinite;
-}
-
-@keyframes landing-blink {
-  50% {
-    opacity: 0.25;
-  }
 }
 
 .landing-link {
@@ -307,19 +305,5 @@
   .landing *::before {
     animation: none !important;
     transition: none !important;
-  }
-
-  .landing-heartbeat path {
-    stroke-dashoffset: 0;
-  }
-
-  .landing-photo img {
-    scale: none !important;
-  }
-
-  .landing-reveal,
-  .landing-reveal .landing-step {
-    opacity: 1;
-    translate: none;
   }
 }
