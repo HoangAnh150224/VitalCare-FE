@@ -63,11 +63,10 @@ export function StillStory({ header, onExplore }: { header: ReactNode; onExplore
               </Button>
             )}
           </div>
-          <figure className={i === 4 || i === 5 ? "mx-auto w-full max-w-[340px]" : ""}>
+          <div className={i === 4 || i === 5 ? "mx-auto w-full max-w-[340px]" : ""}>
             {/* The drawings are made-up screens; the caption beside them says what they show. */}
             <div aria-hidden={i > 0}>{visuals[i]}</div>
-            {i > 0 && <figcaption className="mt-3 text-[12px] text-[#8fb9b5]">Minh họa · dữ liệu mô phỏng</figcaption>}
-          </figure>
+          </div>
         </div>
       ))}
     </section>
