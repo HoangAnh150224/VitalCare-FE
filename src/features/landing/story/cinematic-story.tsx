@@ -71,7 +71,7 @@ export function CinematicStory({ header, onExplore }: { header: ReactNode; onExp
       // --- starting states -------------------------------------------------
       gsap.set(q(".cine-caption"), { autoAlpha: 0, y: 40 });
       gsap.set(q(".cine-caption[data-scene='0']"), { autoAlpha: 1, y: 0 });
-      gsap.set(q(".cine-photo"), { scale: 1.06, transformOrigin: "30% 40%" });
+      gsap.set(q(".cine-photo"), { scale: 1.06, transformOrigin: "54% 42%" });
       gsap.set(q(".cine-layer-devices"), { autoAlpha: 0, scale: 0.5 });
       gsap.set(q(".cine-devices-rig"), { rotateY: -38, rotateX: 14 });
       gsap.set(q(".cine-ring"), { scale: 0.6, autoAlpha: 0, transformOrigin: "50% 50%", transformBox: "fill-box" });
@@ -105,7 +105,7 @@ export function CinematicStory({ header, onExplore }: { header: ReactNode; onExp
         tl.to(q(`.cine-caption[data-scene='${to}']`), { autoAlpha: 1, y: 0, duration: 3 }, at + 2);
       };
 
-      // --- 1. at home: the camera moves in on the device on the finger ------
+      // --- 1. at home: the camera moves in on the device on the wrist -------
       tl.to(q(".cine-photo"), { scale: 2.6, duration: 13 }, 1);
       tl.to(q(".cine-photo-wrap"), { autoAlpha: 0, duration: 4 }, 10);
       tl.to(q(".cine-scroll-hint"), { autoAlpha: 0, duration: 2 }, 0);
@@ -209,10 +209,10 @@ export function CinematicStory({ header, onExplore }: { header: ReactNode; onExp
       {/* The opening shot, full bleed behind the stage. */}
       <div className="cine-photo-wrap absolute inset-0">
         <img
-          src="/landing/oximeter-home.webp"
-          alt="Máy đo SpO₂ kẹp trên ngón tay một bệnh nhân"
+          src="/landing/wrist-monitor.webp"
+          alt="Thiết bị theo dõi sức khỏe đeo trên cổ tay"
           className="cine-photo size-full object-cover"
-          style={{ objectPosition: "30% 40%" }}
+          style={{ objectPosition: "54% 42%" }}
           fetchPriority="high"
         />
         <div className="cine-photo-shade absolute inset-0" />
