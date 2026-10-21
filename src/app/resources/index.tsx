@@ -21,6 +21,7 @@ import {
   Tags,
   Users,
   Eye,
+  DoorOpen,
 } from "lucide-react";
 
 /**
@@ -215,6 +216,16 @@ export const resources: ResourceProps[] = [
     meta: {
       label: "Lần khám",
       icon: <Stethoscope className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // The floor: rooms, who is in them, who waits. Rooms are added on the clinic's page.
+  {
+    name: "exam_rooms",
+    list: "/exam-rooms",
+    meta: {
+      label: "Điều phối phòng khám",
+      icon: <DoorOpen className="h-4 w-4" />,
       parent: "clinic",
     },
   },

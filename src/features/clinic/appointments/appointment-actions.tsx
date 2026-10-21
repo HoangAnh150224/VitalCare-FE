@@ -92,7 +92,8 @@ export function AppointmentActions({ appointment, resource, size = "default", co
   const scheduled = appointment.status === "scheduled";
   const writable = canWrite?.can ?? false;
   const showCheckIn = desk && scheduled && (canCheckIn?.can ?? false) && appointment.appointmentDate === today;
-  const showComplete = !compact && desk && writable && appointment.status === "checked_in";
+  const showComplete =
+    !compact && desk && writable && (appointment.status === "checked_in" || appointment.status === "in_exam");
   const showChange = !compact && scheduled && writable;
   const showNoShow = showChange && desk && appointment.appointmentDate <= today;
 

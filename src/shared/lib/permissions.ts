@@ -25,7 +25,7 @@
  */
 export const ACTION_TO_PERMISSION: Record<
   string,
-  "read" | "write" | "delete" | "activate" | "check_in" | "assign" | "assign_staff" | "status"
+  "read" | "write" | "delete" | "activate" | "check_in" | "assign" | "assign_staff" | "status" | "operate"
 > = {
   // customers:assign — putting a patient in somebody's care and on a device.
   assign: "assign",
@@ -42,6 +42,8 @@ export const ACTION_TO_PERMISSION: Record<
   // customers:status — active, inactive or paused (SRS 3.8.5).
   status: "status",
   check_in: "check_in",
+  // exam_rooms:operate — calling the next patient in, passing one over, pausing a room.
+  operate: "operate",
 };
 
 /**

@@ -18,3 +18,4 @@ export * from "./schedules";
 export * from "./assignments";
 export * from "./my-patients";
 export * from "./view-as";
+export * from "./exam-rooms";
