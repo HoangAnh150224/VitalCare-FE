@@ -291,9 +291,6 @@ export function CinematicStory({ header, onExplore }: { header: ReactNode; onExp
       <p className="cine-scroll-hint absolute bottom-14 left-1/2 -translate-x-1/2 whitespace-nowrap text-[13px] sm:bottom-8 text-[#cfe9e6]">
         Cuộn để xem hành trình của một lần đo
       </p>
-      <p className="absolute bottom-4 left-4 rounded-full bg-black/30 px-3 py-1 text-[11px] text-[#cfe9e6] sm:left-6">
-        Minh họa · dữ liệu mô phỏng
-      </p>
     </section>
   );
 }
