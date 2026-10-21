@@ -36,6 +36,9 @@ export type Appointment = {
   status: AppointmentStatus;
   note: string | null;
   checkedInAt: string | null;
+  /** The examination room the visit is or was in; null until it is called in. */
+  examRoom: { id: number; code: string; name: string | null } | null;
+  calledAt: string | null;
   cancelledAt: string | null;
   /** Why the clinic cancelled it; null when the customer cancelled their own. */
   cancelReason: string | null;
@@ -51,12 +54,16 @@ export function formatBookingCode(code: string | null | undefined): string {
   return code.length === 8 ? `${code.slice(0, 4)}-${code.slice(4)}` : code;
 }
 
-/** Registered, checked in at the desk, completed — or cancelled, or never came. */
-export type AppointmentStatus = "scheduled" | "checked_in" | "completed" | "cancelled" | "no_show";
+/**
+ * Registered, checked in at the desk (waiting for the doctor), in the
+ * examination room, completed — or cancelled, or never came.
+ */
+export type AppointmentStatus = "scheduled" | "checked_in" | "in_exam" | "completed" | "cancelled" | "no_show";
 
 export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
   scheduled: "Đã đăng ký",
   checked_in: "Đã tiếp nhận",
+  in_exam: "Đang khám",
   completed: "Hoàn tất",
   cancelled: "Đã huỷ",
   no_show: "Không đến",

@@ -102,6 +102,8 @@ export const CUSTOMER_STATUS_VARIANTS: Record<CustomerStatus, BadgeVariant> = {
 export const APPOINTMENT_STATUS_VARIANTS: Record<AppointmentStatus, BadgeVariant> = {
   scheduled: "info",
   checked_in: "warning",
+  // Solid: the one state where something is happening right now.
+  in_exam: "default",
   completed: "success",
   cancelled: "neutral",
   no_show: "destructive",

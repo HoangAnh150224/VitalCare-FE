@@ -57,7 +57,7 @@ export const AppointmentShow = () => {
     queryOptions: { enabled: Boolean(record?.id) && (canReadEncounters?.can ?? false) },
   });
   const related = encounters?.data ?? [];
-  const open = record?.status === "scheduled" || record?.status === "checked_in";
+  const open = record?.status === "scheduled" || record?.status === "checked_in" || record?.status === "in_exam";
 
   const status = record?.status;
   const willActivate =
@@ -101,7 +101,7 @@ export const AppointmentShow = () => {
                 {record && <AppointmentActions appointment={record} resource="appointments" />}
               </div>
               {/* The visit follows the check-in: open its encounter from here. */}
-              {record?.status === "checked_in" && canRecordEncounter?.can && (
+              {(record?.status === "checked_in" || record?.status === "in_exam") && canRecordEncounter?.can && (
                 <Button asChild variant="outline">
                   <Link
                     to={newEncounterPath({
@@ -127,6 +127,12 @@ export const AppointmentShow = () => {
                 <span className="font-mono">{formatBookingCode(record?.bookingCode)}</span>
               </MetaItem>
               <MetaItem label="Đăng ký lúc">{formatDateTime(record?.createdAt)}</MetaItem>
+              {record?.examRoom && (
+                <MetaItem label="Phòng khám">
+                  {record.examRoom.code}
+                  {record.calledAt ? ` · vào lúc ${formatDateTime(record.calledAt)}` : ""}
+                </MetaItem>
+              )}
             </MetaStrip>
           </div>
         </LoadingOverlay>

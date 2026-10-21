@@ -15,6 +15,7 @@ import { customResult } from "@/shared/hooks/use-custom-result";
 import type { Clinic, ClinicSummary } from "@/domains/clinic/types";
 import { CLINIC_STATUS_LABELS } from "@/domains/clinic/types";
 import { CLINIC_STATUS_VARIANTS } from "@/shared/lib/status-variants";
+import { ClinicRoomsPanel } from "../exam-rooms/rooms-panel";
 
 /**
  * One clinic (SRS 3.18.3): how to reach it, whether it is operating, and how
@@ -74,6 +75,8 @@ export const ClinicShow = () => {
           <DetailRow label="Địa chỉ">{record?.address ?? <EmptyValue />}</DetailRow>
         </DetailList>
       </DetailPanel>
+
+      {record?.id && <ClinicRoomsPanel clinicId={record.id} />}
     </ShowView>
   );
 };

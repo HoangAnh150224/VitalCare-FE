@@ -11,6 +11,8 @@ export type WorkingHoursEntry = {
   endTime: string;
   /** How long one patient's visit takes; the session holds as many patients as fit. */
   visitMinutes: number;
+  /** The examination room the doctor sits in for the session; null when none is set. */
+  examRoomId?: number | null;
 };
 
 /**

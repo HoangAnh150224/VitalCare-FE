@@ -91,6 +91,7 @@ import {
   ViewAsAllAppointments,
   ViewAsAllPatients,
   ViewAsFrontDesk,
+  ExamRoomBoard,
 } from "@/features/clinic";
 import { ErrorComponent } from "@/shared/components/layout/error-component";
 import { Forbidden } from "@/shared/components/layout/forbidden";
@@ -426,6 +427,20 @@ export function AppRoutes() {
         >
           <Route index element={<AssignmentList />} />
           <Route path="show/:id" element={<AssignmentShow />} />
+        </Route>
+        <Route
+          path="/exam-rooms"
+          element={
+            <CanAccess
+              resource="exam_rooms"
+              action="list"
+              fallback={<Forbidden resource="exam_rooms" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<ExamRoomBoard />} />
         </Route>
         <Route
           path="/clinics"
