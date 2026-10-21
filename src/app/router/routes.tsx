@@ -44,7 +44,7 @@ import {
   RowLevelPolicyEdit,
   RowLevelPolicyShow,
 } from "@/features/administration";
-import { Login, Profile, Register } from "@/features/identity";
+import { ForgotPassword, Login, Profile, Register } from "@/features/identity";
 import { Landing } from "@/features/landing";
 import {
   AppointmentCreate,
@@ -520,6 +520,7 @@ export function AppRoutes() {
       >
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Route>
     </Routes>
   );

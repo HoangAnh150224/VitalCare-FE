@@ -24,16 +24,47 @@ export type RegistrationError = {
 export async function requestRegistrationCode(
   phone: string
 ): Promise<{ ok: true; value: OtpSent } | { ok: false; error: RegistrationError }> {
+  return post(`${API_URL}/auth/register/otp`, { phone });
+}
+
+/**
+ * Asks for a password-recovery code to be sent to a phone number.
+ *
+ * The API answers the same whether or not the number has an account, so a
+ * success here means only that the request was accepted.
+ */
+export async function requestPasswordResetCode(
+  phone: string
+): Promise<{ ok: true; value: OtpSent } | { ok: false; error: RegistrationError }> {
+  return post(`${API_URL}/auth/password-reset/otp`, { phone }, RESET_FAILED);
+}
+
+/** Sets a new password with the recovery code. Signs nobody in. */
+export async function resetPassword(body: {
+  phone: string;
+  otp: string;
+  newPassword: string;
+}): Promise<{ ok: true; value: unknown } | { ok: false; error: RegistrationError }> {
+  return post(`${API_URL}/auth/password-reset`, body, RESET_FAILED);
+}
+
+const RESET_FAILED = "Không đặt lại được mật khẩu";
+
+async function post<T>(
+  url: string,
+  body: unknown,
+  fallback?: string
+): Promise<{ ok: true; value: T } | { ok: false; error: RegistrationError }> {
   try {
-    const response = await fetch(`${API_URL}/auth/register/otp`, {
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone }),
+      body: JSON.stringify(body),
     });
     if (response.ok) {
-      return { ok: true, value: (await response.json()) as OtpSent };
+      return { ok: true, value: (await response.json()) as T };
     }
-    return { ok: false, error: await readRegistrationError(response) };
+    return { ok: false, error: await readRegistrationError(response, fallback) };
   } catch {
     return {
       ok: false,
@@ -73,13 +104,16 @@ export function translateRegistrationMessage(message: string): string {
  * underneath is the one that says what to fix, so it becomes the headline —
  * that is what a toast built from this error will show.
  */
-export async function readRegistrationError(response: Response): Promise<RegistrationError> {
+export async function readRegistrationError(
+  response: Response,
+  fallback = "Đăng ký thất bại"
+): Promise<RegistrationError> {
   try {
     const body = (await response.json()) as { message?: string; errors?: Record<string, string> };
     const firstFieldMessage = body.errors ? Object.values(body.errors)[0] : undefined;
-    const message = firstFieldMessage ?? body.message ?? "Đăng ký thất bại";
+    const message = firstFieldMessage ?? body.message ?? fallback;
     return { message: translateRegistrationMessage(message), fieldErrors: body.errors };
   } catch {
-    return { message: "Đăng ký thất bại" };
+    return { message: fallback };
   }
 }

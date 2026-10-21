@@ -2,8 +2,8 @@
  * Who you are: signing in, registering, and your own profile.
  *
  * `Register` is routed at `/register` — self-registration by phone number with
- * a one-time code. `ForgotPassword` is still unused scaffolding: passwords are
- * reset by an administrator on the Users screen, so nothing routes to it.
+ * a one-time code. `ForgotPassword` is routed at `/forgot-password` — a new
+ * password set with a code sent to the number the account signs in with.
  */
 export { Login } from "./login";
 export { Profile } from "./profile";
