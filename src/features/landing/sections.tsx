@@ -24,7 +24,7 @@ const FEATURES = [
   { Icon: Users, title: "Quản lý bệnh nhân", body: "Hồ sơ cho cả gia đình, giấy tờ tùy thân và trạng thái theo dõi." },
   { Icon: ClipboardList, title: "Hồ sơ bệnh án", body: "Lần khám, chẩn đoán của bác sĩ và ghi chú theo dõi có ký tên." },
   { Icon: CalendarCheck, title: "Đăng ký khám", body: "Chọn bác sĩ và ngày, nhận số thứ tự ngay khi đăng ký." },
-  { Icon: Cpu, title: "Thiết bị IoMT", body: "Kho thiết bị theo cơ sở, cấp cho bệnh nhân và thu hồi khi xong." },
+  { Icon: Cpu, title: "Thiết bị theo dõi", body: "Kho thiết bị theo cơ sở, cấp cho bệnh nhân và thu hồi khi xong." },
   { Icon: Activity, title: "Theo dõi từ xa", body: "SpO₂, nhịp tim và nhiệt độ gửi về liên tục, xem theo xu hướng." },
   { Icon: BellRing, title: "Cảnh báo & phản hồi", body: "Vượt ngưỡng thì tạo cảnh báo, nhân viên y tế nhận và xử lý." },
   { Icon: Smartphone, title: "Theo dõi trên di động", body: "Bệnh nhân và người chăm sóc xem chỉ số, thông báo, lịch tái khám." },

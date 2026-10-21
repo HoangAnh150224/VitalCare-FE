@@ -18,8 +18,8 @@ export function StillStory({ header, onExplore }: { header: ReactNode; onExplore
   const visuals: ReactNode[] = [
     <img
       key="photo"
-      src="/landing/oximeter-home.webp"
-      alt="Máy đo SpO₂ kẹp trên ngón tay một bệnh nhân"
+      src="/landing/wrist-monitor.webp"
+      alt="Thiết bị theo dõi sức khỏe đeo trên cổ tay"
       className="size-full rounded-3xl object-cover"
     />,
     <Fit key="devices" w={940} h={640}>

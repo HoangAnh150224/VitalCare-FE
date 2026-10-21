@@ -5,7 +5,7 @@ const FLOW_ROUTE =
   "M110 330 C200 330 250 190 360 190 C470 190 480 440 600 440 C720 440 730 290 840 290";
 
 const NODES = [
-  { x: 110, y: 330, Icon: HeartPulse, name: "Thiết bị IoMT", stage: "Thu nhận" },
+  { x: 110, y: 330, Icon: HeartPulse, name: "Thiết bị theo dõi", stage: "Thu nhận" },
   { x: 360, y: 190, Icon: Smartphone, name: "Điện thoại / Gateway", stage: "Truyền an toàn" },
   { x: 600, y: 440, Icon: Server, name: "Máy chủ VitalCare", stage: "Kiểm tra & xử lý" },
   { x: 840, y: 290, Icon: LayoutDashboard, name: "Nền tảng theo dõi", stage: "Lưu vào hồ sơ" },
