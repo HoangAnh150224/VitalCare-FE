@@ -20,6 +20,7 @@ import { Textarea } from "@/shared/ui/textarea";
 import type { MedicalService, ServiceOrder } from "@/domains/billing/types";
 import { isOrderOutstanding, SERVICE_CATEGORY_LABELS } from "@/domains/billing/types";
 import { formatDateTime, formatMoney } from "@/shared/lib/format";
+import { billingErrorNotification } from "@/domains/billing/messages";
 import { CancelOrderDialog, OrderFiles, OrderStatusBadge, useOrderActions } from "./order-parts";
 
 /**
@@ -166,6 +167,7 @@ function OrderDialog({
         values: { serviceId: Number(serviceId), instruction: instruction.trim() || null },
         config: { headers: { "Content-Type": "application/json" } },
         successNotification: false,
+        errorNotification: billingErrorNotification,
       },
       {
         onSuccess: () => {

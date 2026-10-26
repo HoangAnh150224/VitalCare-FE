@@ -21,13 +21,14 @@ import {
   RESULT_FILE_MAX_BYTES,
   SERVICE_ORDER_STATUS_LABELS,
 } from "@/domains/billing/types";
+import { billingErrorNotification, billingErrorText } from "@/domains/billing/messages";
 import { SERVICE_ORDER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 
 export const OrderStatusBadge = ({ status }: { status: ServiceOrder["status"] }) => (
   <Badge variant={SERVICE_ORDER_STATUS_VARIANTS[status]}>{SERVICE_ORDER_STATUS_LABELS[status]}</Badge>
 );
 
-type HttpFailure = { message?: string };
+type HttpFailure = { message?: string; errors?: Record<string, unknown> };
 
 /**
  * The steps of an order, each a POST/PATCH on `/service_orders/{id}/...`.
@@ -47,6 +48,7 @@ export function useOrderActions(onChanged: (order: ServiceOrder) => void) {
           values,
           config: { headers: { "Content-Type": "application/json" } },
           successNotification: false,
+          errorNotification: billingErrorNotification,
         },
         {
           onSuccess: ({ data }) => {
@@ -77,7 +79,7 @@ export function useOrderActions(onChanged: (order: ServiceOrder) => void) {
       );
       open?.({ type: "success", message: `Đã đính kèm ${file.name}` });
     } catch (error) {
-      open?.({ type: "error", message: (error as HttpFailure).message ?? "Không tải lên được" });
+      open?.({ type: "error", message: billingErrorText(error as HttpFailure) });
     } finally {
       setUploading(false);
     }
@@ -114,7 +116,7 @@ export function OrderFiles({ order }: { order: Pick<ServiceOrder, "id" | "files"
       link.click();
       URL.revokeObjectURL(url);
     } catch (error) {
-      open?.({ type: "error", message: (error as HttpFailure).message ?? "Không tải được file" });
+      open?.({ type: "error", message: billingErrorText(error as HttpFailure) });
     } finally {
       setBusy(null);
     }

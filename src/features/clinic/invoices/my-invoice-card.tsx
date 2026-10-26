@@ -8,6 +8,7 @@ import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { customResult } from "@/shared/hooks/use-custom-result";
 import type { OwnInvoice } from "@/domains/billing/types";
+import { billingErrorNotification } from "@/domains/billing/messages";
 import { InvoiceLines, InvoiceStatusBadge } from "./invoice-lines";
 
 /** What VNPay's return tells the customer, by the `?payment=` the API sends them back with. */
@@ -63,6 +64,7 @@ export function MyInvoiceCard({ appointmentId }: { appointmentId: number }) {
         values: {},
         config: { headers: { "Content-Type": "application/json" } },
         successNotification: false,
+        errorNotification: billingErrorNotification,
       },
       // A full navigation: VNPay's page, then back to this slip through the API's return.
       { onSuccess: ({ data }) => window.location.assign(data.url) },

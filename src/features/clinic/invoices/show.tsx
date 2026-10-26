@@ -22,6 +22,7 @@ import { Label } from "@/shared/ui/label";
 import type { Invoice, PaymentMethod } from "@/domains/billing/types";
 import { PAYMENT_METHOD_LABELS } from "@/domains/billing/types";
 import { formatDateTime, formatMoney } from "@/shared/lib/format";
+import { billingErrorNotification } from "@/domains/billing/messages";
 import { InvoiceLines, InvoiceStatusBadge, PaymentHistory } from "./invoice-lines";
 
 /**
@@ -113,6 +114,7 @@ function CounterPaymentDialog({ invoice, open, onClose }: { invoice: Invoice; op
         values: { method },
         config: { headers: { "Content-Type": "application/json" } },
         successNotification: false,
+        errorNotification: billingErrorNotification,
       },
       {
         onSuccess: () => {

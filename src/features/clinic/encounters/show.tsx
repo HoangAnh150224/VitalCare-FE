@@ -31,6 +31,7 @@ import type { Encounter } from "@/domains/encounter/types";
 import { ENCOUNTER_STATUS_LABELS, isEncounterLocked } from "@/domains/encounter/types";
 import { STAFF_TYPE_LABELS } from "@/domains/employee/types";
 import { ENCOUNTER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
+import { billingErrorNotification } from "@/domains/billing/messages";
 import { EncounterOrdersPanel, useEncounterOrders } from "../service-orders/encounter-orders-panel";
 
 /** One encounter: what was recorded at the visit, and the step that closes it. */
@@ -61,6 +62,8 @@ export const EncounterShow = () => {
         values: {},
         config: { headers: { "Content-Type": "application/json" } },
         successNotification: false,
+        // Concluding now also checks the ordered services and issues the bill.
+        errorNotification: billingErrorNotification,
       },
       {
         onSuccess: () => {
