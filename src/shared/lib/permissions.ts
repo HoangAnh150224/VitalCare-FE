@@ -25,7 +25,7 @@
  */
 export const ACTION_TO_PERMISSION: Record<
   string,
-  "read" | "write" | "delete" | "activate" | "check_in" | "assign" | "assign_staff" | "status" | "operate" | "report"
+  "read" | "write" | "delete" | "activate" | "check_in" | "assign" | "assign_staff" | "status" | "operate" | "report" | "conclude"
 > = {
   // customers:assign — putting a patient in somebody's care and on a device.
   assign: "assign",
@@ -46,6 +46,8 @@ export const ACTION_TO_PERMISSION: Record<
   operate: "operate",
   // invoices:report — the clinic's revenue, the clinic administrator's.
   report: "report",
+  // clinical_encounters:conclude — the diagnosis and completing the visit, the doctor's.
+  conclude: "conclude",
 };
 
 /**

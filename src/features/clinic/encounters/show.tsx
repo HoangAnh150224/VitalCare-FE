@@ -28,7 +28,7 @@ import {
 } from "@/shared/components/views/record-detail";
 import { formatDateTime } from "@/shared/lib/format";
 import type { Encounter } from "@/domains/encounter/types";
-import { ENCOUNTER_STATUS_LABELS, isEncounterLocked } from "@/domains/encounter/types";
+import { bodyMassIndex, ENCOUNTER_STATUS_LABELS, isEncounterLocked, VITAL_FIELDS } from "@/domains/encounter/types";
 import { STAFF_TYPE_LABELS } from "@/domains/employee/types";
 import { ENCOUNTER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { billingErrorNotification } from "@/domains/billing/messages";
@@ -42,6 +42,8 @@ export const EncounterShow = () => {
   const { mutate, mutation } = useCustomMutation<Encounter>();
   const [confirming, setConfirming] = useState(false);
 
+  // Concluding is the doctor's sign-off (clinical_encounters:conclude); a nurse writes the form but does not close it.
+  const { data: canConclude } = useCan({ resource: "clinical_encounters", action: "conclude" });
   const { data: canWrite } = useCan({ resource: "clinical_encounters", action: "edit" });
   const locked = record ? isEncounterLocked(record) : false;
   const { data: canReadOrders } = useCan({ resource: "service_orders", action: "list" });
@@ -51,7 +53,11 @@ export const EncounterShow = () => {
   // The permission, and the row's own flag: false there means this encounter
   // is outside the caller's write scope.
   const showComplete =
-    record?.status === "in_progress" && (canWrite?.can ?? false) && record._can?.write !== false;
+    record?.status === "in_progress" && (canConclude?.can ?? false) && record._can?.write !== false;
+  const waitsForDoctor =
+    record?.status === "in_progress" && !(canConclude?.can ?? false) && (canWrite?.can ?? false);
+  const noDiagnosis = !record?.diagnosis;
+  const bmi = bodyMassIndex(record?.vitals ?? null);
 
   const complete = () => {
     if (!record) return;
@@ -101,16 +107,27 @@ export const EncounterShow = () => {
               )}
               {showComplete && (
                 <div className="flex flex-wrap items-center gap-3">
-                  <Button onClick={() => setConfirming(true)} disabled={mutation.isPending || outstanding > 0}>
+                  <Button
+                    onClick={() => setConfirming(true)}
+                    disabled={mutation.isPending || outstanding > 0 || noDiagnosis}
+                  >
                     <CheckIcon />
                     Hoàn tất lần khám
                   </Button>
-                  {outstanding > 0 && (
+                  {(noDiagnosis || outstanding > 0) && (
                     <span className="text-muted-foreground text-sm">
-                      Còn {outstanding} dịch vụ chưa có kết quả hoặc chưa xem.
+                      {[
+                        noDiagnosis && "Ghi chẩn đoán trước khi hoàn tất.",
+                        outstanding > 0 && `Còn ${outstanding} dịch vụ chưa có kết quả hoặc chưa xem.`,
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                     </span>
                   )}
                 </div>
+              )}
+              {waitsForDoctor && (
+                <p className="text-muted-foreground text-sm">Bác sĩ ghi chẩn đoán và hoàn tất lần khám.</p>
               )}
             </div>
             <MetaStrip className="shrink-0">
@@ -124,22 +141,73 @@ export const EncounterShow = () => {
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <DetailPanel title="Nội dung khám">
           <DetailList>
-            <DetailRow label="Lý do khám">
+            <DetailRow label="Triệu chứng">
               <span className="whitespace-pre-wrap">{record?.chiefComplaint ?? <EmptyValue />}</span>
             </DetailRow>
-            <DetailRow label="Ghi chú khám">
+            <DetailRow label="Thông tin khám">
+              {record?.examinationFindings ? (
+                <span className="whitespace-pre-wrap">{record.examinationFindings}</span>
+              ) : (
+                <EmptyValue />
+              )}
+            </DetailRow>
+            <DetailRow label="Ghi chú lâm sàng">
               {record?.clinicalNote ? <span className="whitespace-pre-wrap">{record.clinicalNote}</span> : <EmptyValue />}
             </DetailRow>
-            <DetailRow label="Kết luận">
+            <DetailRow label="Chẩn đoán">
               {record?.diagnosis ? <span className="whitespace-pre-wrap">{record.diagnosis}</span> : <EmptyValue />}
             </DetailRow>
-            <DetailRow label="Dặn dò / tái khám">
+            <DetailRow label="Theo dõi / tái khám">
               {record?.followUp ? <span className="whitespace-pre-wrap">{record.followUp}</span> : <EmptyValue />}
             </DetailRow>
           </DetailList>
         </DetailPanel>
 
         <div className="flex min-w-0 flex-col gap-4">
+        <DetailPanel title="Chỉ số sinh tồn">
+          {record?.vitals ? (
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 px-4 py-3">
+              {VITAL_FIELDS.filter((f) => f.name !== "systolicBp" && f.name !== "diastolicBp").map((f) => (
+                <div key={f.name}>
+                  <dt className="text-muted-foreground text-xs">{f.label}</dt>
+                  <dd className="tabular-nums">
+                    {record.vitals?.[f.name] != null ? (
+                      <>
+                        <span className="text-base font-semibold">{record.vitals[f.name]}</span>{" "}
+                        <span className="text-muted-foreground text-xs">{f.unit}</span>
+                      </>
+                    ) : (
+                      <EmptyValue />
+                    )}
+                  </dd>
+                </div>
+              ))}
+              <div>
+                <dt className="text-muted-foreground text-xs">Huyết áp</dt>
+                <dd className="tabular-nums">
+                  {record.vitals.systolicBp != null || record.vitals.diastolicBp != null ? (
+                    <>
+                      <span className="text-base font-semibold">
+                        {record.vitals.systolicBp ?? "—"}/{record.vitals.diastolicBp ?? "—"}
+                      </span>{" "}
+                      <span className="text-muted-foreground text-xs">mmHg</span>
+                    </>
+                  ) : (
+                    <EmptyValue />
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground text-xs">BMI</dt>
+                <dd className="tabular-nums">
+                  {bmi != null ? <span className="text-base font-semibold">{bmi}</span> : <EmptyValue />}
+                </dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="text-muted-foreground px-4 py-3 text-sm">Chưa đo tại lần khám này.</p>
+          )}
+        </DetailPanel>
         <DetailPanel title="Thông tin">
           <DetailList>
             <DetailRow label="Người khám">
