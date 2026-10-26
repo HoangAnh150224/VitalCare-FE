@@ -59,6 +59,12 @@ export function formatLocalDate(value?: string | null): string {
   return new Date(year, month - 1, day).toLocaleDateString(LOCALE, DATE);
 }
 
+/** Whole đồng, grouped the Vietnamese way: "270.000 ₫". */
+export function formatMoney(value?: number | null): string {
+  if (value == null) return EMPTY;
+  return `${value.toLocaleString(LOCALE, { maximumFractionDigits: 0 })} ₫`;
+}
+
 /** A wall-clock time the API sends as `HH:mm:ss`, shown as `HH:mm`. */
 export function formatLocalTime(value?: string | null): string {
   if (!value) return EMPTY;

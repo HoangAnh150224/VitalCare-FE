@@ -6,6 +6,7 @@ import type { AppointmentStatus } from "@/domains/appointment/types";
 import type { CustomerStatus } from "@/domains/customer/types";
 import type { DepartmentStatus } from "@/domains/department/types";
 import type { DeviceStatus } from "@/domains/device/types";
+import type { InvoiceStatus, PaymentStatus, ServiceOrderStatus, ServiceStatus } from "@/domains/billing/types";
 import type { EncounterStatus } from "@/domains/encounter/types";
 import type { AssignmentStatus } from "@/domains/assignment/types";
 import type { EmployeeStatus } from "@/domains/employee/types";
@@ -153,6 +154,32 @@ export const ACTIVITY_STATUS_VARIANTS: Record<ActivityStatus, BadgeVariant> = {
 export const CLINIC_STATUS_VARIANTS: Record<ClinicStatus, BadgeVariant> = {
   OPERATING: "success",
   INACTIVE: "neutral",
+};
+
+/** Waiting on staff is info, waiting on the doctor is amber: the result is in and nobody has read it. */
+export const SERVICE_ORDER_STATUS_VARIANTS: Record<ServiceOrderStatus, BadgeVariant> = {
+  ordered: "outline",
+  in_progress: "info",
+  result_ready: "warning",
+  reviewed: "success",
+  cancelled: "neutral",
+};
+
+export const SERVICE_STATUS_VARIANTS: Record<ServiceStatus, BadgeVariant> = {
+  active: "success",
+  inactive: "neutral",
+};
+
+export const INVOICE_STATUS_VARIANTS: Record<InvoiceStatus, BadgeVariant> = {
+  unpaid: "warning",
+  paid: "success",
+  cancelled: "neutral",
+};
+
+export const PAYMENT_STATUS_VARIANTS: Record<PaymentStatus, BadgeVariant> = {
+  pending: "info",
+  paid: "success",
+  failed: "destructive",
 };
 
 export const PERMISSION_ACTION_VARIANTS: Record<string, BadgeVariant> = {

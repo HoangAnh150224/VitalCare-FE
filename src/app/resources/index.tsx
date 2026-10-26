@@ -22,6 +22,9 @@ import {
   Users,
   Eye,
   DoorOpen,
+  FlaskConical,
+  ReceiptText,
+  ListOrdered,
 } from "lucide-react";
 
 /**
@@ -229,6 +232,29 @@ export const resources: ResourceProps[] = [
       parent: "clinic",
     },
   },
+  // Ordered in an encounter (on its page), carried out from here: no create.
+  {
+    name: "service_orders",
+    list: "/service-orders",
+    show: "/service-orders/show/:id",
+    meta: {
+      label: "Chỉ định dịch vụ",
+      icon: <FlaskConical className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // Issued by concluding an encounter: no create. The report sits under it
+  // as a route of its own, guarded by `invoices:report`.
+  {
+    name: "invoices",
+    list: "/invoices",
+    show: "/invoices/show/:id",
+    meta: {
+      label: "Hóa đơn",
+      icon: <ReceiptText className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
   // No show page: a period is a row, read in the list and changed in its form.
   {
     name: "doctor_schedules",
@@ -345,6 +371,18 @@ export const resources: ResourceProps[] = [
     meta: {
       label: "Quản trị",
       group: true,
+    },
+  },
+  // The service catalogue and its prices, one for every clinic. ADMIN writes it.
+  {
+    name: "medical_services",
+    list: "/medical-services",
+    create: "/medical-services/create",
+    edit: "/medical-services/edit/:id",
+    meta: {
+      label: "Dịch vụ y tế",
+      icon: <ListOrdered className="h-4 w-4" />,
+      parent: "administration",
     },
   },
   {

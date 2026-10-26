@@ -25,7 +25,7 @@
  */
 export const ACTION_TO_PERMISSION: Record<
   string,
-  "read" | "write" | "delete" | "activate" | "check_in" | "assign" | "assign_staff" | "status" | "operate"
+  "read" | "write" | "delete" | "activate" | "check_in" | "assign" | "assign_staff" | "status" | "operate" | "report"
 > = {
   // customers:assign — putting a patient in somebody's care and on a device.
   assign: "assign",
@@ -44,6 +44,8 @@ export const ACTION_TO_PERMISSION: Record<
   check_in: "check_in",
   // exam_rooms:operate — calling the next patient in, passing one over, pausing a room.
   operate: "operate",
+  // invoices:report — the clinic's revenue, the clinic administrator's.
+  report: "report",
 };
 
 /**

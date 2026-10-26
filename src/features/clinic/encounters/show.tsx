@@ -31,6 +31,7 @@ import type { Encounter } from "@/domains/encounter/types";
 import { ENCOUNTER_STATUS_LABELS, isEncounterLocked } from "@/domains/encounter/types";
 import { STAFF_TYPE_LABELS } from "@/domains/employee/types";
 import { ENCOUNTER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
+import { EncounterOrdersPanel, useEncounterOrders } from "../service-orders/encounter-orders-panel";
 
 /** One encounter: what was recorded at the visit, and the step that closes it. */
 export const EncounterShow = () => {
@@ -42,6 +43,10 @@ export const EncounterShow = () => {
 
   const { data: canWrite } = useCan({ resource: "clinical_encounters", action: "edit" });
   const locked = record ? isEncounterLocked(record) : false;
+  const { data: canReadOrders } = useCan({ resource: "service_orders", action: "list" });
+  const readsOrders = canReadOrders?.can ?? false;
+  // Report 1 FE-22: the visit is concluded once every ordered result has been read.
+  const { outstanding } = useEncounterOrders(record?.id, readsOrders);
   // The permission, and the row's own flag: false there means this encounter
   // is outside the caller's write scope.
   const showComplete =
@@ -60,6 +65,7 @@ export const EncounterShow = () => {
       {
         onSuccess: () => {
           invalidate({ resource: "clinical_encounters", invalidates: ["detail", "list"], id: record.id });
+          invalidate({ resource: "invoices", invalidates: ["list"] });
           open?.({ type: "success", message: "Đã hoàn tất lần khám" });
         },
       }
@@ -91,10 +97,17 @@ export const EncounterShow = () => {
                 </p>
               )}
               {showComplete && (
-                <Button onClick={() => setConfirming(true)} disabled={mutation.isPending}>
-                  <CheckIcon />
-                  Hoàn tất lần khám
-                </Button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button onClick={() => setConfirming(true)} disabled={mutation.isPending || outstanding > 0}>
+                    <CheckIcon />
+                    Hoàn tất lần khám
+                  </Button>
+                  {outstanding > 0 && (
+                    <span className="text-muted-foreground text-sm">
+                      Còn {outstanding} dịch vụ chưa có kết quả hoặc chưa xem.
+                    </span>
+                  )}
+                </div>
               )}
             </div>
             <MetaStrip className="shrink-0">
@@ -123,6 +136,7 @@ export const EncounterShow = () => {
           </DetailList>
         </DetailPanel>
 
+        <div className="flex min-w-0 flex-col gap-4">
         <DetailPanel title="Thông tin">
           <DetailList>
             <DetailRow label="Người khám">
@@ -142,14 +156,20 @@ export const EncounterShow = () => {
             </DetailRow>
           </DetailList>
         </DetailPanel>
+        </div>
       </div>
+
+      {record && readsOrders && (
+        <EncounterOrdersPanel encounterId={record.id} open={record.status === "in_progress"} />
+      )}
 
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Hoàn tất lần khám này?</AlertDialogTitle>
             <AlertDialogDescription>
-              Sau khi hoàn tất, nội dung còn sửa được trong 24 giờ, rồi sẽ bị khoá vĩnh viễn.
+              Hệ thống lập hóa đơn gồm phí khám và các dịch vụ đã làm. Nội dung khám còn sửa được trong 24 giờ, rồi
+              sẽ bị khoá vĩnh viễn.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

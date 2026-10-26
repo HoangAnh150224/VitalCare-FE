@@ -180,7 +180,7 @@ function toField(value: unknown): string {
 }
 
 /** RFC 4180: quote the field and double any quote inside it. */
-function toCsv(rows: string[][]): string {
+export function toCsv(rows: string[][]): string {
   return rows
     .map((row) =>
       row.map((field) => `"${field.replace(/"/g, '""')}"`).join(",")
@@ -188,7 +188,7 @@ function toCsv(rows: string[][]): string {
     .join("\r\n");
 }
 
-function download(filename: string, csv: string) {
+export function download(filename: string, csv: string) {
   // The BOM is what makes Excel open a UTF-8 CSV as UTF-8 rather than as the
   // system codepage — without it every accented name arrives mojibake.
   const blob = new Blob(["\ufeff" + csv], {

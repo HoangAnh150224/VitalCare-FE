@@ -13,6 +13,7 @@ import type { Appointment } from "@/domains/appointment/types";
 import { APPOINTMENT_STATUS_LABELS, formatBookingCode, formatQueueNumber } from "@/domains/appointment/types";
 import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { AppointmentActions } from "../appointments/appointment-actions";
+import { MyInvoiceCard } from "../invoices/my-invoice-card";
 
 /**
  * The appointment slip: what the customer shows at the front desk.
@@ -117,6 +118,9 @@ export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointm
           </div>
         </LoadingOverlay>
       </Card>
+
+      {/* The customer's own bill; an administrator's read-only copy reads another endpoint and shows none. */}
+      {record?.status === "completed" && !readOnly && <MyInvoiceCard appointmentId={Number(record.id)} />}
     </ShowView>
   );
 };

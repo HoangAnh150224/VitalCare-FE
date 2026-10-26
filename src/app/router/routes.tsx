@@ -92,6 +92,14 @@ import {
   ViewAsAllPatients,
   ViewAsFrontDesk,
   ExamRoomBoard,
+  MedicalServiceList,
+  MedicalServiceCreate,
+  MedicalServiceEdit,
+  ServiceOrderList,
+  ServiceOrderShow,
+  InvoiceList,
+  InvoiceShow,
+  RevenueReportPage,
 } from "@/features/clinic";
 import { ErrorComponent } from "@/shared/components/layout/error-component";
 import { Forbidden } from "@/shared/components/layout/forbidden";
@@ -441,6 +449,48 @@ export function AppRoutes() {
           }
         >
           <Route index element={<ExamRoomBoard />} />
+        </Route>
+        <Route
+          path="/service-orders"
+          element={
+            <CanAccess resource="service_orders" action="list" fallback={<Forbidden resource="service_orders" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<ServiceOrderList />} />
+          <Route path="show/:id" element={<ServiceOrderShow />} />
+        </Route>
+        <Route
+          path="/invoices"
+          element={
+            <CanAccess resource="invoices" action="list" fallback={<Forbidden resource="invoices" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<InvoiceList />} />
+          <Route path="show/:id" element={<InvoiceShow />} />
+          <Route
+            path="report"
+            element={
+              <CanAccess resource="invoices" action="report" fallback={<Forbidden resource="invoices" />}>
+                <RevenueReportPage />
+              </CanAccess>
+            }
+          />
+        </Route>
+        <Route
+          path="/medical-services"
+          element={
+            <CanAccess resource="medical_services" action="list" fallback={<Forbidden resource="medical_services" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<MedicalServiceList />} />
+          <Route path="create" element={<MedicalServiceCreate />} />
+          <Route path="edit/:id" element={<MedicalServiceEdit />} />
         </Route>
         <Route
           path="/clinics"
