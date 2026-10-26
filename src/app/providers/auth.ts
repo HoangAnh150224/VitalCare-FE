@@ -118,12 +118,13 @@ export const authProvider: AuthProvider = {
    * along on the error as `fieldErrors` so the form can put each under its
    * field instead of only in a toast.
    */
-  async register({ phone, otp, fullName, password }) {
+  async register({ phone, otp, firebaseToken, fullName, password }) {
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, otp, fullName, password }),
+        // `otp`, or Firebase's `firebaseToken` when Firebase sent the code.
+        body: JSON.stringify({ phone, otp, firebaseToken, fullName, password }),
       });
 
       if (!response.ok) {

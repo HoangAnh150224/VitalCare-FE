@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ConfirmationResult } from "firebase/auth";
 import { Link } from "react-router";
 
 import { useRefineOptions, useRegister } from "@refinedev/core";
@@ -20,9 +21,13 @@ import {
   requestRegistrationCode,
   translateRegistrationMessage,
 } from "@/shared/api/registration";
+import { confirmFirebaseCode, sendFirebaseCode, translateFirebaseError } from "@/shared/api/firebase-phone";
 import { cn } from "@/shared/lib/utils";
 
 const CODE_LENGTH = 6;
+
+const freshToken = (held: { value: string; at: number } | null) =>
+  held && Date.now() - held.at < 9 * 60 * 1000 ? held.value : null;
 
 const translate = translateRegistrationMessage;
 
@@ -49,9 +54,15 @@ export const SignUpForm = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [sending, setSending] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [resendIn, setResendIn] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  // Set when Firebase sent the code: the typed code is then checked by Firebase.
+  const firebaseCode = useRef<ConfirmationResult | null>(null);
+  // Firebase confirms a code once; the token it gave is kept for a retry
+  // (a server error after confirming) for a few minutes, as the API allows.
+  const firebaseToken = useRef<{ value: string; at: number } | null>(null);
 
   // Counts the resend cooldown down, so the button says when it will work
   // instead of failing when pressed.
@@ -66,13 +77,29 @@ export const SignUpForm = () => {
     setError(null);
     setFieldErrors({});
     const result = await requestRegistrationCode(phone);
-    setSending(false);
 
     if (!result.ok) {
+      setSending(false);
       setError(translate(result.error.message));
       setFieldErrors(result.error.fieldErrors ?? {});
       return;
     }
+    if (result.value.channel === "firebase") {
+      try {
+        // Replaced only once the new code is on its way: a failed resend
+        // leaves the earlier code usable.
+        firebaseCode.current = await sendFirebaseCode(phone);
+        firebaseToken.current = null;
+      } catch (failure) {
+        setSending(false);
+        setResendIn(result.value.resendAfter);
+        setError(translateFirebaseError(failure));
+        return;
+      }
+    } else {
+      firebaseCode.current = null;
+    }
+    setSending(false);
     setResendIn(result.value.resendAfter);
     setOtp("");
     setStep("details");
@@ -83,7 +110,7 @@ export const SignUpForm = () => {
     void sendCode();
   };
 
-  const handleRegister = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setFieldErrors({});
@@ -93,8 +120,23 @@ export const SignUpForm = () => {
       return;
     }
 
+    let proof: { otp?: string; firebaseToken?: string } = { otp };
+    if (firebaseCode.current) {
+      setChecking(true);
+      try {
+        const token = freshToken(firebaseToken.current) ?? (await confirmFirebaseCode(firebaseCode.current, otp));
+        firebaseToken.current = { value: token, at: firebaseToken.current?.value === token ? firebaseToken.current.at : Date.now() };
+        proof = { firebaseToken: token };
+      } catch (failure) {
+        setFieldErrors({ otp: translateFirebaseError(failure) });
+        return;
+      } finally {
+        setChecking(false);
+      }
+    }
+
     register(
-      { phone, otp, fullName, password },
+      { phone, ...proof, fullName, password },
       {
         onSuccess: (data) => {
           if (data.success) return;
@@ -211,6 +253,8 @@ export const SignUpForm = () => {
                       className="hover:text-foreground underline-offset-4 hover:underline"
                       onClick={() => {
                         setStep("phone");
+                        firebaseCode.current = null;
+                        firebaseToken.current = null;
                         setError(null);
                         setFieldErrors({});
                       }}
@@ -276,9 +320,9 @@ export const SignUpForm = () => {
                   type="submit"
                   size="lg"
                   className="mt-7 w-full"
-                  disabled={isRegistering || otp.length !== CODE_LENGTH}
+                  disabled={isRegistering || checking || otp.length !== CODE_LENGTH}
                 >
-                  {isRegistering ? "Đang tạo tài khoản…" : "Đăng ký"}
+                  {checking ? "Đang kiểm tra mã…" : isRegistering ? "Đang tạo tài khoản…" : "Đăng ký"}
                 </Button>
               </form>
             )}

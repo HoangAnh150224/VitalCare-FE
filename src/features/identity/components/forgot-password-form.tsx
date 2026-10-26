@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ConfirmationResult } from "firebase/auth";
 import { Link } from "react-router";
 
 import { useRefineOptions } from "@refinedev/core";
@@ -21,9 +22,13 @@ import {
   resetPassword,
   translateRegistrationMessage as translate,
 } from "@/shared/api/registration";
+import { confirmFirebaseCode, sendFirebaseCode, translateFirebaseError } from "@/shared/api/firebase-phone";
 import { cn } from "@/shared/lib/utils";
 
 const CODE_LENGTH = 6;
+
+const freshToken = (held: { value: string; at: number } | null) =>
+  held && Date.now() - held.at < 9 * 60 * 1000 ? held.value : null;
 
 /**
  * Recovering a forgotten password (SRS 3.2.5 – 3.2.6), in two steps on one
@@ -49,6 +54,11 @@ export const ForgotPasswordForm = () => {
   const [resendIn, setResendIn] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  // Set when Firebase sent the code: the typed code is then checked by Firebase.
+  const firebaseCode = useRef<ConfirmationResult | null>(null);
+  // Firebase confirms a code once; the token it gave is kept for a retry
+  // (a server error after confirming) for a few minutes, as the API allows.
+  const firebaseToken = useRef<{ value: string; at: number } | null>(null);
 
   // Counts the resend cooldown down, as on the registration form.
   useEffect(() => {
@@ -62,13 +72,29 @@ export const ForgotPasswordForm = () => {
     setError(null);
     setFieldErrors({});
     const result = await requestPasswordResetCode(phone);
-    setSending(false);
 
     if (!result.ok) {
+      setSending(false);
       setError(translate(result.error.message));
       setFieldErrors(result.error.fieldErrors ?? {});
       return;
     }
+    if (result.value.channel === "firebase") {
+      try {
+        // Replaced only once the new code is on its way: a failed resend
+        // leaves the earlier code usable.
+        firebaseCode.current = await sendFirebaseCode(phone);
+        firebaseToken.current = null;
+      } catch (failure) {
+        setSending(false);
+        setResendIn(result.value.resendAfter);
+        setError(translateFirebaseError(failure));
+        return;
+      }
+    } else {
+      firebaseCode.current = null;
+    }
+    setSending(false);
     setResendIn(result.value.resendAfter);
     setOtp("");
     setStep("reset");
@@ -90,7 +116,19 @@ export const ForgotPasswordForm = () => {
     }
 
     setSaving(true);
-    const result = await resetPassword({ phone, otp, newPassword: password });
+    let proof: { otp?: string; firebaseToken?: string } = { otp };
+    if (firebaseCode.current) {
+      try {
+        const token = freshToken(firebaseToken.current) ?? (await confirmFirebaseCode(firebaseCode.current, otp));
+        firebaseToken.current = { value: token, at: firebaseToken.current?.value === token ? firebaseToken.current.at : Date.now() };
+        proof = { firebaseToken: token };
+      } catch (failure) {
+        setSaving(false);
+        setFieldErrors({ otp: translateFirebaseError(failure) });
+        return;
+      }
+    }
+    const result = await resetPassword({ phone, ...proof, newPassword: password });
     setSaving(false);
 
     if (!result.ok) {
@@ -219,6 +257,8 @@ export const ForgotPasswordForm = () => {
                       className="hover:text-foreground underline-offset-4 hover:underline"
                       onClick={() => {
                         setStep("phone");
+                        firebaseCode.current = null;
+                        firebaseToken.current = null;
                         setError(null);
                         setFieldErrors({});
                       }}

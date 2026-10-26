@@ -6,6 +6,8 @@ export type OtpSent = {
   expiresIn: number;
   /** Seconds before another code may be requested. */
   resendAfter: number;
+  /** `sms`: the server sent the code. `firebase`: the screen has Firebase send it, then sends Firebase's token. */
+  channel?: "sms" | "firebase";
 };
 
 export type RegistrationError = {
@@ -39,10 +41,11 @@ export async function requestPasswordResetCode(
   return post(`${API_URL}/auth/password-reset/otp`, { phone }, RESET_FAILED);
 }
 
-/** Sets a new password with the recovery code. Signs nobody in. */
+/** Sets a new password with the recovery code, or Firebase's token for it. Signs nobody in. */
 export async function resetPassword(body: {
   phone: string;
-  otp: string;
+  otp?: string;
+  firebaseToken?: string;
   newPassword: string;
 }): Promise<{ ok: true; value: unknown } | { ok: false; error: RegistrationError }> {
   return post(`${API_URL}/auth/password-reset`, body, RESET_FAILED);
