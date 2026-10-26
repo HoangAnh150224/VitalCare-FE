@@ -91,6 +91,9 @@ export function translateRegistrationMessage(message: string): string {
   if (message.startsWith("The code is incorrect")) {
     return "Mã xác thực không đúng hoặc đã hết hạn.";
   }
+  if (message.startsWith("The code could not be sent")) {
+    return "Chưa gửi được mã. Vui lòng thử lại sau ít phút.";
+  }
   if (message.startsWith("Password is too long")) {
     return "Mật khẩu quá dài. Hãy dùng ít chữ có dấu hơn.";
   }
