@@ -1,13 +1,11 @@
 import { API_URL } from "@/shared/api/constants";
 
-/** What `POST /auth/register/otp` answers: a code is on its way. */
+/** What `POST /auth/password-reset/otp` answers: a code is on its way. */
 export type OtpSent = {
   /** Seconds the code stays usable. */
   expiresIn: number;
   /** Seconds before another code may be requested. */
   resendAfter: number;
-  /** `sms`: the server sent the code. `firebase`: the screen has Firebase send it, then sends Firebase's token. */
-  channel?: "sms" | "firebase";
 };
 
 export type RegistrationError = {
@@ -17,23 +15,16 @@ export type RegistrationError = {
 };
 
 /**
- * Asks for a registration code to be sent to a phone number.
+ * Asks for a password-recovery code to be emailed to the account that signs
+ * in with this phone number.
+ *
+ * The API answers the same whether or not the number has an account (or the
+ * account an email), so a success here means only that the request was
+ * accepted.
  *
  * Plain `fetch`, like the auth provider and for the same reason: this happens
  * before there is a token, so the shared ky instance — which exists to attach
  * one and to refresh it — has nothing to do here.
- */
-export async function requestRegistrationCode(
-  phone: string
-): Promise<{ ok: true; value: OtpSent } | { ok: false; error: RegistrationError }> {
-  return post(`${API_URL}/auth/register/otp`, { phone });
-}
-
-/**
- * Asks for a password-recovery code to be sent to a phone number.
- *
- * The API answers the same whether or not the number has an account, so a
- * success here means only that the request was accepted.
  */
 export async function requestPasswordResetCode(
   phone: string
@@ -41,11 +32,10 @@ export async function requestPasswordResetCode(
   return post(`${API_URL}/auth/password-reset/otp`, { phone }, RESET_FAILED);
 }
 
-/** Sets a new password with the recovery code, or Firebase's token for it. Signs nobody in. */
+/** Sets a new password with the recovery code. Signs nobody in. */
 export async function resetPassword(body: {
   phone: string;
-  otp?: string;
-  firebaseToken?: string;
+  otp: string;
   newPassword: string;
 }): Promise<{ ok: true; value: unknown } | { ok: false; error: RegistrationError }> {
   return post(`${API_URL}/auth/password-reset`, body, RESET_FAILED);
@@ -85,6 +75,18 @@ export function translateRegistrationMessage(message: string): string {
   if (message.startsWith("That phone number is already in use")) {
     return "Số điện thoại này đã được đăng ký. Hãy đăng nhập.";
   }
+  if (message.startsWith("That email address is already in use")) {
+    return "Email này đã được dùng cho tài khoản khác.";
+  }
+  if (message.startsWith("Email must be a valid address")) {
+    return "Email không hợp lệ.";
+  }
+  if (message.startsWith("Email is required")) {
+    return "Vui lòng nhập email.";
+  }
+  if (message.startsWith("Email must be at most")) {
+    return "Email quá dài.";
+  }
   if (message.startsWith("Please wait")) {
     return "Vừa gửi mã cho số này. Vui lòng đợi một chút trước khi yêu cầu mã mới.";
   }
@@ -93,9 +95,6 @@ export function translateRegistrationMessage(message: string): string {
   }
   if (message.startsWith("The code is incorrect")) {
     return "Mã xác thực không đúng hoặc đã hết hạn.";
-  }
-  if (message.startsWith("The code could not be sent")) {
-    return "Chưa gửi được mã. Vui lòng thử lại sau ít phút.";
   }
   if (message.startsWith("Password is too long")) {
     return "Mật khẩu quá dài. Hãy dùng ít chữ có dấu hơn.";

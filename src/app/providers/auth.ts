@@ -111,20 +111,19 @@ export const authProvider: AuthProvider = {
   },
 
   /**
-   * Creates an account with the code sent to its phone number, and signs it
-   * in — the API answers a registration with a token pair, like a sign-in.
+   * Creates an account and signs it in — the API answers a registration with
+   * a token pair, like a sign-in.
    *
-   * A 422 carries per-field messages (a wrong code is one, on `otp`); they ride
-   * along on the error as `fieldErrors` so the form can put each under its
-   * field instead of only in a toast.
+   * A 422 carries per-field messages; they ride along on the error as
+   * `fieldErrors` so the form can put each under its field instead of only in
+   * a toast.
    */
-  async register({ phone, otp, firebaseToken, fullName, password }) {
+  async register({ phone, email, fullName, password }) {
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // `otp`, or Firebase's `firebaseToken` when Firebase sent the code.
-        body: JSON.stringify({ phone, otp, firebaseToken, fullName, password }),
+        body: JSON.stringify({ phone, email, fullName, password }),
       });
 
       if (!response.ok) {
