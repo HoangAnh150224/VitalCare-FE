@@ -24,9 +24,8 @@ import { cn } from "@/shared/lib/utils";
  * account -- 0901234567 and +84901234567 alike -- because the server
  * normalises before it looks anything up, so this form sends what was typed.
  *
- * Self-registration is linked from here: anybody may create an account with a
- * phone number they can receive a code on. A forgotten password is recovered
- * the same way, with a code sent to the number, from "Quên mật khẩu?".
+ * Self-registration is linked from here. A forgotten password is recovered
+ * with a code texted to the number, from "Quên mật khẩu?" under the button.
  *
  * The screen sits on `gradient-hero` rather than the page background, and that
  * is the one place in the application where a surface is a picture rather than
@@ -118,12 +117,7 @@ export const SignInForm = () => {
               </div>
 
               <div className={cn("relative mt-5 flex flex-col gap-2")}>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Mật khẩu</Label>
-                  <Link to="/forgot-password" className="text-link text-xs font-medium hover:underline">
-                    Quên mật khẩu?
-                  </Link>
-                </div>
+                <Label htmlFor="password">Mật khẩu</Label>
                 <InputPassword
                   id="password"
                   name="password"
@@ -142,6 +136,12 @@ export const SignInForm = () => {
               >
                 {isPending ? "Đang đăng nhập…" : "Đăng nhập"}
               </Button>
+
+              <div className="mt-4 text-center">
+                <Link to="/forgot-password" className="text-link text-sm font-medium hover:underline">
+                  Quên mật khẩu?
+                </Link>
+              </div>
             </form>
 
             <p
