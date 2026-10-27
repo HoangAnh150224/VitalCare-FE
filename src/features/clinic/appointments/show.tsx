@@ -1,5 +1,5 @@
 import { useCan, useInvalidate, useList, useNotification, useShow, useUpdate } from "@refinedev/core";
-import { PencilIcon } from "lucide-react";
+import { BanknoteIcon, PencilIcon, PrinterIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
@@ -27,10 +27,11 @@ import {
   MetaItem,
   MetaStrip,
 } from "@/shared/components/views/record-detail";
-import { formatDateTime, formatLocalDate, formatLocalTime } from "@/shared/lib/format";
+import { formatDateTime, formatLocalDate, formatLocalTime, formatMoney } from "@/shared/lib/format";
 import type { Appointment } from "@/domains/appointment/types";
 import { APPOINTMENT_STATUS_LABELS, formatBookingCode, formatQueueNumber } from "@/domains/appointment/types";
 import type { Encounter } from "@/domains/encounter/types";
+import type { Invoice } from "@/domains/billing/types";
 import { CUSTOMER_STATUS_LABELS } from "@/domains/customer/types";
 import {
   APPOINTMENT_STATUS_VARIANTS,
@@ -38,6 +39,8 @@ import {
 } from "@/shared/lib/status-variants";
 import { AppointmentActions } from "./appointment-actions";
 import { clinicToday } from "./clinic-day";
+import { CounterPaymentDialog } from "../invoices/counter-payment";
+import { InvoiceStatusBadge } from "../invoices/invoice-lines";
 import { newEncounterPath } from "@/domains/encounter/types";
 
 /** One registered visit: its queue number, what can be done to it, and the encounter it led to. */
@@ -138,6 +141,8 @@ export const AppointmentShow = () => {
         </LoadingOverlay>
       </Card>
 
+      {record?.status === "completed" && <VisitBill appointmentId={record.id} />}
+
       <div className="grid min-w-0 gap-4 lg:grid-cols-3">
         <DetailPanel title="Khách hàng">
           <DetailList>
@@ -225,6 +230,62 @@ export const AppointmentShow = () => {
     </ShowView>
   );
 };
+
+/**
+ * The visit's bill, where the desk already is once the doctor has concluded:
+ * how much, whether it is paid, and taking the money — through the same
+ * confirmation as the invoice page. Nothing before there is a bill.
+ */
+function VisitBill({ appointmentId }: { appointmentId: number }) {
+  const { data: canRead } = useCan({ resource: "invoices", action: "list" });
+  const { data: canCollect } = useCan({ resource: "invoices", action: "edit" });
+  const [paying, setPaying] = useState(false);
+  const { result } = useList<Invoice>({
+    resource: "invoices",
+    filters: [{ field: "appointmentId", operator: "eq", value: appointmentId }],
+    pagination: { currentPage: 1, pageSize: 1 },
+    queryOptions: { enabled: canRead?.can ?? false },
+  });
+  const invoice = result?.data?.[0];
+  if (!invoice) return null;
+  const unpaid = invoice.status === "unpaid";
+
+  return (
+    <Card className="flex flex-row flex-wrap items-center gap-x-6 gap-y-3 px-6 py-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-semibold">Hóa đơn</span>
+          <Link to={`/invoices/show/${invoice.id}`} className="font-mono text-sm hover:underline">
+            {invoice.invoiceNumber}
+          </Link>
+          <InvoiceStatusBadge status={invoice.status} />
+        </div>
+        <span className="text-muted-foreground text-sm">
+          {unpaid ? "Bệnh nhân chưa thanh toán." : `Đã thanh toán lúc ${formatDateTime(invoice.paidAt)}.`}
+        </span>
+      </div>
+      <span className="text-2xl font-semibold tabular-nums">{formatMoney(invoice.totalAmount)}</span>
+      <div className="flex flex-wrap gap-2">
+        {unpaid && canCollect?.can && invoice._can?.write !== false ? (
+          <Button onClick={() => setPaying(true)}>
+            <BanknoteIcon />
+            Thu tiền
+          </Button>
+        ) : (
+          !unpaid && (
+            <Button asChild variant="outline">
+              <Link to={`/invoices/show/${invoice.id}`}>
+                <PrinterIcon />
+                In biên lai
+              </Link>
+            </Button>
+          )
+        )}
+      </div>
+      <CounterPaymentDialog invoice={invoice} open={paying} onClose={() => setPaying(false)} />
+    </Card>
+  );
+}
 
 /**
  * The two things the desk may correct on a visit that is still open: why, and

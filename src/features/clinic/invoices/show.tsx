@@ -1,28 +1,16 @@
-import { useCan, useCustomMutation, useInvalidate, useNotification, useShow } from "@refinedev/core";
+import { useCan, useShow } from "@refinedev/core";
 import { BanknoteIcon, PrinterIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
-import { API_URL } from "@/shared/api/constants";
 import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
 import { DetailList, DetailPanel, DetailRow, EmptyValue } from "@/shared/components/views/record-detail";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
-import { Label } from "@/shared/ui/label";
-import type { Invoice, PaymentMethod } from "@/domains/billing/types";
-import { PAYMENT_METHOD_LABELS } from "@/domains/billing/types";
-import { formatDateTime, formatMoney } from "@/shared/lib/format";
-import { billingErrorNotification } from "@/domains/billing/messages";
+import type { Invoice } from "@/domains/billing/types";
+import { formatDateTime } from "@/shared/lib/format";
+import { CounterPaymentDialog } from "./counter-payment";
 import { InvoiceLines, InvoiceStatusBadge, PaymentHistory } from "./invoice-lines";
 
 /**
@@ -98,60 +86,3 @@ export const InvoiceShow = () => {
     </ShowView>
   );
 };
-
-/** Cash or a transfer received at the counter. The API settles a bill once; a second clerk is told it is paid. */
-function CounterPaymentDialog({ invoice, open, onClose }: { invoice: Invoice; open: boolean; onClose: () => void }) {
-  const [method, setMethod] = useState<PaymentMethod>("cash");
-  const { mutate, mutation } = useCustomMutation<Invoice>();
-  const invalidate = useInvalidate();
-  const { open: notify } = useNotification();
-
-  const confirm = () =>
-    mutate(
-      {
-        url: `${API_URL}/invoices/${invoice.id}/payments`,
-        method: "post",
-        values: { method },
-        config: { headers: { "Content-Type": "application/json" } },
-        successNotification: false,
-        errorNotification: billingErrorNotification,
-      },
-      {
-        onSuccess: () => {
-          notify?.({ type: "success", message: `Đã thu ${formatMoney(invoice.totalAmount)}` });
-          onClose();
-        },
-        // Paid or not, the bill on screen may be stale now.
-        onSettled: () => invalidate({ resource: "invoices", invalidates: ["detail", "list"], id: invoice.id }),
-      },
-    );
-
-  return (
-    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Thu {formatMoney(invoice.totalAmount)}</DialogTitle>
-          <DialogDescription>
-            Hóa đơn {invoice.invoiceNumber} của {invoice.patient.fullName}. Chỉ xác nhận khi đã nhận đủ tiền.
-          </DialogDescription>
-        </DialogHeader>
-        <RadioGroup value={method} onValueChange={(value) => setMethod(value as PaymentMethod)} className="gap-3">
-          {(["cash", "bank_transfer"] as const).map((value) => (
-            <div key={value} className="flex items-center gap-2">
-              <RadioGroupItem id={`pay-${value}`} value={value} />
-              <Label htmlFor={`pay-${value}`}>{PAYMENT_METHOD_LABELS[value]}</Label>
-            </div>
-          ))}
-        </RadioGroup>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Đóng
-          </Button>
-          <Button onClick={confirm} disabled={mutation.isPending}>
-            {mutation.isPending ? "Đang ghi nhận..." : "Đã nhận tiền"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
