@@ -7,6 +7,7 @@ import { API_URL } from "@/shared/api/constants";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { customResult } from "@/shared/hooks/use-custom-result";
+import { cn } from "@/shared/lib/utils";
 import type { OwnInvoice } from "@/domains/billing/types";
 import { billingErrorNotification } from "@/domains/billing/messages";
 import { InvoiceLines, InvoiceStatusBadge } from "./invoice-lines";
@@ -22,7 +23,7 @@ const RETURN_MESSAGES: Record<string, { type: "success" | "error"; message: stri
  * The bill on a customer's appointment slip, once the visit is concluded,
  * and paying it through VNPay. Nothing shows before there is a bill.
  */
-export function MyInvoiceCard({ appointmentId }: { appointmentId: number }) {
+export function MyInvoiceCard({ appointmentId, className }: { appointmentId: number; className?: string }) {
   const { result, query } = useCustom<OwnInvoice>({
     url: `${API_URL}/my_appointments/${appointmentId}/invoice`,
     method: "get",
@@ -71,7 +72,7 @@ export function MyInvoiceCard({ appointmentId }: { appointmentId: number }) {
     );
 
   return (
-    <Card className="mx-auto w-full max-w-md gap-4 px-6 py-5">
+    <Card className={cn("mx-auto w-full max-w-md gap-4 px-6 py-5", className)}>
       <div className="flex items-center gap-2">
         <h3 className="font-semibold">Hóa đơn</h3>
         <span className="text-muted-foreground font-mono text-xs">{invoice.invoiceNumber}</span>

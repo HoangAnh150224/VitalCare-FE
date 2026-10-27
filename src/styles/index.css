@@ -388,6 +388,40 @@
   letter-spacing: -0.01em;
 }
 
+/* Portal surfaces are lifted by a soft brand-tinted shadow rather than
+   outlined; the hairline keeps them visible in dark mode, where shadows vanish.
+   Shared screens' shadcn cards (account, slip, bill, forms) get the same. */
+@utility card-soft {
+  background-color: var(--card);
+  border-radius: 1.5rem;
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--border) 55%, transparent),
+    0 12px 32px -18px color-mix(in oklab, var(--primary) 35%, transparent);
+}
+
+@layer components {
+  .portal-shell [data-slot="card"] {
+    border-color: transparent;
+    border-radius: 1.5rem;
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--border) 55%, transparent),
+      0 12px 32px -18px color-mix(in oklab, var(--primary) 35%, transparent);
+  }
+}
+
+/* The portal's one loud surface: the brand teal, deepening to the corner,
+   with a warm gold glow so it reads as a welcome rather than a warning. */
+@utility portal-hero {
+  /* Darkened from the brand so white text holds AA on every preset, light or
+     dark; children use --hero-ink for teal text on white (the hero button). */
+  --hero-ink: color-mix(in oklab, var(--primary) 70%, black);
+  color: #fff;
+  background:
+    radial-gradient(90% 110% at 0% 100%, color-mix(in oklab, var(--gold-300) 18%, transparent) 0%, transparent 55%),
+    radial-gradient(110% 130% at 100% 0%, color-mix(in oklab, var(--primary) 70%, white 30%) 0%, transparent 50%),
+    linear-gradient(135deg, color-mix(in oklab, var(--primary) 78%, black) 0%, color-mix(in oklab, var(--primary) 52%, black) 100%);
+}
+
 /* The frosted bar the shell uses for its sticky header. */
 @utility surface-blur {
   background-color: color-mix(in oklab, var(--accent) 86%, transparent);

@@ -29,15 +29,15 @@ export function AppointmentTicket({ appointment, footer, className }: Props) {
   return (
     <article
       className={cn(
-        "bg-card overflow-hidden rounded-2xl border border-border shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_80_80/0.18)]",
+        "card-soft overflow-hidden",
         className
       )}
     >
       <div className={cn("flex gap-4 p-4 sm:gap-5 sm:p-5", ended && "opacity-60")}>
         <div
           className={cn(
-            "flex w-20 shrink-0 flex-col items-center justify-center rounded-xl py-3 sm:w-24",
-            ended ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"
+            "flex w-20 shrink-0 flex-col items-center justify-center rounded-2xl py-3 sm:w-24",
+            ended ? "bg-muted text-muted-foreground" : "portal-hero"
           )}
         >
           <span className="text-[11px] font-medium opacity-80">Số khám</span>
@@ -70,8 +70,8 @@ export function AppointmentTicket({ appointment, footer, className }: Props) {
           {/* The tear line, with a notch cut into each edge like a paper stub. */}
           <div aria-hidden className="relative">
             <div className="mx-5 border-t-2 border-dashed border-border" />
-            <span className="bg-background absolute top-1/2 -left-3 size-6 -translate-y-1/2 rounded-full border border-border" />
-            <span className="bg-background absolute top-1/2 -right-3 size-6 -translate-y-1/2 rounded-full border border-border" />
+            <span className="bg-background absolute top-1/2 -left-3 size-6 -translate-y-1/2 rounded-full" />
+            <span className="bg-background absolute top-1/2 -right-3 size-6 -translate-y-1/2 rounded-full" />
           </div>
           <div data-print="hide" className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-5">
             {footer}

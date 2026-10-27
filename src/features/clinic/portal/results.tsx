@@ -1,12 +1,13 @@
 import { useList } from "@refinedev/core";
-import { ChevronRightIcon, FileTextIcon } from "lucide-react";
+import { CloudOffIcon, FileHeartIcon } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router";
 
+import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import type { Appointment } from "@/domains/appointment/types";
 import { cn } from "@/shared/lib/utils";
-import { formatVisitDay, VISIT_SORTERS } from "./visit";
+import { EmptyState, VisitRow } from "./parts";
+import { VISIT_SORTERS } from "./visit";
 
 /**
  * Every concluded visit under the account, newest first: the way into what
@@ -44,10 +45,10 @@ export const PortalResults = () => {
               aria-pressed={person === id}
               onClick={() => setPerson(id)}
               className={cn(
-                "rounded-full border px-3.5 py-1.5 text-sm transition-colors",
+                "rounded-full px-4 py-2 text-sm font-medium transition-colors",
                 person === id
-                  ? "border-primary bg-primary/10 text-primary font-medium"
-                  : "border-border text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "card-soft text-muted-foreground hover:text-foreground"
               )}
             >
               {name}
@@ -58,40 +59,30 @@ export const PortalResults = () => {
 
       {query.isLoading ? (
         <div className="flex flex-col gap-3">
-          <Skeleton className="h-20 rounded-2xl" />
-          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-3xl" />
+          <Skeleton className="h-20 rounded-3xl" />
         </div>
       ) : query.isError ? (
-        <div className="bg-card flex flex-col items-start gap-1 rounded-2xl border border-dashed border-border p-5">
-          <p className="font-medium">Không tải được danh sách kết quả.</p>
-          <button type="button" className="text-primary text-sm font-medium hover:underline" onClick={() => query.refetch()}>
-            Thử lại
-          </button>
-        </div>
+        <EmptyState
+          icon={CloudOffIcon}
+          title="Không tải được danh sách kết quả"
+          action={
+            <Button variant="outline" className="rounded-full" onClick={() => query.refetch()}>
+              Thử lại
+            </Button>
+          }
+        />
       ) : shown.length === 0 ? (
-        <div className="bg-card flex flex-col items-start gap-1 rounded-2xl border border-dashed border-border p-5">
-          <p className="font-medium">Chưa có kết quả khám nào.</p>
-          <p className="text-muted-foreground text-sm">Kết quả hiện ở đây khi bác sĩ hoàn tất lượt khám.</p>
-        </div>
+        <EmptyState
+          icon={FileHeartIcon}
+          title="Chưa có kết quả khám nào"
+          text="Kết quả hiện ở đây khi bác sĩ hoàn tất lượt khám."
+        />
       ) : (
-        <ul className="bg-card divide-y divide-border overflow-hidden rounded-2xl border border-border">
+        <ul className="card-soft divide-y divide-border/70 overflow-hidden">
           {shown.map((visit) => (
             <li key={visit.id}>
-              <Link
-                to={`/my-results/${visit.id}`}
-                className="text-foreground hover:bg-muted/50 flex items-center gap-4 px-4 py-4 transition-colors"
-              >
-                <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full">
-                  <FileTextIcon className="size-5" />
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="font-display font-semibold">{formatVisitDay(visit.appointmentDate)}</span>
-                  <span className="text-muted-foreground truncate text-sm">
-                    {visit.customer.fullName} · {visit.doctor?.fullName ?? visit.clinic.name}
-                  </span>
-                </span>
-                <ChevronRightIcon className="text-muted-foreground size-5 shrink-0" />
-              </Link>
+              <VisitRow visit={visit} to={`/my-results/${visit.id}`} />
             </li>
           ))}
         </ul>

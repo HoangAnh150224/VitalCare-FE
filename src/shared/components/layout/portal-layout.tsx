@@ -63,7 +63,7 @@ export function PortalLayout({ children }: PropsWithChildren) {
         {/* One soft wash of the brand behind the top of the page, and nothing else decorative. */}
         <div
           aria-hidden
-          className="from-primary/10 pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b to-transparent"
+          className="from-primary/8 pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b to-transparent"
         />
 
         <a
@@ -76,7 +76,7 @@ export function PortalLayout({ children }: PropsWithChildren) {
           Chuyển đến nội dung chính
         </a>
 
-        <header data-print="hide" className="surface-blur sticky top-0 z-30 border-b border-border/60">
+        <header data-print="hide" className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg">
           <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-6 px-4 sm:px-6">
             <Link to="/dashboard" className="flex items-center gap-2.5">
               <img src="/vitalcare-mark.png" alt="" className="size-9 rounded-xl bg-white p-1 shadow-sm" />
@@ -90,10 +90,10 @@ export function PortalLayout({ children }: PropsWithChildren) {
                   to={item.to}
                   aria-current={isActive(item.to) ? "page" : undefined}
                   className={cn(
-                    "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                    "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
                     isActive(item.to)
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-card hover:text-foreground"
                   )}
                 >
                   {item.label}
@@ -122,7 +122,7 @@ export function PortalLayout({ children }: PropsWithChildren) {
           data-print="hide"
           aria-label="Điều hướng"
           className={cn(
-            "surface-blur fixed inset-x-0 bottom-0 z-30 border-t border-border/60 md:hidden",
+            "bg-card/90 fixed inset-x-0 bottom-0 z-30 rounded-t-3xl shadow-[0_-8px_24px_-12px_rgb(0_60_60/0.2)] backdrop-blur-lg md:hidden",
             "pb-[env(safe-area-inset-bottom)]"
           )}
         >
@@ -135,12 +135,18 @@ export function PortalLayout({ children }: PropsWithChildren) {
                     to={item.to}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "relative flex flex-col items-center gap-1 pt-2.5 pb-2 text-[11px] font-medium",
-                      active ? "text-primary" : "text-muted-foreground"
+                      "flex flex-col items-center gap-1 pt-2 pb-2 text-[11px]",
+                      active ? "text-primary font-semibold" : "text-muted-foreground font-medium"
                     )}
                   >
-                    {active && <span aria-hidden className="bg-primary absolute top-0 h-0.5 w-10 rounded-full" />}
-                    <item.icon className="size-5" strokeWidth={active ? 2.25 : 1.75} />
+                    <span
+                      className={cn(
+                        "flex h-8 w-14 items-center justify-center rounded-full transition-colors",
+                        active && "bg-primary/12"
+                      )}
+                    >
+                      <item.icon className="size-5" strokeWidth={active ? 2.25 : 1.75} />
+                    </span>
                     {item.label}
                   </Link>
                 </li>
@@ -167,7 +173,7 @@ function AccountMenu() {
         className="focus-visible:ring-ring rounded-full focus-visible:outline-none focus-visible:ring-2"
       >
         <Avatar className="size-9">
-          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">{initials(name)}</AvatarFallback>
+          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">{initials(name)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-56">

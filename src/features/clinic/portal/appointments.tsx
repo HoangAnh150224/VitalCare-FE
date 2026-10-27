@@ -1,5 +1,5 @@
 import { useList } from "@refinedev/core";
-import { CalendarPlusIcon } from "lucide-react";
+import { CalendarCheck2Icon, CalendarPlusIcon, HistoryIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
 import { Button } from "@/shared/ui/button";
@@ -9,6 +9,7 @@ import { cn } from "@/shared/lib/utils";
 import { clinicToday } from "../appointments/clinic-day";
 import { AppointmentActions } from "../appointments/appointment-actions";
 import { AppointmentTicket } from "./appointment-ticket";
+import { EmptyState } from "./parts";
 import { isUpcoming, VISIT_SORTERS } from "./visit";
 
 type Tab = "upcoming" | "past";
@@ -48,7 +49,7 @@ export const PortalAppointments = () => {
             Đến phòng khám, đưa phiếu cho lễ tân để được tiếp nhận rồi chờ gọi số.
           </p>
         </div>
-        <Button asChild className="rounded-xl">
+        <Button asChild className="h-11 rounded-full px-5">
           <Link to="/my-appointments/create">
             <CalendarPlusIcon />
             Đăng ký khám
@@ -56,7 +57,7 @@ export const PortalAppointments = () => {
         </Button>
       </div>
 
-      <div role="group" aria-label="Lọc lượt khám" className="bg-muted grid grid-cols-2 gap-1 rounded-xl p-1 sm:w-80">
+      <div role="group" aria-label="Lọc lượt khám" className="card-soft grid grid-cols-2 gap-1 rounded-full p-1.5 sm:w-80">
         {(
           [
             ["upcoming", "Sắp tới", upcoming.length],
@@ -69,30 +70,27 @@ export const PortalAppointments = () => {
             aria-pressed={tab === value}
             onClick={() => setParams(value === "upcoming" ? {} : { tab: value }, { replace: true })}
             className={cn(
-              "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              tab === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              "rounded-full px-3 py-2 text-sm font-semibold transition-colors",
+              tab === value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             )}
           >
             {label}
-            {!query.isLoading && <span className="text-muted-foreground ms-1.5 tabular-nums">{count}</span>}
+            {!query.isLoading && <span className="ms-1.5 tabular-nums opacity-70">{count}</span>}
           </button>
         ))}
       </div>
 
       {query.isLoading ? (
         <div className="flex flex-col gap-4">
-          <Skeleton className="h-40 rounded-2xl" />
-          <Skeleton className="h-40 rounded-2xl" />
+          <Skeleton className="h-40 rounded-3xl" />
+          <Skeleton className="h-40 rounded-3xl" />
         </div>
       ) : shown.length === 0 ? (
-        <div className="bg-card flex flex-col items-start gap-1 rounded-2xl border border-dashed border-border p-5">
-          <p className="font-medium">
-            {tab === "upcoming" ? "Chưa có lượt khám nào sắp tới." : "Chưa có lượt khám nào đã qua."}
-          </p>
-          {tab === "upcoming" && (
-            <p className="text-muted-foreground text-sm">Bấm “Đăng ký khám” để chọn bác sĩ, ngày khám và nhận số.</p>
-          )}
-        </div>
+        <EmptyState
+          icon={tab === "upcoming" ? CalendarCheck2Icon : HistoryIcon}
+          title={tab === "upcoming" ? "Chưa có lượt khám nào sắp tới" : "Chưa có lượt khám nào đã qua"}
+          text={tab === "upcoming" ? "Bấm “Đăng ký khám” để chọn bác sĩ, ngày khám và nhận số." : undefined}
+        />
       ) : (
         <div className="flex flex-col gap-4">
           {shown.map((visit) => (
@@ -110,7 +108,7 @@ export const PortalAppointments = () => {
                     <AppointmentActions appointment={visit} resource="my_appointments" size="sm" />
                   )}
                   {visit.status === "completed" && (
-                    <Button asChild size="sm" variant="outline" className="rounded-lg">
+                    <Button asChild size="sm" className="rounded-full">
                       <Link to={`/my-results/${visit.id}`}>Kết quả khám</Link>
                     </Button>
                   )}

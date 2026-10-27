@@ -9,6 +9,15 @@ import { GENDER_LABELS } from "@/domains/customer/types";
 import type { Profile } from "@/domains/profile/types";
 import { profileKind } from "@/domains/profile/types";
 import { initials } from "@/shared/lib/format";
+import { cn } from "@/shared/lib/utils";
+
+/** A colour per person, so a family reads at a glance; the owner, first, keeps the brand. */
+const AVATAR_TONES = [
+  "bg-primary/12 text-primary",
+  "bg-gold-subtle text-gold-text",
+  "bg-info-subtle text-info-text",
+  "bg-success-subtle text-success-text",
+];
 
 /** Whole years since a `YYYY-MM-DD` birth date, as of today. */
 function ageOf(dateOfBirth: string): number {
@@ -47,7 +56,7 @@ export const MyProfileList = () => {
             Bạn và người thân. Mỗi lượt đăng ký khám là cho một người trong danh sách này.
           </p>
         </div>
-        <Button asChild variant="outline" className="rounded-xl">
+        <Button asChild className="h-11 rounded-full px-5">
           <Link to="/my-profiles/create">
             <PlusIcon />
             Thêm người thân
@@ -57,19 +66,24 @@ export const MyProfileList = () => {
 
       {query.isLoading ? (
         <div className="grid gap-3 md:grid-cols-2">
-          <Skeleton className="h-24 rounded-2xl" />
-          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-3xl" />
+          <Skeleton className="h-24 rounded-3xl" />
         </div>
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">
-          {profiles.map((profile) => (
+          {profiles.map((profile, index) => (
             <li key={profile.id}>
               <Link
                 to={`/my-profiles/edit/${profile.id}`}
-                className="bg-card text-foreground hover:border-primary/40 flex h-full flex-col gap-3 rounded-2xl border border-border p-4 transition-colors"
+                className="card-soft text-foreground flex h-full flex-col gap-3 p-4 transition-transform hover:-translate-y-0.5 sm:p-5"
               >
                 <div className="flex items-center gap-3">
-                  <span className="bg-primary/10 text-primary font-display flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
+                  <span
+                    className={cn(
+                      "font-display flex size-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold",
+                      AVATAR_TONES[index % AVATAR_TONES.length]
+                    )}
+                  >
                     {initials(profile.fullName)}
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col">
@@ -84,7 +98,7 @@ export const MyProfileList = () => {
                   <ChevronRightIcon className="text-muted-foreground size-5 shrink-0" />
                 </div>
                 {!profile.complete && (
-                  <p className="flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                  <p className="bg-gold-subtle text-gold-text flex items-start gap-2 rounded-xl px-3 py-2 text-sm">
                     <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
                     Cần bổ sung ngày sinh, giới tính và số CCCD trước khi đăng ký khám. Bấm để bổ sung.
                   </p>
