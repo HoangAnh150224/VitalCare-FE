@@ -15,12 +15,10 @@ export type RegistrationError = {
 };
 
 /**
- * Asks for a password-recovery code to be emailed to the account that signs
- * in with this phone number.
+ * Asks for a password-recovery code to be texted to this phone number.
  *
- * The API answers the same whether or not the number has an account (or the
- * account an email), so a success here means only that the request was
- * accepted.
+ * The API answers the same whether or not the number has an account, so a
+ * success here means only that the request was accepted.
  *
  * Plain `fetch`, like the auth provider and for the same reason: this happens
  * before there is a token, so the shared ky instance — which exists to attach
@@ -80,9 +78,6 @@ export function translateRegistrationMessage(message: string): string {
   }
   if (message.startsWith("Email must be a valid address")) {
     return "Email không hợp lệ.";
-  }
-  if (message.startsWith("Email is required")) {
-    return "Vui lòng nhập email.";
   }
   if (message.startsWith("Email must be at most")) {
     return "Email quá dài.";

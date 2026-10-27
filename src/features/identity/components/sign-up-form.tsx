@@ -20,8 +20,8 @@ import { cn } from "@/shared/lib/utils";
 
 /**
  * Self-registration, in one step: phone number (what the account signs in
- * with), email (where a forgotten password is recovered through), name and
- * password. The API creates the account and signs it in.
+ * with, and where a password-recovery code is texted), name and password.
+ * The API creates the account and signs it in.
  *
  * A new account is a customer that is not yet a patient: it can register for
  * an examination, and becomes a patient when it checks in at the clinic.
@@ -31,7 +31,6 @@ export const SignUpForm = () => {
   const { mutate: register, isPending: isRegistering } = useRegister();
 
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -50,7 +49,7 @@ export const SignUpForm = () => {
     }
 
     register(
-      { phone, email, fullName, password },
+      { phone, fullName, password },
       {
         onSuccess: (data) => {
           if (data.success) return;
@@ -97,7 +96,7 @@ export const SignUpForm = () => {
           <CardHeader className={cn("gap-1 px-0")}>
             <CardTitle className={cn("text-2xl font-semibold")}>Đăng ký</CardTitle>
             <CardDescription>
-              Đăng nhập bằng số điện thoại. Email dùng để nhận mã khi bạn quên mật khẩu.
+              Đăng nhập bằng số điện thoại. Khi quên mật khẩu, mã khôi phục được gửi qua SMS tới số này.
             </CardDescription>
           </CardHeader>
 
@@ -118,22 +117,6 @@ export const SignUpForm = () => {
                   onChange={(e) => setPhone(e.target.value)}
                 />
                 {fieldError("phone")}
-              </div>
-
-              <div className="mt-5 flex flex-col gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="ban@gmail.com"
-                  required
-                  maxLength={255}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                {fieldError("email")}
               </div>
 
               <div className="mt-5 flex flex-col gap-2">

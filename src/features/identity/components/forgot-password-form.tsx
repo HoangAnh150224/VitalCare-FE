@@ -27,13 +27,13 @@ const CODE_LENGTH = 6;
 
 /**
  * Recovering a forgotten password (SRS 3.2.5 – 3.2.6), in two steps on one
- * screen: the phone number the account signs in with, then the code emailed
- * to the account together with the new password.
+ * screen: the phone number the account signs in with, then the code texted
+ * to that number together with the new password.
  *
- * The SRS draws a link sent by email; here it is a code by email, because the
+ * The SRS draws a link sent by email; here it is a code by SMS, because the
  * person types the code on this same screen. The second step says the same
- * thing whether or not the number has an account with an email — the API
- * answers all alike, and so does this form.
+ * thing whether or not the number has an account — the API answers both
+ * alike, and so does this form.
  */
 export const ForgotPasswordForm = () => {
   const { title } = useRefineOptions();
@@ -115,8 +115,8 @@ export const ForgotPasswordForm = () => {
     ) : null;
 
   const description = {
-    phone: "Nhập số điện thoại bạn dùng để đăng nhập. Mã khôi phục sẽ được gửi tới email của tài khoản.",
-    reset: `Nếu số ${phone} có tài khoản đã khai báo email, mã khôi phục ${CODE_LENGTH} số đã được gửi tới email đó (xem cả thư mục Spam). Tài khoản chưa có email? Liên hệ phòng khám để được đặt lại mật khẩu.`,
+    phone: "Nhập số điện thoại bạn dùng để đăng nhập. Mã khôi phục sẽ được gửi qua SMS tới số này.",
+    reset: `Nếu số ${phone} có tài khoản, mã khôi phục ${CODE_LENGTH} số đã được gửi qua SMS tới số đó.`,
     done: "Đã đổi mật khẩu. Mọi phiên đăng nhập cũ đã kết thúc.",
   }[step];
 
