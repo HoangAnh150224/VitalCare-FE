@@ -13,10 +13,10 @@ import { cn } from "@/shared/lib/utils";
 
 /** A colour per person, so a family reads at a glance; the owner, first, keeps the brand. */
 const AVATAR_TONES = [
-  "bg-primary/12 text-primary",
-  "bg-gold-subtle text-gold-text",
-  "bg-info-subtle text-info-text",
-  "bg-success-subtle text-success-text",
+  "bg-primary text-primary-foreground",
+  "bg-amber-500 text-white",
+  "bg-sky-600 text-white",
+  "bg-emerald-600 text-white",
 ];
 
 /** Whole years since a `YYYY-MM-DD` birth date, as of today. */

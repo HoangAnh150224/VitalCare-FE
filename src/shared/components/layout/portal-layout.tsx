@@ -76,7 +76,7 @@ export function PortalLayout({ children }: PropsWithChildren) {
           Chuyển đến nội dung chính
         </a>
 
-        <header data-print="hide" className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg">
+        <header data-print="hide" className="bg-card/90 sticky top-0 z-30 shadow-[0_1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] backdrop-blur-lg">
           <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-6 px-4 sm:px-6">
             <Link to="/dashboard" className="flex items-center gap-2.5">
               <img src="/vitalcare-mark.png" alt="" className="size-9 rounded-xl bg-white p-1 shadow-sm" />
@@ -142,7 +142,7 @@ export function PortalLayout({ children }: PropsWithChildren) {
                     <span
                       className={cn(
                         "flex h-8 w-14 items-center justify-center rounded-full transition-colors",
-                        active && "bg-primary/12"
+                        active && "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
                       )}
                     >
                       <item.icon className="size-5" strokeWidth={active ? 2.25 : 1.75} />

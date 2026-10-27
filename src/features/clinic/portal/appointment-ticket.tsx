@@ -70,8 +70,8 @@ export function AppointmentTicket({ appointment, footer, className }: Props) {
           {/* The tear line, with a notch cut into each edge like a paper stub. */}
           <div aria-hidden className="relative">
             <div className="mx-5 border-t-2 border-dashed border-border" />
-            <span className="bg-background absolute top-1/2 -left-3 size-6 -translate-y-1/2 rounded-full" />
-            <span className="bg-background absolute top-1/2 -right-3 size-6 -translate-y-1/2 rounded-full" />
+            <span className="absolute top-1/2 -left-3 bg-(--portal-page,var(--background)) size-6 -translate-y-1/2 rounded-full" />
+            <span className="absolute top-1/2 -right-3 bg-(--portal-page,var(--background)) size-6 -translate-y-1/2 rounded-full" />
           </div>
           <div data-print="hide" className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-5">
             {footer}

@@ -9,13 +9,17 @@ import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { cn } from "@/shared/lib/utils";
 import { clinicToday } from "../appointments/clinic-day";
 
-/** The portal's few colours, each tied to one kind of thing so they mean something. */
+/**
+ * The portal's few colours, each tied to one kind of thing so they mean
+ * something, and solid so they stand off the white card: visits teal,
+ * results sky, people amber, heart and heat rose, body measures green.
+ */
 export const TONES = {
-  teal: "bg-primary/12 text-primary",
-  sky: "bg-info-subtle text-info-text",
-  gold: "bg-gold-subtle text-gold-text",
-  green: "bg-success-subtle text-success-text",
-  rose: "bg-destructive-subtle text-destructive-text",
+  teal: "bg-primary text-primary-foreground shadow-sm shadow-primary/30",
+  sky: "bg-sky-600 text-white shadow-sm shadow-sky-600/30",
+  gold: "bg-amber-500 text-white shadow-sm shadow-amber-500/30",
+  green: "bg-emerald-600 text-white shadow-sm shadow-emerald-600/30",
+  rose: "bg-rose-500 text-white shadow-sm shadow-rose-500/30",
 } as const;
 
 export type Tone = keyof typeof TONES;
