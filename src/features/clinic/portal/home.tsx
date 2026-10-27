@@ -18,6 +18,7 @@ import type { Profile } from "@/domains/profile/types";
 import { clinicToday } from "../appointments/clinic-day";
 import { AppointmentActions } from "../appointments/appointment-actions";
 import { AppointmentTicket } from "./appointment-ticket";
+import { QueueBanner } from "./live-queue";
 import { EmptyState, IconChip, PortalSection, VisitRow, type Tone } from "./parts";
 import { formatVisitDay, isUpcoming, VISIT_SORTERS } from "./visit";
 
@@ -140,6 +141,7 @@ export const PortalHome = () => {
         ) : next ? (
           <AppointmentTicket
             appointment={next}
+            status={<QueueBanner appointment={next} />}
             footer={
               <>
                 <Button asChild variant="link" className="h-auto px-0">

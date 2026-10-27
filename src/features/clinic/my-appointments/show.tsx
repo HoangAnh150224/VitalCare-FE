@@ -16,6 +16,8 @@ import { APPOINTMENT_STATUS_LABELS, formatBookingCode, formatQueueNumber } from 
 import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { AppointmentActions } from "../appointments/appointment-actions";
 import { MyInvoiceCard } from "../invoices/my-invoice-card";
+import { QueueBanner } from "../portal/live-queue";
+import { roomLabel } from "../portal/use-queue-live";
 
 /**
  * The appointment slip: what the customer shows at the front desk.
@@ -59,6 +61,12 @@ export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointm
         <ShowViewHeader title="Phiếu khám" resource={resource} />
       )}
 
+      {portal && record && (
+        <div data-print="hide" className="mx-auto w-full max-w-md empty:hidden">
+          <QueueBanner appointment={record} />
+        </div>
+      )}
+
       <Card className="mx-auto w-full max-w-md py-6">
         <LoadingOverlay loading={query.isLoading}>
           <div className="flex flex-col items-center gap-5 px-6 text-center">
@@ -92,7 +100,7 @@ export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointm
                   : status === "checked_in"
                     ? "Bạn đã được tiếp nhận. Vui lòng chờ gọi số."
                     : status === "in_exam"
-                      ? `Mời bạn vào ${record?.examRoom ? `phòng ${record.examRoom.code}` : "phòng khám"}.`
+                      ? `Mời bạn vào ${record ? roomLabel(record) : "phòng khám"}.`
                     : status === "completed"
                       ? "Lượt khám này đã hoàn tất."
                       : status === "no_show"

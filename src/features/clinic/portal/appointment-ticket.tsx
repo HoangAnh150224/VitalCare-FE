@@ -12,6 +12,8 @@ type Props = {
   appointment: Appointment;
   /** What sits under the tear line: the slip link, cancel, reschedule. */
   footer?: ReactNode;
+  /** A live line under the details, such as the place in the queue. */
+  status?: ReactNode;
   className?: string;
 };
 
@@ -23,7 +25,7 @@ type Props = {
  * The number is the thing called at the doctor's door, so it carries the
  * page; everything else is there to say which visit this is.
  */
-export function AppointmentTicket({ appointment, footer, className }: Props) {
+export function AppointmentTicket({ appointment, footer, status, className }: Props) {
   const ended = appointment.status === "cancelled" || appointment.status === "no_show";
 
   return (
@@ -64,6 +66,9 @@ export function AppointmentTicket({ appointment, footer, className }: Props) {
           <p className="text-muted-foreground truncate text-sm">Người tới khám: {appointment.customer.fullName}</p>
         </div>
       </div>
+
+      {/* empty:hidden: the banner renders nothing on most days, and its padding should not linger. */}
+      {status && <div className="px-4 pb-4 empty:hidden sm:px-5 sm:pb-5">{status}</div>}
 
       {footer && (
         <>

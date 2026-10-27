@@ -60,6 +60,13 @@ export function formatBookingCode(code: string | null | undefined): string {
  */
 export type AppointmentStatus = "scheduled" | "checked_in" | "in_exam" | "completed" | "cancelled" | "no_show";
 
+/**
+ * A visit's place in its doctor's queue today: `ahead` is null when it is not
+ * waiting; `skipped` when it was called, the patient was not there, and it
+ * waits to be called again.
+ */
+export type MyQueue = { ahead: number | null; skipped: boolean };
+
 export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
   scheduled: "Đã đăng ký",
   checked_in: "Đã tiếp nhận",

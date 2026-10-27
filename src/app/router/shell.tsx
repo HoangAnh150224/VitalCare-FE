@@ -3,13 +3,27 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { Layout } from "@/shared/components/layout/layout";
 import { PortalLayout } from "@/shared/components/layout/portal-layout";
 import { usePortalAccount } from "@/shared/hooks/use-portal-account";
+import { useMyQueueLive } from "@/features/clinic/portal";
 
 /**
  * The shell around every signed-in screen: the patient portal for an account
  * that only holds its own records, the staff console for everybody else.
  */
 export function ShellLayout({ children }: PropsWithChildren) {
-  return usePortalAccount() ? <PortalLayout>{children}</PortalLayout> : <Layout>{children}</Layout>;
+  return usePortalAccount() ? (
+    <PortalLayout>
+      <PortalLive />
+      {children}
+    </PortalLayout>
+  ) : (
+    <Layout>{children}</Layout>
+  );
+}
+
+/** The portal's live channel: visits follow the clinic's queue on every screen. Renders nothing. */
+function PortalLive() {
+  useMyQueueLive();
+  return null;
 }
 
 /**

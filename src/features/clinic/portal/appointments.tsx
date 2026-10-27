@@ -9,6 +9,7 @@ import { cn } from "@/shared/lib/utils";
 import { clinicToday } from "../appointments/clinic-day";
 import { AppointmentActions } from "../appointments/appointment-actions";
 import { AppointmentTicket } from "./appointment-ticket";
+import { QueueBanner } from "./live-queue";
 import { EmptyState } from "./parts";
 import { isUpcoming, VISIT_SORTERS } from "./visit";
 
@@ -97,6 +98,7 @@ export const PortalAppointments = () => {
             <AppointmentTicket
               key={visit.id}
               appointment={visit}
+              status={tab === "upcoming" && <QueueBanner appointment={visit} />}
               footer={
                 <>
                   <Button asChild variant="link" className="h-auto px-0">
