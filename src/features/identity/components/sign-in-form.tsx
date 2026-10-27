@@ -10,7 +10,6 @@ import { Label } from "@/shared/ui/label";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/shared/ui/card";
@@ -90,9 +89,6 @@ export const SignInForm = () => {
             <CardTitle className={cn("text-2xl font-semibold")}>
               Đăng nhập
             </CardTitle>
-            <CardDescription>
-              Nhập thông tin đăng nhập để tiếp tục.
-            </CardDescription>
           </CardHeader>
 
           <CardContent className={cn("px-0")}>
@@ -137,7 +133,7 @@ export const SignInForm = () => {
                 {isPending ? "Đang đăng nhập…" : "Đăng nhập"}
               </Button>
 
-              <div className="mt-4 text-center">
+              <div className="mt-4 text-right">
                 <Link to="/forgot-password" className="text-link text-sm font-medium hover:underline">
                   Quên mật khẩu?
                 </Link>
