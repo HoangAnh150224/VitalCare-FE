@@ -75,6 +75,7 @@ import {
   PortalAppointmentCreate,
   PortalAppointments,
   PortalHome,
+  PortalPayments,
   PortalResult,
   PortalResults,
   QuickCheckIn,
@@ -564,6 +565,15 @@ export function AppRoutes() {
           <Route index element={<PortalResults />} />
           <Route path=":appointmentId" element={<PortalResult />} />
         </Route>
+        {/* The account's bills and how each was paid; the same grant as their appointments. */}
+        <Route
+          path="/my-payments"
+          element={
+            <CanAccess resource="my_appointments" action="list" fallback={<Forbidden resource="my_appointments" />}>
+              <PortalPayments />
+            </CanAccess>
+          }
+        />
         <Route
           path="/my-profiles"
           element={

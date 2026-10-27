@@ -7,6 +7,7 @@ import {
   HeartPulseIcon,
   TriangleAlertIcon,
   UsersRoundIcon,
+  WalletIcon,
 } from "lucide-react";
 import { Link } from "react-router";
 
@@ -20,6 +21,7 @@ import { AppointmentActions } from "../appointments/appointment-actions";
 import { AppointmentTicket } from "./appointment-ticket";
 import { QueueBanner } from "./live-queue";
 import { EmptyState, IconChip, PortalSection, VisitRow, type Tone } from "./parts";
+import { useMyInvoices } from "./use-my-invoices";
 import { formatVisitDay, isUpcoming, VISIT_SORTERS } from "./visit";
 
 /** "Chào buổi sáng" before noon, and so on: how the SRS home greets (3.2.1). */
@@ -59,12 +61,21 @@ export const PortalHome = () => {
   const profiles = profilesResult?.data ?? [];
   const incomplete = profiles.filter((profile) => !profile.complete).length;
   const firstName = user?.fullName?.trim().split(/\s+/).pop();
-  const loading = visitsQuery.isLoading || profilesQuery.isLoading;
+  const { invoices, query: invoicesQuery } = useMyInvoices();
+  const unpaidBills = invoices.filter((invoice) => invoice.status === "unpaid").length;
+  const loading = visitsQuery.isLoading || profilesQuery.isLoading || invoicesQuery.isLoading;
 
   const shortcuts: { to: string; label: string; note: string; icon: typeof CalendarCheck2Icon; tone: Tone }[] = [
     { to: "/my-appointments", label: "Lượt khám", note: `${upcoming.length} sắp tới`, icon: CalendarCheck2Icon, tone: "teal" },
     { to: "/my-results", label: "Kết quả", note: `${results} kết quả`, icon: FileHeartIcon, tone: "sky" },
     { to: "/my-profiles", label: "Hồ sơ", note: `${profiles.length} người`, icon: UsersRoundIcon, tone: "gold" },
+    {
+      to: "/my-payments",
+      label: "Thanh toán",
+      note: invoicesQuery.isError ? "Xem hóa đơn" : unpaidBills > 0 ? `${unpaidBills} chưa trả` : "Đã trả hết",
+      icon: WalletIcon,
+      tone: "green",
+    },
   ];
 
   return (
@@ -97,7 +108,7 @@ export const PortalHome = () => {
         </Button>
       </section>
 
-      <nav aria-label="Lối tắt" className="grid grid-cols-3 gap-3">
+      <nav aria-label="Lối tắt" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {shortcuts.map((item) => (
           <Link
             key={item.to}

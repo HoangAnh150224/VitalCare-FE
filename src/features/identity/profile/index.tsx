@@ -5,7 +5,8 @@ import {
   useLogout,
   useNotification,
 } from "@refinedev/core";
-import { LogOutIcon } from "lucide-react";
+import { ChevronRightIcon, LogOutIcon, WalletIcon } from "lucide-react";
+import { Link } from "react-router";
 
 import { API_URL } from "@/shared/api/constants";
 import {
@@ -248,6 +249,17 @@ export const Profile = () => {
             </form>
           </CardContent>
         </Card>
+
+        {portal && (
+          <Link
+            to="/my-payments"
+            className="bg-card text-foreground hover:bg-muted/40 flex items-center gap-3 rounded-3xl border px-5 py-4 transition-colors"
+          >
+            <WalletIcon className="text-primary size-5" />
+            <span className="flex-1 font-medium">Lịch sử thanh toán</span>
+            <ChevronRightIcon className="text-muted-foreground size-5" />
+          </Link>
+        )}
 
         {portal && (
           <Button

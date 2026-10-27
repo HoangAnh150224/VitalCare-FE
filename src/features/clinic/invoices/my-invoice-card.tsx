@@ -10,7 +10,7 @@ import { customResult } from "@/shared/hooks/use-custom-result";
 import { cn } from "@/shared/lib/utils";
 import type { OwnInvoice } from "@/domains/billing/types";
 import { billingErrorNotification } from "@/domains/billing/messages";
-import { InvoiceLines, InvoiceStatusBadge } from "./invoice-lines";
+import { InvoiceLines, InvoiceStatusBadge, PaymentHistory } from "./invoice-lines";
 
 /** What VNPay's return tells the customer, by the `?payment=` the API sends them back with. */
 const RETURN_MESSAGES: Record<string, { type: "success" | "error"; message: string }> = {
@@ -81,6 +81,14 @@ export function MyInvoiceCard({ appointmentId, className }: { appointmentId: num
         </span>
       </div>
       <InvoiceLines invoice={invoice} />
+      {invoice.payments.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <h4 className="text-sm font-semibold">Lịch sử giao dịch</h4>
+          <div className="bg-muted/40 rounded-xl">
+            <PaymentHistory invoice={invoice} />
+          </div>
+        </div>
+      )}
       {invoice.status === "unpaid" && (
         <div data-print="hide" className="flex flex-col gap-2">
           {onlinePayment ? (
