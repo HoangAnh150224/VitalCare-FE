@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useCan, useCustom, useCustomMutation, useInvalidate } from "@refinedev/core";
+import { useCan, useCustom, useCustomMutation, useInvalidate, useList } from "@refinedev/core";
 import {
   CheckIcon,
   DoorOpenIcon,
@@ -15,17 +15,29 @@ import { Link } from "react-router";
 import { API_URL } from "@/shared/api/constants";
 import { subscribe } from "@/shared/api/live";
 import { customResult } from "@/shared/hooks/use-custom-result";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { formatQueueNumber } from "@/domains/appointment/types";
-import { newEncounterPath } from "@/domains/encounter/types";
+import { newEncounterPath, type Encounter } from "@/domains/encounter/types";
 import { EXAM_ROOM_STATUS_LABELS, type BoardVisit, type ExamRoomStatus, type RoomBoard } from "@/domains/exam-room/types";
 import { cn } from "@/shared/lib/utils";
 
 type Room = RoomBoard["rooms"][number];
 type RoomAction = "call-next" | "pass-over" | "no-show" | "finish" | "pause" | "resume";
+/** What happens to the patient in the room: each asks before it is done. */
+type Decision = "finish" | "pass-over" | "no-show";
 
 const STATUS_VARIANT: Record<ExamRoomStatus, "success" | "default" | "neutral"> = {
   available: "success",
@@ -75,6 +87,8 @@ export function ExamRoomBoard() {
   const { mutate } = useCustomMutation<RoomBoard>();
   // Per room: two rooms worked at once each keep their own button disabled.
   const [pending, setPending] = useState<Record<number, RoomAction>>({});
+  // The room and the decision waiting for a yes; the act runs only after it.
+  const [asking, setAsking] = useState<{ room: Room; action: Decision } | null>(null);
 
   const act = (room: Room, action: RoomAction) => {
     setPending((current) => ({ ...current, [room.id]: action }));
@@ -103,6 +117,15 @@ export function ExamRoomBoard() {
   };
 
   const rooms = board?.rooms ?? [];
+  // The actions go to the room, and the server acts on whoever is in it then.
+  // If the occupant changed while the question was open (someone else let them
+  // go and the next patient was called), the question was about somebody else.
+  const askedAbout = asking?.room.current?.appointmentId;
+  const liveOccupant = asking ? rooms.find((room) => room.id === asking.room.id)?.current?.appointmentId : undefined;
+  const stale = asking !== null && liveOccupant !== askedAbout;
+  useEffect(() => {
+    if (stale) setAsking(null);
+  }, [stale]);
   const waitingTotal =
     rooms.reduce((sum, room) => sum + room.waiting.length, 0) +
     (board?.withoutRoom ?? []).reduce((sum, queue) => sum + queue.waiting.length, 0);
@@ -152,10 +175,23 @@ export function ExamRoomBoard() {
             canOperate={canOperate?.can ?? false}
             canExamine={canExamine?.can ?? false}
             pending={pending[room.id] ?? null}
-            onAction={(action) => act(room, action)}
+            onAction={(action) =>
+              action === "finish" || action === "pass-over" || action === "no-show"
+                ? setAsking({ room, action })
+                : act(room, action)
+            }
           />
         ))}
       </div>
+
+      <ConfirmDecision
+        asking={asking}
+        onClose={() => setAsking(null)}
+        onConfirm={() => {
+          if (asking && !stale) act(asking.room, asking.action);
+          setAsking(null);
+        }}
+      />
 
       {board && board.withoutRoom.length > 0 && (
         <Card className="flex flex-col gap-3 p-5">
@@ -318,5 +354,85 @@ function WaitingList({ visits }: { visits: BoardVisit[] }) {
         </li>
       ))}
     </ol>
+  );
+}
+
+const DECISIONS: Record<Decision, { title: (name: string) => string; text: string; confirm: string }> = {
+  finish: {
+    title: (name) => `Kết thúc lượt khám của ${name}?`,
+    text: "Lượt khám đóng lại, phòng trống và gọi người tiếp theo.",
+    confirm: "Khám xong",
+  },
+  "pass-over": {
+    title: (name) => `${name} vắng mặt?`,
+    text: "Bệnh nhân quay lại hàng chờ, sau những người chưa được gọi, và được gọi lại sau ít phút. Phòng gọi người tiếp theo ngay.",
+    confirm: "Xác nhận vắng",
+  },
+  "no-show": {
+    title: (name) => `Ghi nhận ${name} không đến?`,
+    text: "Lượt khám đóng lại và không khôi phục được; muốn khám phải đăng ký mới.",
+    confirm: "Xác nhận không đến",
+  },
+};
+
+/**
+ * The question before a room's patient is let go. "Khám xong" also looks for
+ * the visit's encounter: closing a visit nobody wrote up leaves the patient
+ * with no result and no bill, which is worth saying before, not after.
+ */
+function ConfirmDecision({
+  asking,
+  onClose,
+  onConfirm,
+}: {
+  asking: { room: Room; action: Decision } | null;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const current = asking?.room.current ?? null;
+  const decision = asking ? DECISIONS[asking.action] : null;
+  const { data: canRead } = useCan({ resource: "clinical_encounters", action: "list" });
+  const finishing = asking?.action === "finish" && current != null;
+  const { result, query } = useList<Encounter>({
+    resource: "clinical_encounters",
+    filters: [{ field: "appointmentId", operator: "eq", value: current?.appointmentId }],
+    pagination: { currentPage: 1, pageSize: 1 },
+    errorNotification: false,
+    queryOptions: { enabled: finishing && (canRead?.can ?? false), retry: false },
+  });
+  const encounter = result?.data?.[0];
+  const known = finishing && (canRead?.can ?? false) && !query.isLoading && !query.isError;
+
+  const warning = !finishing
+    ? null
+    : !known
+      ? "Nếu lượt này chưa ghi lần khám, bệnh nhân sẽ không có kết quả khám và không có hoá đơn."
+      : !encounter
+        ? "Chưa ghi lần khám nào cho lượt này: bệnh nhân sẽ không có kết quả khám và không có hoá đơn."
+        : encounter.status === "in_progress"
+          ? "Lần khám vẫn đang mở. Nhớ bấm “Hoàn tất lần khám” để bệnh nhân có kết quả và hoá đơn."
+          : null;
+
+  return (
+    <AlertDialog open={current !== null} onOpenChange={(open) => !open && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{decision && current ? decision.title(current.patientName) : ""}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {current ? `Số ${formatQueueNumber(current.queueNumber)} · phòng ${asking?.room.code}. ` : ""}
+            {decision?.text}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {warning && (
+          <p role="alert" className="bg-warning-subtle text-warning-text rounded-lg px-3 py-2 text-sm font-medium">
+            {warning}
+          </p>
+        )}
+        <AlertDialogFooter>
+          <AlertDialogCancel>Không</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>{decision?.confirm}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

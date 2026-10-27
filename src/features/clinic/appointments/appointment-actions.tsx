@@ -1,4 +1,4 @@
-import { useCan, useCustomMutation, useInvalidate, useNotification } from "@refinedev/core";
+import { useCan, useCustomMutation, useInvalidate, useNotification, useOne } from "@refinedev/core";
 import { CalendarClockIcon, CheckIcon, LogInIcon, UserXIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -32,6 +32,8 @@ import {
 } from "@/shared/ui/select";
 import { Textarea } from "@/shared/ui/textarea";
 import type { Appointment } from "@/domains/appointment/types";
+import { GENDER_LABELS, type Customer } from "@/domains/customer/types";
+import { ID_TYPE_LABELS } from "@/domains/profile/types";
 import { formatQueueNumber } from "@/domains/appointment/types";
 import { formatLocalDate } from "@/shared/lib/format";
 import { clinicToday } from "./clinic-day";
@@ -73,8 +75,9 @@ export function AppointmentActions({ appointment, resource, size = "default", co
   const { open } = useNotification();
   const invalidate = useInvalidate();
   const { mutate, mutation } = useCustomMutation<Appointment>();
-  // The two acts that cannot be undone ask first.
-  const [confirming, setConfirming] = useState<"cancel" | "no-show" | null>(null);
+  // What cannot be undone asks first: cancelling, a no-show, and a check-in
+  // (there is no un-check-in), which also has the desk match the person to their papers.
+  const [confirming, setConfirming] = useState<"cancel" | "no-show" | "check-in" | null>(null);
   const [reason, setReason] = useState("");
   // The clinic cancelling a customer's visit has to say why; the API refuses
   // it otherwise. A customer cancelling their own only confirms.
@@ -170,7 +173,7 @@ export function AppointmentActions({ appointment, resource, size = "default", co
   return (
     <div className="flex flex-wrap gap-2">
       {showCheckIn && (
-        <Button size={size} onClick={() => run("check-in")} disabled={busy}>
+        <Button size={size} onClick={() => setConfirming("check-in")} disabled={busy}>
           <LogInIcon />
           Tiếp nhận
         </Button>
@@ -270,15 +273,23 @@ export function AppointmentActions({ appointment, resource, size = "default", co
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirming === "no-show" ? "Ghi nhận bệnh nhân không đến?" : "Huỷ đăng ký khám này?"}
+              {confirming === "check-in"
+                ? `Tiếp nhận ${appointment.customer.fullName}?`
+                : confirming === "no-show"
+                  ? "Ghi nhận bệnh nhân không đến?"
+                  : "Huỷ đăng ký khám này?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {visit}.{" "}
-              {confirming === "no-show"
-                ? "Lượt đăng ký sẽ đóng lại; bệnh nhân muốn khám phải đăng ký mới."
-                : "Đăng ký đã huỷ không khôi phục được, số khám không cấp lại."}
+              {confirming === "check-in"
+                ? `Số ${formatQueueNumber(appointment.queueNumber)}${appointment.doctor ? ` · ${appointment.doctor.fullName}` : ""}. Đối chiếu thông tin dưới đây với giấy tờ tuỳ thân của người tới khám; tiếp nhận xong không huỷ được.`
+                : `${visit}. ${
+                    confirming === "no-show"
+                      ? "Lượt đăng ký sẽ đóng lại; bệnh nhân muốn khám phải đăng ký mới."
+                      : "Đăng ký đã huỷ không khôi phục được, số khám không cấp lại."
+                  }`}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {confirming === "check-in" && <CheckInIdentity appointment={appointment} />}
           {confirming === "cancel" && desk && (
             <Textarea
               value={reason}
@@ -294,11 +305,48 @@ export function AppointmentActions({ appointment, resource, size = "default", co
               disabled={confirming === "cancel" && desk && reason.trim() === ""}
               onClick={() => confirming && run(confirming)}
             >
-              {confirming === "no-show" ? "Xác nhận không đến" : "Xác nhận huỷ"}
+              {confirming === "check-in"
+                ? "Xác nhận tiếp nhận"
+                : confirming === "no-show"
+                  ? "Xác nhận không đến"
+                  : "Xác nhận huỷ"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+/**
+ * Who is about to be checked in, as their papers would show it: the desk reads
+ * this against the ID card in front of them. Read when the question opens;
+ * without access to the record it falls back to what the visit carries.
+ */
+function CheckInIdentity({ appointment }: { appointment: Appointment }) {
+  const { result: customer, query } = useOne<Customer>({
+    resource: "customers",
+    id: appointment.customer.id,
+    errorNotification: false,
+    queryOptions: { retry: false },
+  });
+  const idLabel = customer?.nationalIdType ? ID_TYPE_LABELS[customer.nationalIdType] : "Giấy tờ";
+  const rows: [string, string][] = [
+    ["Họ và tên", customer?.fullName ?? appointment.customer.fullName],
+    ["Ngày sinh", customer?.dateOfBirth ? formatLocalDate(customer.dateOfBirth) : "—"],
+    ["Giới tính", customer?.gender ? GENDER_LABELS[customer.gender] : "—"],
+    [idLabel, customer?.nationalId ?? "—"],
+    ["Số điện thoại", customer?.phone ?? appointment.customer.phone],
+  ];
+
+  return (
+    <dl className="bg-muted/50 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-lg p-4 text-sm">
+      {rows.map(([label, value]) => (
+        <div key={label} className="contents">
+          <dt className="text-muted-foreground">{label}</dt>
+          <dd className="font-medium tabular-nums">{query.isLoading ? "…" : value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
