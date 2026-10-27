@@ -30,6 +30,18 @@ export async function requestPasswordResetCode(
   return post(`${API_URL}/auth/password-reset/otp`, { phone }, RESET_FAILED);
 }
 
+/**
+ * Whether the recovery code is right, without spending it — the form checks
+ * it before asking for the new password. A wrong one comes back as a field
+ * error on `otp` and counts toward burning the code.
+ */
+export async function checkPasswordResetCode(body: {
+  phone: string;
+  otp: string;
+}): Promise<{ ok: true; value: unknown } | { ok: false; error: RegistrationError }> {
+  return post(`${API_URL}/auth/password-reset/otp/check`, body, RESET_FAILED);
+}
+
 /** Sets a new password with the recovery code. Signs nobody in. */
 export async function resetPassword(body: {
   phone: string;

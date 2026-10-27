@@ -17,6 +17,7 @@ import {
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/shared/ui/input-otp";
 import { InputPassword } from "@/shared/components/form/input-password";
 import {
+  checkPasswordResetCode,
   requestPasswordResetCode,
   resetPassword,
   translateRegistrationMessage as translate,
@@ -26,9 +27,9 @@ import { cn } from "@/shared/lib/utils";
 const CODE_LENGTH = 6;
 
 /**
- * Recovering a forgotten password (SRS 3.2.5 – 3.2.6), in two steps on one
- * screen: the phone number the account signs in with, then the code texted
- * to that number together with the new password.
+ * Recovering a forgotten password (SRS 3.2.5 – 3.2.6), in three steps on one
+ * screen: the phone number the account signs in with, the code texted to it
+ * (checked before going on), then the new password.
  *
  * The SRS draws a link sent by email; here it is a code by SMS, because the
  * person types the code on this same screen. The second step says the same
@@ -38,13 +39,14 @@ const CODE_LENGTH = 6;
 export const ForgotPasswordForm = () => {
   const { title } = useRefineOptions();
 
-  const [step, setStep] = useState<"phone" | "reset" | "done">("phone");
+  const [step, setStep] = useState<"phone" | "code" | "password" | "done">("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [sending, setSending] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [resendIn, setResendIn] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +74,24 @@ export const ForgotPasswordForm = () => {
     }
     setResendIn(result.value.resendAfter);
     setOtp("");
-    setStep("reset");
+    setStep("code");
+  };
+
+  const handleCode = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setFieldErrors({});
+
+    setChecking(true);
+    const result = await checkPasswordResetCode({ phone, otp });
+    setChecking(false);
+
+    if (!result.ok) {
+      setError(result.error.message);
+      setFieldErrors(result.error.fieldErrors ?? {});
+      return;
+    }
+    setStep("password");
   };
 
   const handlePhone = (e: React.FormEvent<HTMLFormElement>) => {
@@ -97,6 +116,12 @@ export const ForgotPasswordForm = () => {
     if (!result.ok) {
       setError(result.error.message);
       setFieldErrors(result.error.fieldErrors ?? {});
+      // The code was right a moment ago; if it is not now, it has expired
+      // meanwhile — back to the code step, where a new one can be sent.
+      if (result.error.fieldErrors?.otp) {
+        setOtp("");
+        setStep("code");
+      }
       return;
     }
     setPassword("");
@@ -116,7 +141,8 @@ export const ForgotPasswordForm = () => {
 
   const description = {
     phone: "Nhập số điện thoại bạn dùng để đăng nhập. Mã khôi phục sẽ được gửi qua SMS tới số này.",
-    reset: `Nếu số ${phone} có tài khoản, mã khôi phục ${CODE_LENGTH} số đã được gửi qua SMS tới số đó.`,
+    code: `Nếu số ${phone} có tài khoản, mã khôi phục ${CODE_LENGTH} số đã được gửi qua SMS tới số đó.`,
+    password: "Mã đúng. Đặt mật khẩu mới cho tài khoản.",
     done: "Đã đổi mật khẩu. Mọi phiên đăng nhập cũ đã kết thúc.",
   }[step];
 
@@ -149,7 +175,13 @@ export const ForgotPasswordForm = () => {
         <Card className={cn("mt-8 w-full p-8 shadow-e4", "sm:w-[420px]")}>
           <CardHeader className={cn("gap-1 px-0")}>
             <CardTitle className={cn("text-2xl font-semibold")}>
-              {step === "phone" ? "Khôi phục mật khẩu" : step === "reset" ? "Đặt mật khẩu mới" : "Thành công"}
+              {step === "phone"
+                ? "Khôi phục mật khẩu"
+                : step === "code"
+                  ? "Nhập mã khôi phục"
+                  : step === "password"
+                    ? "Đặt mật khẩu mới"
+                    : "Thành công"}
             </CardTitle>
             <CardDescription>{description}</CardDescription>
           </CardHeader>
@@ -184,8 +216,8 @@ export const ForgotPasswordForm = () => {
               </form>
             )}
 
-            {step === "reset" && (
-              <form onSubmit={handleReset}>
+            {step === "code" && (
+              <form onSubmit={handleCode}>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="otp">Mã khôi phục</Label>
                   <InputOTP
@@ -229,7 +261,24 @@ export const ForgotPasswordForm = () => {
                   </div>
                 </div>
 
-                <div className="mt-5 flex flex-col gap-2">
+                {error && Object.keys(fieldErrors).length === 0 && (
+                  <p className="text-destructive mt-4 text-sm">{error}</p>
+                )}
+
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="mt-7 w-full"
+                  disabled={checking || otp.length !== CODE_LENGTH}
+                >
+                  {checking ? "Đang kiểm tra…" : "Tiếp tục"}
+                </Button>
+              </form>
+            )}
+
+            {step === "password" && (
+              <form onSubmit={handleReset}>
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="password">Mật khẩu mới</Label>
                   {/* Tells password managers which account the new password is for. */}
                   <input type="hidden" name="username" autoComplete="username" value={phone} readOnly />
@@ -238,6 +287,7 @@ export const ForgotPasswordForm = () => {
                     name="password"
                     autoComplete="new-password"
                     placeholder="Tối thiểu 8 ký tự"
+                    autoFocus
                     required
                     minLength={8}
                     maxLength={72}
@@ -269,7 +319,7 @@ export const ForgotPasswordForm = () => {
                   type="submit"
                   size="lg"
                   className="mt-7 w-full"
-                  disabled={saving || otp.length !== CODE_LENGTH}
+                  disabled={saving}
                 >
                   {saving ? "Đang đặt lại…" : "Đặt lại mật khẩu"}
                 </Button>
