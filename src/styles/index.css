@@ -410,7 +410,9 @@
 @utility card-soft {
   background-color: var(--card);
   border-radius: 1.5rem;
-  box-shadow: var(--card-shadow);
+  /* Outside the portal (a staff account on a shared screen) there is no
+     --card-shadow: fall back to a plain hairline. */
+  box-shadow: var(--card-shadow, 0 0 0 1px var(--border));
 }
 
 @layer components {
