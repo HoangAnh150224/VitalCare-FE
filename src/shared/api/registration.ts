@@ -85,6 +85,9 @@ export function translateRegistrationMessage(message: string): string {
   if (message.startsWith("Please wait")) {
     return "Vừa gửi mã cho số này. Vui lòng đợi một chút trước khi yêu cầu mã mới.";
   }
+  if (message.startsWith("Too many codes have been requested from this network")) {
+    return "Đã yêu cầu quá nhiều mã từ mạng này. Vui lòng thử lại sau.";
+  }
   if (message.startsWith("Too many codes")) {
     return "Đã gửi quá nhiều mã tới số này. Vui lòng thử lại sau.";
   }
