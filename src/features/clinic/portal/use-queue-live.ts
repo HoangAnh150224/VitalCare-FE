@@ -30,8 +30,8 @@ function useRefreshQueue() {
 
 /**
  * The portal's live queue, run once by the shell so it holds on every screen:
- * re-reads the visits when the API says the clinic's queue moved, polls while
- * a visit is live in case the socket is down, and tells the patient — toast,
+ * re-reads the visits when the API says the clinic's queue moved, polls on the
+ * day of a visit still to happen in case the socket is down, and tells the patient — toast,
  * buzz, tab title — the moment one of their visits is called into a room.
  */
 export function useMyQueueLive() {
@@ -45,10 +45,13 @@ export function useMyQueueLive() {
     sorters: [...VISIT_SORTERS],
   });
   const today = clinicToday();
-  const live = (result?.data ?? []).filter(
-    (visit) => visit.appointmentDate === today && (visit.status === "checked_in" || visit.status === "in_exam")
+  // From "registered" on, not only once checked in: without the socket, the
+  // check-in itself is the change this page would otherwise never hear of.
+  const anyLive = (result?.data ?? []).some(
+    (visit) =>
+      visit.appointmentDate === today &&
+      (visit.status === "scheduled" || visit.status === "checked_in" || visit.status === "in_exam")
   );
-  const anyLive = live.length > 0;
 
   useEffect(() => {
     if (!anyLive) return;
