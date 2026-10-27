@@ -103,11 +103,16 @@ export const PortalAppointments = () => {
                 <>
                   <Button asChild variant="link" className="h-auto px-0">
                     <Link to={`/my-appointments/show/${visit.id}`}>
-                      {visit.status === "completed" ? "Xem phiếu và hoá đơn" : "Xem phiếu"}
+                      Xem phiếu
                     </Link>
                   </Button>
                   {tab === "upcoming" && (
                     <AppointmentActions appointment={visit} resource="my_appointments" size="sm" />
+                  )}
+                  {visit.status === "completed" && (
+                    <Button asChild size="sm" variant="outline" className="rounded-lg">
+                      <Link to={`/my-results/${visit.id}`}>Kết quả khám</Link>
+                    </Button>
                   )}
                 </>
               }

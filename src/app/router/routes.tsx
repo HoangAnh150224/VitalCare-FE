@@ -75,6 +75,8 @@ import {
   PortalAppointmentCreate,
   PortalAppointments,
   PortalHome,
+  PortalResult,
+  PortalResults,
   QuickCheckIn,
   StaffList,
   StaffCreate,
@@ -549,6 +551,18 @@ export function AppRoutes() {
             element={<PortalSwitch portal={<PortalAppointmentCreate />} staff={<MyAppointmentCreate />} />}
           />
           <Route path="show/:id" element={<MyAppointmentShow />} />
+        </Route>
+        {/* The customer's concluded visits and what came of them; the same grant as their appointments. */}
+        <Route
+          path="/my-results"
+          element={
+            <CanAccess resource="my_appointments" action="list" fallback={<Forbidden resource="my_appointments" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<PortalResults />} />
+          <Route path=":appointmentId" element={<PortalResult />} />
         </Route>
         <Route
           path="/my-profiles"

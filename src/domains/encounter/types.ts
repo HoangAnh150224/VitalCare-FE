@@ -1,3 +1,4 @@
+import type { ServiceOrder } from "@/domains/billing/types";
 import type { StaffType } from "@/domains/employee/types";
 
 /** A clinical encounter as `GET /clinical_encounters` returns it (`EncounterResponse`). */
@@ -92,3 +93,12 @@ export function newEncounterPath({ customerId, patientName, appointmentId }: New
   if (appointmentId) query.set("appointmentId", String(appointmentId));
   return `/clinical-encounters/create?${query}`;
 }
+
+/**
+ * A customer's own concluded visit (`GET /my_appointments/{id}/result`): the
+ * encounter and the services done in it, cancelled ones left out.
+ */
+export type MyVisitResult = {
+  encounter: Encounter;
+  orders: ServiceOrder[];
+};

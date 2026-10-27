@@ -8,6 +8,7 @@ import { useGetIdentity, useLogout } from "@refinedev/core";
 import {
   CalendarCheck2Icon,
   CircleUserRoundIcon,
+  FileHeartIcon,
   HouseIcon,
   LogOutIcon,
   UsersRoundIcon,
@@ -34,6 +35,7 @@ type NavItem = { to: string; label: string; icon: LucideIcon };
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Trang chủ", icon: HouseIcon },
   { to: "/my-appointments", label: "Lượt khám", icon: CalendarCheck2Icon },
+  { to: "/my-results", label: "Kết quả", icon: FileHeartIcon },
   { to: "/my-profiles", label: "Hồ sơ", icon: UsersRoundIcon },
 ];
 
@@ -124,7 +126,7 @@ export function PortalLayout({ children }: PropsWithChildren) {
             "pb-[env(safe-area-inset-bottom)]"
           )}
         >
-          <ul className="grid grid-cols-4">
+          <ul className="grid grid-cols-5">
             {TABS.map((item) => {
               const active = isActive(item.to);
               return (

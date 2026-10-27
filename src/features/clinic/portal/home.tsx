@@ -132,7 +132,7 @@ export const PortalHome = () => {
             {recent.map((visit) => (
               <li key={visit.id}>
                 <Link
-                  to={`/my-appointments/show/${visit.id}`}
+                  to={visit.status === "completed" ? `/my-results/${visit.id}` : `/my-appointments/show/${visit.id}`}
                   className="text-foreground hover:bg-muted/50 flex items-center gap-3 px-4 py-3 transition-colors"
                 >
                   <span className="flex min-w-0 flex-1 flex-col">

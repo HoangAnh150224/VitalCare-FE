@@ -132,6 +132,11 @@ export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointm
                 In phiếu
               </Button>
               {record && !readOnly && <AppointmentActions appointment={record} resource="my_appointments" />}
+              {portal && status === "completed" && (
+                <Button asChild>
+                  <Link to={`/my-results/${record?.id}`}>Xem kết quả khám</Link>
+                </Button>
+              )}
             </div>
           </div>
         </LoadingOverlay>

@@ -100,15 +100,24 @@ export function useOrderActions(onChanged: (order: ServiceOrder) => void) {
 /**
  * A result's files. Downloaded through the API with the session's token, then
  * saved — never opened in a tab, so an uploaded file never runs in this origin.
+ *
+ * `downloadPath` points it somewhere other than the staff endpoint — the
+ * customer reads their files through their own visit result.
  */
-export function OrderFiles({ order }: { order: Pick<ServiceOrder, "id" | "files"> }) {
+export function OrderFiles({
+  order,
+  downloadPath = (fileId) => `service_orders/${order.id}/files/${fileId}`,
+}: {
+  order: Pick<ServiceOrder, "id" | "files">;
+  downloadPath?: (fileId: number) => string;
+}) {
   const { open } = useNotification();
   const [busy, setBusy] = useState<number | null>(null);
 
   const save = async (file: ServiceOrder["files"][number]) => {
     setBusy(file.id);
     try {
-      const blob = await kyInstance.get(`service_orders/${order.id}/files/${file.id}`).blob();
+      const blob = await kyInstance.get(downloadPath(file.id)).blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
