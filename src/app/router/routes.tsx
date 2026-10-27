@@ -72,6 +72,9 @@ import {
   MyProfileList,
   MyAppointmentList,
   MyAppointmentShow,
+  PortalAppointmentCreate,
+  PortalAppointments,
+  PortalHome,
   QuickCheckIn,
   StaffList,
   StaffCreate,
@@ -103,7 +106,7 @@ import {
 } from "@/features/clinic";
 import { ErrorComponent } from "@/shared/components/layout/error-component";
 import { Forbidden } from "@/shared/components/layout/forbidden";
-import { Layout } from "@/shared/components/layout/layout";
+import { PortalSwitch, ShellLayout } from "./shell";
 
 /**
  * Route tree rendered inside `<Refine>`. Every path here must line up with the
@@ -126,9 +129,9 @@ export function AppRoutes() {
       <Route
         element={
           <Authenticated key="authenticated-routes" redirectOnFail="/login">
-            <Layout>
+            <ShellLayout>
               <Outlet />
-            </Layout>
+            </ShellLayout>
           </Authenticated>
         }
       >
@@ -136,7 +139,7 @@ export function AppRoutes() {
           A signed-in visitor opens on the dashboard (the `/` route above sends
           them here) rather than on a resource's table.
         */}
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<PortalSwitch portal={<PortalHome />} staff={<Dashboard />} />} />
         {/*
           Blog posts render their create / edit / show / clone actions as
           dialogs on top of the list. Nesting them under the list route keeps
@@ -537,8 +540,14 @@ export function AppRoutes() {
             </CanAccess>
           }
         >
-          <Route index element={<MyAppointmentList />} />
-          <Route path="create" element={<MyAppointmentCreate />} />
+          <Route
+            index
+            element={<PortalSwitch portal={<PortalAppointments />} staff={<MyAppointmentList />} />}
+          />
+          <Route
+            path="create"
+            element={<PortalSwitch portal={<PortalAppointmentCreate />} staff={<MyAppointmentCreate />} />}
+          />
           <Route path="show/:id" element={<MyAppointmentShow />} />
         </Route>
         <Route

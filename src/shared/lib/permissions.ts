@@ -88,3 +88,25 @@ export function permissionFor(
   const suffix = ACTION_TO_PERMISSION[action];
   return suffix ? `${resource}:${suffix}` : null;
 }
+
+/**
+ * The resources a customer holds about themselves. Named one by one rather
+ * than matched on the `my_` prefix: `my_patients` is staff's — the patients
+ * in a nurse's care — and must not send a nurse to the patient portal.
+ */
+const PORTAL_RESOURCES = new Set(["my_appointments", "my_profiles"]);
+
+/**
+ * Whether an account is a customer's and nothing more: every code it holds is
+ * about its own visits and profiles.
+ *
+ * Such an account gets the patient portal instead of the staff shell. Anybody
+ * holding even one other code — staff, an administrator who can also register
+ * for themselves — keeps the staff shell, since that is where their work is.
+ */
+export function isPortalAccount(permissions: readonly string[] | undefined): boolean {
+  return (
+    Boolean(permissions?.length) &&
+    permissions!.every((code) => PORTAL_RESOURCES.has(code.slice(0, code.indexOf(":"))))
+  );
+}

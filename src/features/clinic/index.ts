@@ -22,3 +22,4 @@ export * from "./exam-rooms";
 export * from "./medical-services";
 export * from "./service-orders";
 export * from "./invoices";
+export * from "./portal";

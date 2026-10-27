@@ -1,9 +1,11 @@
 import { useShow, type BaseKey } from "@refinedev/core";
-import { PrinterIcon } from "lucide-react";
+import { ChevronLeftIcon, PrinterIcon } from "lucide-react";
+import { Link } from "react-router";
 import { QRCodeSVG } from "qrcode.react";
 
 import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
+import { useShellVariant } from "@/shared/components/layout/shell-variant";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
@@ -36,10 +38,26 @@ type MyAppointmentShowProps = {
 export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointmentShowProps = {}) => {
   const { result: record, query } = useShow<Appointment>({ resource, id });
   const status = record?.status;
+  // In the patient portal the console's header (refresh, edit, delete) has
+  // nothing to offer; a way back to the visits is all it needs.
+  const portal = useShellVariant() === "portal";
 
   return (
     <ShowView>
-      <ShowViewHeader title="Phiếu khám" resource={resource} />
+      {portal ? (
+        <div data-print="hide" className="mx-auto flex w-full max-w-md flex-col gap-2">
+          <Link
+            to="/my-appointments"
+            className="text-muted-foreground hover:text-foreground -ms-1 inline-flex w-fit items-center gap-1 text-sm"
+          >
+            <ChevronLeftIcon className="size-4" />
+            Lượt khám
+          </Link>
+          <h1>Phiếu khám</h1>
+        </div>
+      ) : (
+        <ShowViewHeader title="Phiếu khám" resource={resource} />
+      )}
 
       <Card className="mx-auto w-full max-w-md py-6">
         <LoadingOverlay loading={query.isLoading}>

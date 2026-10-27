@@ -15,8 +15,12 @@ import {
   BreadcrumbPage as ShadcnBreadcrumbPage,
   Breadcrumb as ShadcnBreadcrumb,
 } from "@/shared/ui/breadcrumb";
+import { useShellVariant } from "@/shared/components/layout/shell-variant";
 
 export function Breadcrumb() {
+  // The portal has a few screens and a tab bar; a trail back to "home" says
+  // nothing its back arrow and tabs do not already.
+  const variant = useShellVariant();
   const Link = useLink();
   const { breadcrumbs } = useBreadcrumb();
   const { resources } = useResourceParams();
@@ -51,6 +55,8 @@ export function Breadcrumb() {
 
     return list;
   }, [breadcrumbs, Link, rootRouteResource]);
+
+  if (variant === "portal") return null;
 
   return (
     <ShadcnBreadcrumb>

@@ -124,6 +124,9 @@
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
     "Courier New", monospace;
+  /* Headings in the patient portal (loaded by PortalLayout): warmer than the
+     console's Inter, and the face the landing page already speaks in. */
+  --font-display: "Be Vietnam Pro", var(--font-sans);
 }
 
 @layer base {
@@ -366,6 +369,23 @@
     var(--gold-500) 55%,
     var(--gold-600) 100%
   );
+}
+
+/* --------------------------------------------------------------------------
+   Patient portal
+   --------------------------------------------------------------------------
+   Screens shared with staff (profile forms, the slip) keep their markup; in
+   the portal their page titles take the display face and a size that suits
+   a single reading column instead of a console. Unlayered on purpose, so it
+   outranks the `text-3xl` utility those headers carry.
+   -------------------------------------------------------------------------- */
+
+.portal-shell h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.625rem;
+  line-height: 2.125rem;
+  letter-spacing: -0.01em;
 }
 
 /* The frosted bar the shell uses for its sticky header. */

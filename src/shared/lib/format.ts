@@ -70,3 +70,10 @@ export function formatLocalTime(value?: string | null): string {
   if (!value) return EMPTY;
   return value.slice(0, 5);
 }
+
+/** "Nguyễn Văn An" → "NA": first and last word, for an avatar with no picture. */
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}

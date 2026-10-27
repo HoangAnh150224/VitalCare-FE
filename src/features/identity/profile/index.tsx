@@ -2,8 +2,10 @@ import { useState } from "react";
 import {
   useCustomMutation,
   useGetIdentity,
+  useLogout,
   useNotification,
 } from "@refinedev/core";
+import { LogOutIcon } from "lucide-react";
 
 import { API_URL } from "@/shared/api/constants";
 import {
@@ -13,6 +15,8 @@ import {
   type TokenPair,
 } from "@/shared/api/session";
 import { Breadcrumb } from "@/shared/components/layout/breadcrumb";
+import { useShellVariant } from "@/shared/components/layout/shell-variant";
+import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
 import { Badge } from "@/shared/ui/badge";
@@ -26,6 +30,7 @@ import {
   CardTitle,
 } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
+import { initials } from "@/shared/lib/format";
 
 /**
  * The signed-in user's own account.
@@ -43,6 +48,10 @@ export const Profile = () => {
   const authorities = getAuthorities();
   const { open } = useNotification();
   const { mutate, mutation } = useCustomMutation<TokenPair>();
+  const { mutate: logout, isPending: isLoggingOut } = useLogout();
+  // A customer has no use for role names and permission codes: in the portal
+  // the account is a name, a number and a way to sign out (SRS 3.2.4).
+  const portal = useShellVariant() === "portal";
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -93,13 +102,29 @@ export const Profile = () => {
       <Breadcrumb />
 
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Tài khoản của bạn</h1>
-        <p className="text-muted-foreground text-sm">
-          Thông tin của tài khoản bạn đang đăng nhập.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{portal ? "Tài khoản" : "Tài khoản của bạn"}</h1>
+        {!portal && (
+          <p className="text-muted-foreground text-sm">
+            Thông tin của tài khoản bạn đang đăng nhập.
+          </p>
+        )}
       </div>
 
-      <div className="grid max-w-4xl gap-6 lg:grid-cols-2">
+      <div className={cn("grid gap-6", portal ? "max-w-2xl" : "max-w-4xl lg:grid-cols-2")}>
+        {portal ? (
+          <Card className="flex-row items-center gap-4 p-5">
+            <Avatar className="size-14">
+              <AvatarFallback className="bg-primary/10 text-primary font-display text-lg font-semibold">
+                {initials(identity?.fullName ?? "")}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex min-w-0 flex-col">
+              <span className="font-display truncate text-lg font-semibold">{identity?.fullName ?? "—"}</span>
+              <span className="text-muted-foreground text-sm tabular-nums">{identity?.phone ?? "—"}</span>
+              {identity?.email && <span className="text-muted-foreground truncate text-sm">{identity.email}</span>}
+            </div>
+          </Card>
+        ) : (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Hồ sơ cá nhân</CardTitle>
@@ -164,6 +189,7 @@ export const Profile = () => {
             </div>
           </CardContent>
         </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -222,6 +248,17 @@ export const Profile = () => {
             </form>
           </CardContent>
         </Card>
+
+        {portal && (
+          <Button
+            variant="outline"
+            className="text-destructive hover:text-destructive h-11 rounded-xl"
+            onClick={() => logout()}
+          >
+            <LogOutIcon />
+            {isLoggingOut ? "Đang đăng xuất…" : "Đăng xuất"}
+          </Button>
+        )}
       </div>
     </div>
   );
