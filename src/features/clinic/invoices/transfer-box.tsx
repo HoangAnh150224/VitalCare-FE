@@ -15,7 +15,7 @@ export function TransferBox({ transfer }: { transfer: TransferInstructions }) {
     `https://img.vietqr.io/image/${encodeURIComponent(transfer.bank)}-${encodeURIComponent(transfer.accountNumber)}-compact2.png` +
     `?amount=${transfer.amount}&addInfo=${encodeURIComponent(transfer.content)}&accountName=${encodeURIComponent(transfer.accountName)}`;
   const rows: [string, string, boolean][] = [
-    ["Ngân hàng", transfer.bank, false],
+    ["Ngân hàng", transfer.bankName ?? transfer.bank, false],
     ["Số tài khoản", transfer.accountNumber, true],
     ["Chủ tài khoản", transfer.accountName, false],
     ["Số tiền", formatMoney(transfer.amount), false],

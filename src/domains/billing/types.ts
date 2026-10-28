@@ -139,7 +139,10 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 /** `GET /my_appointments/{id}/invoice`: the bill, and whether it can be paid online. */
 /** Where to transfer the money for an unpaid bill: the VietQR code is built from these. */
 export type TransferInstructions = {
+  /** What VietQR is given: a short name or the bank's BIN. */
   bank: string;
+  /** The bank's name, for people. */
+  bankName?: string;
   accountNumber: string;
   accountName: string;
   amount: number;
