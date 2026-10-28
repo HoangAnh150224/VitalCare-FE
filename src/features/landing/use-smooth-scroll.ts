@@ -1,29 +1,16 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
-import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 gsap.registerPlugin(ScrollTrigger);
-
-const REDUCED = "(prefers-reduced-motion: reduce)";
-
-/** Whether the visitor asked for less motion, kept current if they change it. */
-export function useReducedMotion() {
-  return useSyncExternalStore(subscribeReduced, () => window.matchMedia(REDUCED).matches);
-}
-
-function subscribeReduced(notify: () => void) {
-  const query = window.matchMedia(REDUCED);
-  query.addEventListener("change", notify);
-  return () => query.removeEventListener("change", notify);
-}
 
 /**
  * Smooth (Lenis) scrolling for the landing page only, driving ScrollTrigger
  * from the same frames, and a `scrollTo` that goes through it.
  *
  * Torn down when the page unmounts — the sign-in screen and the app scroll
- * natively — and never started for somebody who asked for less motion.
+ * natively.
  */
 export function useSmoothScroll(enabled: boolean) {
   const lenis = useRef<Lenis | null>(null);

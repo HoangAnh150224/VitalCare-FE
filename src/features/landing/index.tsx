@@ -12,8 +12,7 @@ import { Button } from "@/shared/ui/button";
 
 import { AiAssist, Features, FinalCall, HowItWorks, Platform } from "./sections";
 import { CinematicStory } from "./story/cinematic-story";
-import { StillStory } from "./story/still-story";
-import { useReducedMotion, useSmoothScroll } from "./use-smooth-scroll";
+import { useSmoothScroll } from "./use-smooth-scroll";
 
 /**
  * The page everybody opens on: a film, scrubbed by the scroll, of one reading
@@ -25,8 +24,10 @@ export function Landing() {
   // Somebody already signed in goes on to the app instead of signing in again.
   const { data: auth } = useIsAuthenticated();
   const signedIn = auth?.authenticated ?? false;
-  const reduced = useReducedMotion();
-  const scrollTo = useSmoothScroll(!reduced);
+  // The film plays for everybody, "reduce motion" or not: it only moves as the
+  // visitor scrolls, and a still page was being mistaken for a broken one on
+  // machines with Windows' animation effects off (the user's decision).
+  const scrollTo = useSmoothScroll(true);
   const explore = () => scrollTo("#tinh-nang");
 
   const header = (
@@ -57,13 +58,9 @@ export function Landing() {
   return (
     <div className="landing min-h-svh">
       <main>
-        {reduced ? (
-          <StillStory header={header} onExplore={explore} />
-        ) : (
-          <CinematicStory header={header} onExplore={explore} />
-        )}
+        <CinematicStory header={header} onExplore={explore} />
         <Features />
-        <HowItWorks animate={!reduced} />
+        <HowItWorks animate />
         <Platform />
         <AiAssist />
         <FinalCall signedIn={signedIn} />

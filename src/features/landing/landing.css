@@ -220,10 +220,6 @@
   }
 }
 
-.cine-still {
-  padding-bottom: 2rem;
-}
-
 /* --- sections after the film ------------------------------------------------ */
 .landing-feature {
   border-top: 2px solid var(--landing-mint);
@@ -298,12 +294,4 @@
   color: var(--landing-teal-deep);
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .landing *,
-  .landing *::before {
-    animation: none !important;
-    transition: none !important;
-  }
 }

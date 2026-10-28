@@ -182,7 +182,8 @@ export function CinematicStory({ header, onExplore }: { header: ReactNode; onExp
       const dots = q(".cine-progress-dot");
       const mark = () => {
         const time = tl.time();
-        const active = SCENE_AT.findLastIndex((at) => time >= at - 0.01);
+        // A plain count, not findLastIndex (Chrome 97+): the film also plays on older Chrome.
+        const active = SCENE_AT.filter((at) => time >= at - 0.01).length - 1;
         dots.forEach((dot: HTMLElement, i: number) => dot.toggleAttribute("data-active", i === active));
       };
 
