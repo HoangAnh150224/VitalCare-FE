@@ -137,7 +137,18 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 };
 
 /** `GET /my_appointments/{id}/invoice`: the bill, and whether it can be paid online. */
-export type OwnInvoice = { invoice: Invoice; onlinePayment: boolean };
+/** Where to transfer the money for an unpaid bill: the VietQR code is built from these. */
+export type TransferInstructions = {
+  bank: string;
+  accountNumber: string;
+  accountName: string;
+  amount: number;
+  /** The transfer content, e.g. `VC000017`, which ties the money to the bill. */
+  content: string;
+};
+
+/** `transfer` is null when the bill is paid or the clinic has no account set up for transfers. */
+export type OwnInvoice = { invoice: Invoice; onlinePayment: boolean; transfer?: TransferInstructions | null };
 
 /** One day of `GET /invoices/report`, or the period's total (date null). */
 export type RevenueDay = {
