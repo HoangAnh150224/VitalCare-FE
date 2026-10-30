@@ -25,6 +25,7 @@ import {
   FlaskConical,
   ReceiptText,
   ListOrdered,
+  BriefcaseMedical,
 } from "lucide-react";
 
 /**
@@ -240,6 +241,20 @@ export const resources: ResourceProps[] = [
     meta: {
       label: "Chỉ định dịch vụ",
       icon: <FlaskConical className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // First-aid guidance, written and reviewed by clinical staff (SRS 3.17).
+  // What is published is read on the public site, not here.
+  {
+    name: "first_aid_articles",
+    list: "/first-aid-articles",
+    create: "/first-aid-articles/create",
+    edit: "/first-aid-articles/edit/:id",
+    show: "/first-aid-articles/show/:id",
+    meta: {
+      label: "Nội dung sơ cứu",
+      icon: <BriefcaseMedical className="h-4 w-4" />,
       parent: "clinic",
     },
   },

@@ -46,6 +46,7 @@ import {
 } from "@/features/administration";
 import { ForgotPassword, Login, Profile, Register } from "@/features/identity";
 import { Landing } from "@/features/landing";
+import { PublicClinics, PublicClinicShow, PublicFirstAid, PublicFirstAidShow, PublicLayout, PublicServices } from "@/features/public";
 import {
   AppointmentCreate,
   AppointmentList,
@@ -100,6 +101,11 @@ import {
   ExamRoomBoard,
   MedicalServiceList,
   MedicalServiceCreate,
+  FirstAidList,
+  FirstAidCreate,
+  FirstAidEdit,
+  FirstAidShow,
+  FirstAidHistory,
   MedicalServiceEdit,
   ServiceOrderList,
   ServiceOrderShow,
@@ -129,6 +135,17 @@ export function AppRoutes() {
         landing page, and signing in leads on to the dashboard.
       */}
       <Route path="/" element={<Landing />} />
+      {/*
+        The public site, for everybody too: clinics, prices, first aid. Its
+        own frame, not the app's shell; it reads only /api/public.
+      */}
+      <Route element={<PublicLayout />}>
+        <Route path="/locations" element={<PublicClinics />} />
+        <Route path="/locations/:id" element={<PublicClinicShow />} />
+        <Route path="/services" element={<PublicServices />} />
+        <Route path="/first-aid" element={<PublicFirstAid />} />
+        <Route path="/first-aid/:id" element={<PublicFirstAidShow />} />
+      </Route>
       <Route
         element={
           <Authenticated key="authenticated-routes" redirectOnFail="/login">
@@ -497,6 +514,20 @@ export function AppRoutes() {
           <Route index element={<MedicalServiceList />} />
           <Route path="create" element={<MedicalServiceCreate />} />
           <Route path="edit/:id" element={<MedicalServiceEdit />} />
+        </Route>
+        <Route
+          path="/first-aid-articles"
+          element={
+            <CanAccess resource="first_aid_articles" action="list" fallback={<Forbidden resource="first_aid_articles" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<FirstAidList />} />
+          <Route path="create" element={<FirstAidCreate />} />
+          <Route path="edit/:id" element={<FirstAidEdit />} />
+          <Route path="show/:id" element={<FirstAidShow />} />
+          <Route path="history/:id" element={<FirstAidHistory />} />
         </Route>
         <Route
           path="/clinics"

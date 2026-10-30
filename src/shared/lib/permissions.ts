@@ -25,7 +25,7 @@
  */
 export const ACTION_TO_PERMISSION: Record<
   string,
-  "read" | "write" | "delete" | "activate" | "check_in" | "assign" | "assign_staff" | "status" | "operate" | "report" | "conclude"
+  "read" | "write" | "delete" | "activate" | "check_in" | "assign" | "assign_staff" | "status" | "operate" | "report" | "conclude" | "review"
 > = {
   // customers:assign — putting a patient in somebody's care and on a device.
   assign: "assign",
@@ -48,6 +48,8 @@ export const ACTION_TO_PERMISSION: Record<
   report: "report",
   // clinical_encounters:conclude — the diagnosis and completing the visit, the doctor's.
   conclude: "conclude",
+  // first_aid_articles:review — approving, sending back, publishing and archiving guidance (BR-31).
+  review: "review",
 };
 
 /**

@@ -37,6 +37,18 @@ export function Landing() {
         VitalCare
       </Link>
       <nav className="flex items-center gap-2">
+        {/* The public pages, for anybody: where to go, what it costs, what to do in an emergency. */}
+        <div className="mr-2 hidden items-center gap-1 lg:flex">
+          {[
+            { to: "/locations", label: "Cơ sở" },
+            { to: "/services", label: "Dịch vụ & giá" },
+            { to: "/first-aid", label: "Sơ cứu" },
+          ].map((item) => (
+            <Button key={item.to} asChild variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
+              <Link to={item.to}>{item.label}</Link>
+            </Button>
+          ))}
+        </div>
         {signedIn ? (
           <Button asChild variant="secondary">
             <Link to="/dashboard">Vào trang của tôi</Link>

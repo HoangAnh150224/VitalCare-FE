@@ -10,6 +10,7 @@ import type { InvoiceStatus, PaymentStatus, ServiceOrderStatus, ServiceStatus } 
 import type { EncounterStatus } from "@/domains/encounter/types";
 import type { AssignmentStatus } from "@/domains/assignment/types";
 import type { EmployeeStatus } from "@/domains/employee/types";
+import type { FirstAidStatus } from "@/domains/first-aid/types";
 import type { OrganizationStatus } from "@/domains/organization/types";
 import type { TaskPriority, TaskStatus } from "@/domains/task/types";
 import type { UserStatus } from "@/domains/user/types";
@@ -164,6 +165,15 @@ export const SERVICE_ORDER_STATUS_VARIANTS: Record<ServiceOrderStatus, BadgeVari
   result_ready: "warning",
   reviewed: "success",
   cancelled: "neutral",
+};
+
+/** Waiting on a reviewer is amber; out for patients is green. */
+export const FIRST_AID_STATUS_VARIANTS: Record<FirstAidStatus, BadgeVariant> = {
+  draft: "outline",
+  pending_review: "warning",
+  reviewed: "info",
+  published: "success",
+  archived: "neutral",
 };
 
 export const SERVICE_STATUS_VARIANTS: Record<ServiceStatus, BadgeVariant> = {
