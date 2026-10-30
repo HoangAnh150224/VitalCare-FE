@@ -31,7 +31,13 @@ import { Card } from "@/shared/ui/card";
 import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { formatQueueNumber } from "@/domains/appointment/types";
 import { newEncounterPath, type Encounter } from "@/domains/encounter/types";
-import { EXAM_ROOM_STATUS_LABELS, type BoardVisit, type ExamRoomStatus, type RoomBoard } from "@/domains/exam-room/types";
+import {
+  EXAM_ROOM_STATUS_LABELS,
+  type AwayVisit,
+  type BoardVisit,
+  type ExamRoomStatus,
+  type RoomBoard,
+} from "@/domains/exam-room/types";
 import { cn } from "@/shared/lib/utils";
 
 type Room = RoomBoard["rooms"][number];
@@ -205,6 +211,7 @@ export function ExamRoomBoard() {
             <div key={queue.doctor.id} className="flex flex-col gap-1.5">
               <span className="text-sm font-medium">{queue.doctor.fullName}</span>
               <WaitingList visits={queue.waiting} />
+              <AwayList visits={queue.away ?? []} />
             </div>
           ))}
         </Card>
@@ -332,6 +339,7 @@ function RoomCard({
         <span className="text-muted-foreground text-xs font-medium">Đang chờ ({room.waiting.length})</span>
         <WaitingList visits={room.waiting} />
       </div>
+      <AwayList visits={room.away ?? []} />
     </Card>
   );
 }
@@ -346,7 +354,11 @@ function WaitingList({ visits }: { visits: BoardVisit[] }) {
         <li key={visit.appointmentId} className="flex items-center gap-3 text-sm">
           <span className="w-7 font-semibold tabular-nums">{formatQueueNumber(visit.queueNumber)}</span>
           <span className="min-w-0 flex-1 truncate">{visit.patientName}</span>
-          {visit.passedOver ? (
+          {visit.returned ? (
+            <span className="text-info-text text-xs font-medium">
+              {visit.referredBy ? `Chuyển từ ${visit.referredBy}` : "Quay lại đọc kết quả"}
+            </span>
+          ) : visit.passedOver ? (
             <span className="text-warning-text text-xs">Đã gọi, vắng</span>
           ) : (
             <span className="text-muted-foreground text-xs tabular-nums">{clockTime(visit.checkedInAt)}</span>
@@ -434,5 +446,26 @@ function ConfirmDecision({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+/** Patients out of the room for ordered services or another doctor, and how far along they are. */
+function AwayList({ visits }: { visits: AwayVisit[] }) {
+  if (visits.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-muted-foreground text-xs font-medium">Đang làm chỉ định / khám thêm ({visits.length})</span>
+      <ol className="flex flex-col gap-1">
+        {visits.map(({ visit, done, total, pending }) => (
+          <li key={visit.appointmentId} className="flex items-center gap-3 text-sm">
+            <span className="w-7 font-semibold tabular-nums">{formatQueueNumber(visit.queueNumber)}</span>
+            <span className="min-w-0 flex-1 truncate">{visit.patientName}</span>
+            <span className="text-warning-text truncate text-xs" title={pending.join(", ")}>
+              {done}/{total} xong{pending.length ? ` · còn ${pending.join(", ")}` : ""}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }

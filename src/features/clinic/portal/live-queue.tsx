@@ -18,12 +18,13 @@ export function QueueBanner({ appointment }: { appointment: Appointment }) {
   const today = appointment.appointmentDate === clinicToday();
   const waiting = today && appointment.status === "checked_in";
   const called = today && appointment.status === "in_exam";
+  const away = today && appointment.status === "awaiting_results";
 
   const { result, query } = useCustom<MyQueue>({
     url: `${API_URL}/my_appointments/${appointment.id}/queue`,
     method: "get",
     errorNotification: false,
-    queryOptions: { queryKey: [QUEUE_KEY, appointment.id], enabled: waiting, retry: false },
+    queryOptions: { queryKey: [QUEUE_KEY, appointment.id], enabled: waiting || away, retry: false },
   });
   const queue = customResult(result?.data, "ahead");
 
@@ -38,12 +39,35 @@ export function QueueBanner({ appointment }: { appointment: Appointment }) {
       </div>
     );
   }
+  if (away) {
+    const tasks = queue?.tasks ?? [];
+    return (
+      <div role="status" className="bg-warning-subtle flex flex-col gap-2 rounded-2xl px-4 py-3">
+        <span className="font-display font-bold">Bác sĩ chỉ định bạn làm thêm</span>
+        <ul className="flex flex-col gap-1 text-sm">
+          {tasks.map((task, index) => (
+            <li key={index} className="flex items-center gap-2">
+              <span aria-hidden>{task.done ? "✓" : "○"}</span>
+              <span className={task.done ? "text-muted-foreground line-through" : "font-medium"}>
+                {task.kind === "referral" ? `Khám thêm ${task.name}` : task.name}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <span className="text-muted-foreground text-sm">
+          Làm xong bạn tự quay lại hàng chờ của {appointment.doctor?.fullName ?? "bác sĩ"}, được gọi trước.
+        </span>
+      </div>
+    );
+  }
   if (!waiting) return null;
 
   const headline =
     query.isLoading || !queue || queue.ahead == null
       ? "Đang chờ gọi số"
-      : queue.skipped
+      : queue.returned && queue.ahead === 0
+        ? "Đã đủ kết quả — bạn là người được gọi tiếp theo"
+        : queue.skipped
         ? "Bạn đã được gọi nhưng chưa có mặt"
         : queue.ahead === 0
           ? "Bạn là người tiếp theo"

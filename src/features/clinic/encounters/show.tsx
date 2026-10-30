@@ -33,6 +33,7 @@ import { STAFF_TYPE_LABELS } from "@/domains/employee/types";
 import { ENCOUNTER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { billingErrorNotification } from "@/domains/billing/messages";
 import { EncounterOrdersPanel, useEncounterOrders } from "../service-orders/encounter-orders-panel";
+import { VisitPanel } from "./visit-panel";
 
 /** One encounter: what was recorded at the visit, and the step that closes it. */
 export const EncounterShow = () => {
@@ -137,6 +138,8 @@ export const EncounterShow = () => {
           </div>
         </LoadingOverlay>
       </Card>
+
+      {record && <VisitPanel encounter={record} />}
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <DetailPanel title="Nội dung khám">

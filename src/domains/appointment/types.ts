@@ -58,19 +58,33 @@ export function formatBookingCode(code: string | null | undefined): string {
  * Registered, checked in at the desk (waiting for the doctor), in the
  * examination room, completed — or cancelled, or never came.
  */
-export type AppointmentStatus = "scheduled" | "checked_in" | "in_exam" | "completed" | "cancelled" | "no_show";
+export type AppointmentStatus =
+  | "scheduled"
+  | "checked_in"
+  | "in_exam"
+  | "awaiting_results"
+  | "completed"
+  | "cancelled"
+  | "no_show";
+
+/**
+ * One thing a visit went out of the room for: a service ordered at it, or
+ * another doctor it was referred to; `done` once the patient need not wait for it.
+ */
+export type VisitTask = { kind: "service" | "referral"; name: string; status: string; done: boolean };
 
 /**
  * A visit's place in its doctor's queue today: `ahead` is null when it is not
  * waiting; `skipped` when it was called, the patient was not there, and it
  * waits to be called again.
  */
-export type MyQueue = { ahead: number | null; skipped: boolean };
+export type MyQueue = { ahead: number | null; skipped: boolean; returned?: boolean; tasks?: VisitTask[] };
 
 export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
   scheduled: "Đã đăng ký",
   checked_in: "Đã tiếp nhận",
   in_exam: "Đang khám",
+  awaiting_results: "Đang làm chỉ định",
   completed: "Hoàn tất",
   cancelled: "Đã huỷ",
   no_show: "Không đến",

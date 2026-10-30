@@ -105,6 +105,7 @@ export const APPOINTMENT_STATUS_VARIANTS: Record<AppointmentStatus, BadgeVariant
   checked_in: "warning",
   // Solid: the one state where something is happening right now.
   in_exam: "default",
+  awaiting_results: "warning",
   completed: "success",
   cancelled: "neutral",
   no_show: "destructive",

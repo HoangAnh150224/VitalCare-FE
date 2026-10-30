@@ -50,7 +50,10 @@ export function useMyQueueLive() {
   const anyLive = (result?.data ?? []).some(
     (visit) =>
       visit.appointmentDate === today &&
-      (visit.status === "scheduled" || visit.status === "checked_in" || visit.status === "in_exam")
+      (visit.status === "scheduled" ||
+        visit.status === "checked_in" ||
+        visit.status === "in_exam" ||
+        visit.status === "awaiting_results")
   );
 
   useEffect(() => {

@@ -28,7 +28,14 @@ export type BoardVisit = {
   calledAt: string | null;
   /** Called before and not there: waits behind everybody not yet called. */
   passedOver: boolean;
+  /** Back from ordered services or sent by a colleague: called first. */
+  returned?: boolean;
+  /** The doctor who referred the patient here today. */
+  referredBy?: string | null;
 };
+
+/** A patient out of the room for ordered services or another doctor: how far along. */
+export type AwayVisit = { visit: BoardVisit; done: number; total: number; pending: string[] };
 
 export type BoardDoctor = { id: number; fullName: string; specialty: string | null };
 
@@ -49,7 +56,8 @@ export type RoomBoard = {
     doctor: BoardDoctor | null;
     current: BoardVisit | null;
     waiting: BoardVisit[];
+    away?: AwayVisit[];
   }[];
   /** Doctors whose patients are waiting with no room to be called into. */
-  withoutRoom: { doctor: BoardDoctor; waiting: BoardVisit[] }[];
+  withoutRoom: { doctor: BoardDoctor; waiting: BoardVisit[]; away?: AwayVisit[] }[];
 };

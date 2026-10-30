@@ -99,6 +99,8 @@ export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointm
                   ? "Đến phòng khám, đưa phiếu này cho lễ tân để được tiếp nhận, rồi chờ gọi số."
                   : status === "checked_in"
                     ? "Bạn đã được tiếp nhận. Vui lòng chờ gọi số."
+                    : status === "awaiting_results"
+                      ? "Bạn đang đi làm các chỉ định của bác sĩ. Xong sẽ tự quay lại hàng chờ, được gọi trước."
                     : status === "in_exam"
                       ? `Mời bạn vào ${record ? roomLabel(record) : "phòng khám"}.`
                     : status === "completed"
