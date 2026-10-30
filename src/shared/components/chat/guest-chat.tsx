@@ -1,4 +1,4 @@
-import { useIsAuthenticated, useNotification } from "@refinedev/core";
+import { useCan, useIsAuthenticated, useNotification } from "@refinedev/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MessageCircleIcon } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
@@ -135,17 +135,7 @@ function GuestChatBody({ preferredClinicId }: { preferredClinicId?: string }) {
   const [session, setSession] = useState<Session | null>(readSession);
 
   if (auth?.authenticated) {
-    return (
-      <div className="flex flex-col gap-3 p-4 text-sm">
-        <p>
-          Bạn đã đăng nhập. Tin nhắn với phòng khám nằm trong mục Tin nhắn của
-          tài khoản.
-        </p>
-        <Button asChild>
-          <Link to="/my-conversations">Mở Tin nhắn</Link>
-        </Button>
-      </div>
-    );
+    return <SignedInChatLink />;
   }
   if (!session) {
     return (
@@ -166,6 +156,25 @@ function GuestChatBody({ preferredClinicId }: { preferredClinicId?: string }) {
         setSession(null);
       }}
     />
+  );
+}
+
+/** Somebody signed in chats from their account: staff in the clinic's inbox, a patient in their messages. */
+function SignedInChatLink() {
+  const { data: staff } = useCan({ resource: "conversations", action: "list" });
+  return (
+    <div className="flex flex-col gap-3 p-4 text-sm">
+      <p>
+        {staff?.can
+          ? "Bạn đang đăng nhập bằng tài khoản phòng khám. Tin nhắn của bệnh nhân và khách nằm trong hộp thư Tin nhắn."
+          : "Bạn đã đăng nhập. Tin nhắn với phòng khám nằm trong mục Tin nhắn của tài khoản."}
+      </p>
+      <Button asChild>
+        <Link to={staff?.can ? "/conversations" : "/my-conversations"}>
+          Mở Tin nhắn
+        </Link>
+      </Button>
+    </div>
   );
 }
 
@@ -316,6 +325,7 @@ function GuestConversation({
 }) {
   const queryClient = useQueryClient();
   const { open } = useNotification();
+  const [confirmNew, setConfirmNew] = useState(false);
   const key = ["guest-chat", session.id];
   const { data, error } = useQuery({
     queryKey: key,
@@ -357,9 +367,12 @@ function GuestConversation({
         <button
           type="button"
           className="text-primary shrink-0 hover:underline"
-          onClick={onLost}
+          onClick={() => (confirmNew ? onLost() : setConfirmNew(true))}
+          onBlur={() => setConfirmNew(false)}
         >
-          Cuộc trò chuyện mới
+          {confirmNew
+            ? "Bấm lần nữa: cuộc cũ sẽ không mở lại được"
+            : "Cuộc trò chuyện mới"}
         </button>
       </div>
       <ChatThread

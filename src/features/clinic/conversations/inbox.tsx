@@ -12,12 +12,11 @@ import {
   PhoneIcon,
   SearchIcon,
 } from "lucide-react";
-import { useDeferredValue, useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 
 import { kyInstance } from "@/shared/api/data";
 import { subscribe } from "@/shared/api/live";
-import { publicGet } from "@/shared/api/public";
 import {
   ChatComposer,
   ChatEmergencyNotice,
@@ -33,7 +32,6 @@ import { cn } from "@/shared/lib/utils";
 import { formatDateTime } from "@/shared/lib/format";
 import type { InboxConversation } from "@/domains/chat/types";
 import { CHAT_KIND_LABELS, chatErrorText } from "@/domains/chat/types";
-import type { PublicClinic } from "@/domains/public-site/types";
 import { displayPhone } from "@/domains/public-site/types";
 import { fetchThread, threadKey, threadRetry, useChatSend } from "./api";
 
@@ -41,31 +39,35 @@ import { fetchThread, threadKey, threadRetry, useChatSend } from "./api";
 const topicOf = (clinicId: string) => `/topic/conversations/${clinicId}`;
 
 /**
- * Nudges for every clinic: the inbox's own scope decides which conversations
- * a member of staff then reads, so listening to a clinic not theirs only
- * costs a re-read that comes back the same.
+ * Nudges for the clinics the caller answers — their own, or every one for the
+ * system administrator. The handler is read through a ref, so a new one on
+ * every render does not close and reopen the subscriptions.
  */
 function useConversationNudges(onNudge: (conversationId: number) => void) {
-  const { data: clinics } = useQuery({
-    queryKey: ["public", "clinics"],
-    queryFn: () => publicGet<PublicClinic[]>("clinics"),
-    staleTime: 60_000,
+  const handler = useRef(onNudge);
+  useEffect(() => {
+    handler.current = onNudge;
   });
-  const ids = clinics?.map((clinic) => clinic.id).join(",") ?? "";
+  const { data: clinicIds } = useQuery({
+    queryKey: ["conversation-clinics"],
+    queryFn: () => kyInstance.get("conversations/clinics").json<string[]>(),
+    staleTime: 5 * 60_000,
+  });
+  const ids = clinicIds?.join(",") ?? "";
   useEffect(() => {
     if (!ids) return;
     const offs = ids
       .split(",")
       .map((clinicId) =>
         subscribe(topicOf(clinicId), (body) =>
-          onNudge(
+          handler.current(
             (body as { conversationId?: number } | undefined)?.conversationId ??
               0
           )
         )
       );
     return () => offs.forEach((off) => off());
-  }, [ids, onNudge]);
+  }, [ids]);
 }
 
 /**
@@ -77,7 +79,6 @@ export function ConversationInbox() {
   const params = useParams();
   const navigate = useNavigate();
   const selected = params.id ? Number(params.id) : null;
-  const invalidate = useInvalidate();
   const [query, setQuery] = useState("");
   const [only, setOnly] = useState<"all" | "unread">("all");
   const term = useDeferredValue(query.trim());
@@ -105,15 +106,15 @@ export function ConversationInbox() {
 
   useConversationNudges((conversationId) => {
     void listQuery.refetch();
-    invalidate({ resource: "conversations", invalidates: ["list"] });
     if (conversationId === selected) void thread.refetch();
   });
 
-  // Opening a conversation marks it read: the list's unread counts follow.
+  // Opening a conversation marks it read: the list's unread counts follow, once per conversation opened.
+  const openedId = thread.data?.conversation.id;
   useEffect(() => {
-    if (thread.dataUpdatedAt) void listQuery.refetch();
+    if (openedId) void listQuery.refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [thread.dataUpdatedAt]);
+  }, [openedId]);
 
   return (
     <ListView>
