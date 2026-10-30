@@ -24,6 +24,7 @@ import type { AppointmentStatus, VisitTask } from "@/domains/appointment/types";
 import { APPOINTMENT_STATUS_LABELS } from "@/domains/appointment/types";
 import type { Encounter } from "@/domains/encounter/types";
 import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
+import { billingErrorNotification } from "@/domains/billing/messages";
 import { clinicToday } from "../appointments/clinic-day";
 import { DoctorDayHint, doctorLabel, useClinicDoctors } from "../appointments/doctor-day";
 
@@ -89,6 +90,7 @@ export function VisitPanel({ encounter }: { encounter: Encounter }) {
         values,
         config: { headers: { "Content-Type": "application/json" } },
         successNotification: false,
+        errorNotification: billingErrorNotification,
       },
       {
         onSuccess: () => {
