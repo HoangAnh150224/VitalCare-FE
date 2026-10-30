@@ -457,11 +457,13 @@ function AwayList({ visits }: { visits: AwayVisit[] }) {
       <span className="text-muted-foreground text-xs font-medium">Đang làm chỉ định / khám thêm ({visits.length})</span>
       <ol className="flex flex-col gap-1">
         {visits.map(({ visit, done, total, pending }) => (
-          <li key={visit.appointmentId} className="flex items-center gap-3 text-sm">
+          <li key={visit.appointmentId} className="flex items-start gap-3 text-sm">
             <span className="w-7 font-semibold tabular-nums">{formatQueueNumber(visit.queueNumber)}</span>
-            <span className="min-w-0 flex-1 truncate">{visit.patientName}</span>
-            <span className="text-warning-text truncate text-xs" title={pending.join(", ")}>
-              {done}/{total} xong{pending.length ? ` · còn ${pending.join(", ")}` : ""}
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate">{visit.patientName}</span>
+              <span className="text-warning-text text-xs" title={pending.join(", ")}>
+                {done}/{total} xong{pending.length ? ` · còn ${pending.join(", ")}` : ""}
+              </span>
             </span>
           </li>
         ))}
