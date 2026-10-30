@@ -27,7 +27,14 @@ import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { clinicToday } from "../appointments/clinic-day";
 import { DoctorDayHint, doctorLabel, useClinicDoctors } from "../appointments/doctor-day";
 
-type VisitState = { appointmentId: number | null; status: AppointmentStatus | null; returned: boolean; tasks: VisitTask[] };
+type VisitState = {
+  appointmentId: number | null;
+  status: AppointmentStatus | null;
+  /** The visit's own doctor: a referral goes to somebody else. */
+  doctorId: number | null;
+  returned: boolean;
+  tasks: VisitTask[];
+};
 
 const TASK_STATUS: Record<string, string> = {
   ordered: "chưa làm",
@@ -65,7 +72,7 @@ export function VisitPanel({ encounter }: { encounter: Encounter }) {
   const [reason, setReason] = useState("");
   const today = clinicToday();
   const { doctors } = useClinicDoctors(asking === "refer" ? encounter.clinicId ?? undefined : undefined, today);
-  const others = doctors.filter((doctor) => doctor.id !== encounter.clinician?.id);
+  const others = doctors.filter((doctor) => doctor.id !== (state?.doctorId ?? encounter.clinician?.id));
   const chosen = others.find((doctor) => String(doctor.id) === doctorId);
 
   if (!encounter.appointmentId || !state || !state.status) return null;
