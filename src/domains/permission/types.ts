@@ -70,6 +70,8 @@ const RESOURCE_LABELS: Record<string, string> = {
   monitoring_assignments: "Phân công theo dõi",
   my_profiles: "Hồ sơ cá nhân",
   first_aid_articles: "Nội dung sơ cứu",
+  conversations: "Tin nhắn hỗ trợ",
+  my_conversations: "Tin nhắn của tôi",
 };
 
 /** `blog_posts` reads better as "Blog posts" in a group heading. */

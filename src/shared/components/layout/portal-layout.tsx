@@ -11,6 +11,7 @@ import {
   FileHeartIcon,
   HouseIcon,
   LogOutIcon,
+  MessagesSquareIcon,
   UsersRoundIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -36,11 +37,15 @@ const NAV: NavItem[] = [
   { to: "/dashboard", label: "Trang chủ", icon: HouseIcon },
   { to: "/my-appointments", label: "Lượt khám", icon: CalendarCheck2Icon },
   { to: "/my-results", label: "Kết quả", icon: FileHeartIcon },
+  { to: "/my-conversations", label: "Tin nhắn", icon: MessagesSquareIcon },
   { to: "/my-profiles", label: "Hồ sơ", icon: UsersRoundIcon },
 ];
 
 /** The phone's tab bar adds the account, which the desktop keeps behind the avatar. */
-const TABS: NavItem[] = [...NAV, { to: "/profile", label: "Tài khoản", icon: CircleUserRoundIcon }];
+const TABS: NavItem[] = [
+  ...NAV,
+  { to: "/profile", label: "Tài khoản", icon: CircleUserRoundIcon },
+];
 
 type Identity = { fullName?: string; phone?: string };
 
@@ -55,7 +60,8 @@ type Identity = { fullName?: string; phone?: string };
  */
 export function PortalLayout({ children }: PropsWithChildren) {
   const { pathname } = useLocation();
-  const isActive = (to: string) => pathname === to || pathname.startsWith(`${to}/`);
+  const isActive = (to: string) =>
+    pathname === to || pathname.startsWith(`${to}/`);
 
   return (
     <ShellVariantContext.Provider value="portal">
@@ -76,14 +82,26 @@ export function PortalLayout({ children }: PropsWithChildren) {
           Chuyển đến nội dung chính
         </a>
 
-        <header data-print="hide" className="bg-card/90 sticky top-0 z-30 shadow-[0_1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] backdrop-blur-lg">
+        <header
+          data-print="hide"
+          className="bg-card/90 sticky top-0 z-30 shadow-[0_1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] backdrop-blur-lg"
+        >
           <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-6 px-4 sm:px-6">
             <Link to="/dashboard" className="flex items-center gap-2.5">
-              <img src="/vitalcare-mark.png" alt="" className="size-9 rounded-xl bg-white p-1 shadow-sm" />
-              <span className="font-display text-lg font-extrabold tracking-tight">VitalCare</span>
+              <img
+                src="/vitalcare-mark.png"
+                alt=""
+                className="size-9 rounded-xl bg-white p-1 shadow-sm"
+              />
+              <span className="font-display text-lg font-extrabold tracking-tight">
+                VitalCare
+              </span>
             </Link>
 
-            <nav aria-label="Điều hướng chính" className="hidden items-center gap-1 md:flex">
+            <nav
+              aria-label="Điều hướng chính"
+              className="hidden items-center gap-1 md:flex"
+            >
               {NAV.map((item) => (
                 <Link
                   key={item.to}
@@ -126,7 +144,7 @@ export function PortalLayout({ children }: PropsWithChildren) {
             "pb-[env(safe-area-inset-bottom)]"
           )}
         >
-          <ul className="grid grid-cols-5">
+          <ul className="grid grid-cols-6">
             {TABS.map((item) => {
               const active = isActive(item.to);
               return (
@@ -136,16 +154,22 @@ export function PortalLayout({ children }: PropsWithChildren) {
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "flex flex-col items-center gap-1 pt-2 pb-2 text-[11px]",
-                      active ? "text-primary font-semibold" : "text-muted-foreground font-medium"
+                      active
+                        ? "text-primary font-semibold"
+                        : "text-muted-foreground font-medium"
                     )}
                   >
                     <span
                       className={cn(
-                        "flex h-8 w-14 items-center justify-center rounded-full transition-colors",
-                        active && "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
+                        "flex h-8 w-12 items-center justify-center rounded-full transition-colors",
+                        active &&
+                          "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
                       )}
                     >
-                      <item.icon className="size-5" strokeWidth={active ? 2.25 : 1.75} />
+                      <item.icon
+                        className="size-5"
+                        strokeWidth={active ? 2.25 : 1.75}
+                      />
                     </span>
                     {item.label}
                   </Link>
@@ -173,13 +197,19 @@ function AccountMenu() {
         className="focus-visible:ring-ring rounded-full focus-visible:outline-none focus-visible:ring-2"
       >
         <Avatar className="size-9">
-          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">{initials(name)}</AvatarFallback>
+          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+            {initials(name)}
+          </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-56">
         <DropdownMenuLabel className="flex flex-col gap-0.5">
           <span className="truncate text-sm font-medium">{name}</span>
-          {user?.phone && <span className="text-muted-foreground truncate text-xs font-normal">{user.phone}</span>}
+          {user?.phone && (
+            <span className="text-muted-foreground truncate text-xs font-normal">
+              {user.phone}
+            </span>
+          )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
@@ -188,7 +218,10 @@ function AccountMenu() {
             Tài khoản
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => logout()} className="text-destructive focus:text-destructive">
+        <DropdownMenuItem
+          onClick={() => logout()}
+          className="text-destructive focus:text-destructive"
+        >
           <LogOutIcon className="size-4" />
           {isPending ? "Đang đăng xuất…" : "Đăng xuất"}
         </DropdownMenuItem>

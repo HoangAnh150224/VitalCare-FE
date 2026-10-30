@@ -106,6 +106,9 @@ import {
   FirstAidEdit,
   FirstAidShow,
   FirstAidHistory,
+  ConversationInbox,
+  PortalConversations,
+  PortalConversationShow,
   MedicalServiceEdit,
   ServiceOrderList,
   ServiceOrderShow,
@@ -528,6 +531,30 @@ export function AppRoutes() {
           <Route path="edit/:id" element={<FirstAidEdit />} />
           <Route path="show/:id" element={<FirstAidShow />} />
           <Route path="history/:id" element={<FirstAidHistory />} />
+        </Route>
+        {/* The clinic's support inbox; the open conversation is part of the URL. */}
+        <Route
+          path="/conversations"
+          element={
+            <CanAccess resource="conversations" action="list" fallback={<Forbidden resource="conversations" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<ConversationInbox />} />
+          <Route path="show/:id" element={<ConversationInbox />} />
+        </Route>
+        {/* A customer's own conversations with clinics. */}
+        <Route
+          path="/my-conversations"
+          element={
+            <CanAccess resource="my_conversations" action="list" fallback={<Forbidden resource="my_conversations" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<PortalConversations />} />
+          <Route path=":id" element={<PortalConversationShow />} />
         </Route>
         <Route
           path="/clinics"

@@ -26,6 +26,7 @@ import {
   ReceiptText,
   ListOrdered,
   BriefcaseMedical,
+  MessagesSquare,
 } from "lucide-react";
 
 /**
@@ -112,6 +113,16 @@ export const resources: ResourceProps[] = [
     meta: {
       label: "Đăng ký khám của tôi",
       icon: <CalendarCheck className="h-4 w-4" />,
+    },
+  },
+  // The customer's conversations with clinics (SRS 3.16); the portal's "Tin nhắn".
+  {
+    name: "my_conversations",
+    list: "/my-conversations",
+    show: "/my-conversations/:id",
+    meta: {
+      label: "Tin nhắn của tôi",
+      icon: <MessagesSquare className="h-4 w-4" />,
     },
   },
   // The patient profiles under the account: the owner's own and their relatives'.
@@ -241,6 +252,17 @@ export const resources: ResourceProps[] = [
     meta: {
       label: "Chỉ định dịch vụ",
       icon: <FlaskConical className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // The clinic's support inbox (SRS 3.16): patients and guests writing in.
+  {
+    name: "conversations",
+    list: "/conversations",
+    show: "/conversations/show/:id",
+    meta: {
+      label: "Tin nhắn",
+      icon: <MessagesSquare className="h-4 w-4" />,
       parent: "clinic",
     },
   },

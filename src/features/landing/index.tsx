@@ -9,6 +9,7 @@ import { Link } from "react-router";
 import "./landing.css";
 
 import { Button } from "@/shared/ui/button";
+import { GuestChatLauncher } from "@/shared/components/chat/guest-chat";
 
 import { AiAssist, Features, FinalCall, HowItWorks, Platform } from "./sections";
 import { CinematicStory } from "./story/cinematic-story";
@@ -86,6 +87,7 @@ export function Landing() {
           </Link>
         </div>
       </footer>
+      <GuestChatLauncher />
     </div>
   );
 }

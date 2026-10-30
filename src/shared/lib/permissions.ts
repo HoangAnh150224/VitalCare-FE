@@ -96,7 +96,7 @@ export function permissionFor(
  * than matched on the `my_` prefix: `my_patients` is staff's — the patients
  * in a nurse's care — and must not send a nurse to the patient portal.
  */
-const PORTAL_RESOURCES = new Set(["my_appointments", "my_profiles"]);
+const PORTAL_RESOURCES = new Set(["my_appointments", "my_profiles", "my_conversations"]);
 
 /**
  * Whether an account is a customer's and nothing more: every code it holds is

@@ -13,6 +13,7 @@ import {
 } from "@/shared/ui/sheet";
 import { cn } from "@/shared/lib/utils";
 import { NOT_AN_EMERGENCY_SERVICE } from "@/domains/first-aid/types";
+import { GuestChatLauncher } from "@/shared/components/chat/guest-chat";
 import { EmergencyDialog } from "./emergency";
 
 const NAV = [
@@ -122,6 +123,7 @@ export function PublicLayout({ children }: { children?: ReactNode }) {
           />
         </div>
       </footer>
+      <GuestChatLauncher />
     </div>
   );
 }

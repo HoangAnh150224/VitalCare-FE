@@ -6,12 +6,14 @@ import {
   ClockIcon,
   MailIcon,
   MapPinIcon,
+  MessageCircleIcon,
   PhoneIcon,
   StethoscopeIcon,
 } from "lucide-react";
 import { Link, useParams } from "react-router";
 
 import { publicGet, publicRetry } from "@/shared/api/public";
+import { openGuestChat } from "@/shared/components/chat/guest-chat";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
@@ -189,6 +191,13 @@ export function PublicClinicShow() {
               </Button>
               <Button asChild variant="outline">
                 <Link to="/services">Bảng giá dịch vụ</Link>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => openGuestChat(clinic.id)}
+              >
+                <MessageCircleIcon />
+                Chat với phòng khám
               </Button>
             </div>
           </div>
