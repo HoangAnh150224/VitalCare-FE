@@ -27,10 +27,17 @@ import {
 } from "@/domains/device/sync";
 import { BatteryLevel, ConnectivityBadge } from "./device-status";
 import { DeviceSimulatorButton, DeviceTokenButton } from "./device-operations";
+import { RecentReadings } from "./recent-readings";
+
+/** How often an open device page re-reads the device and its uploads. */
+const LIVE_MS = 5_000;
 
 /** One device: what it is, who wears it now, and everybody who has. */
 export const DeviceShow = () => {
-  const { result: record, query } = useShow<Device>({});
+  const { result: record, query } = useShow<Device>({
+    // Kept fresh while open: whether it reports, its battery and last upload change as the band sends.
+    queryOptions: { refetchInterval: LIVE_MS },
+  });
   const { result: history } = useCustom<DeviceAssignment[]>({
     url: `${API_URL}/devices/${record?.id}/assignments`,
     method: "get",
@@ -46,7 +53,10 @@ export const DeviceShow = () => {
     url: `${API_URL}/device_syncs`,
     method: "get",
     config: { query: { deviceId: record?.id, _start: 0, _end: 5 } },
-    queryOptions: { enabled: Boolean(record?.id) && Boolean(seeSyncs?.can) },
+    queryOptions: {
+      enabled: Boolean(record?.id) && Boolean(seeSyncs?.can),
+      refetchInterval: LIVE_MS,
+    },
   });
   const uploads = Array.isArray(syncs?.data) ? syncs.data : [];
 
@@ -183,6 +193,8 @@ export const DeviceShow = () => {
           )}
         </DetailPanel>
       </div>
+
+      {record && <RecentReadings deviceId={record.id} />}
 
       {seeSyncs?.can && (
         <DetailPanel
