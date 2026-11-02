@@ -28,6 +28,8 @@ import {
   BriefcaseMedical,
   MessagesSquare,
   ScrollText,
+  RefreshCw,
+  TriangleAlert,
 } from "lucide-react";
 
 /**
@@ -115,6 +117,12 @@ export const resources: ResourceProps[] = [
       label: "Đăng ký khám của tôi",
       icon: <CalendarCheck className="h-4 w-4" />,
     },
+  },
+  // The monitoring devices handed to the customer's profiles, and pairing them (FE-02).
+  {
+    name: "my_devices",
+    list: "/my-devices",
+    meta: { label: "Thiết bị của tôi", icon: <Watch className="h-4 w-4" /> },
   },
   // The customer's conversations with clinics (SRS 3.16); the portal's "Tin nhắn".
   {
@@ -218,6 +226,27 @@ export const resources: ResourceProps[] = [
     meta: {
       label: "Thiết bị IoMT",
       icon: <Watch className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // FE-06: every upload from a device, and the readings refused, to retry.
+  {
+    name: "device_syncs",
+    list: "/device-syncs",
+    show: "/device-syncs/show/:id",
+    meta: {
+      label: "Lịch sử đồng bộ",
+      icon: <RefreshCw className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  {
+    name: "sync_failures",
+    list: "/sync-failures",
+    show: "/sync-failures/show/:id",
+    meta: {
+      label: "Bản ghi đồng bộ lỗi",
+      icon: <TriangleAlert className="h-4 w-4" />,
       parent: "clinic",
     },
   },

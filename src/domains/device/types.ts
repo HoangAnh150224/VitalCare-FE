@@ -18,7 +18,27 @@ export type Device = {
     fullName: string;
     since: string;
   } | null;
+  /** FE-02: what the device last said about itself. */
+  connectivity: Connectivity;
+  batteryLevel: number | null;
+  firmwareVersion: string | null;
+  lastSyncAt: string | null;
+  pairedAt: string | null;
+  /** Whether its MQTT/REST secret has been issued; the secret is never sent back. */
+  hasToken: boolean;
 };
+
+export type Connectivity = "ONLINE" | "OFFLINE";
+
+export const CONNECTIVITY_LABELS: Record<Connectivity, string> = {
+  ONLINE: "Trực tuyến",
+  OFFLINE: "Mất kết nối",
+};
+
+export const CONNECTIVITY_OPTIONS = [
+  { label: "Trực tuyến", value: "ONLINE" },
+  { label: "Mất kết nối", value: "OFFLINE" },
+];
 
 /** `assigned` is set and cleared only by handing a device out and taking it back. */
 export type DeviceStatus = "available" | "assigned" | "maintenance" | "retired";

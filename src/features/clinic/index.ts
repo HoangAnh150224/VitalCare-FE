@@ -25,3 +25,5 @@ export * from "./conversations";
 export * from "./service-orders";
 export * from "./invoices";
 export * from "./portal";
+export * from "./device-syncs";
+export * from "./my-devices";

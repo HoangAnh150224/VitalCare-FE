@@ -48,7 +48,14 @@ import {
 } from "@/features/administration";
 import { ForgotPassword, Login, Profile, Register } from "@/features/identity";
 import { Landing } from "@/features/landing";
-import { PublicClinics, PublicClinicShow, PublicFirstAid, PublicFirstAidShow, PublicLayout, PublicServices } from "@/features/public";
+import {
+  PublicClinics,
+  PublicClinicShow,
+  PublicFirstAid,
+  PublicFirstAidShow,
+  PublicLayout,
+  PublicServices,
+} from "@/features/public";
 import {
   AppointmentCreate,
   AppointmentList,
@@ -119,6 +126,11 @@ import {
   InvoiceList,
   InvoiceShow,
   RevenueReportPage,
+  DeviceSyncList,
+  DeviceSyncShow,
+  SyncFailureList,
+  SyncFailureShow,
+  MyDeviceList,
 } from "@/features/clinic";
 import { ErrorComponent } from "@/shared/components/layout/error-component";
 import { Forbidden } from "@/shared/components/layout/forbidden";
@@ -166,7 +178,12 @@ export function AppRoutes() {
           A signed-in visitor opens on the dashboard (the `/` route above sends
           them here) rather than on a resource's table.
         */}
-        <Route path="/dashboard" element={<PortalSwitch portal={<PortalHome />} staff={<Dashboard />} />} />
+        <Route
+          path="/dashboard"
+          element={
+            <PortalSwitch portal={<PortalHome />} staff={<Dashboard />} />
+          }
+        />
         {/*
           Blog posts render their create / edit / show / clone actions as
           dialogs on top of the list. Nesting them under the list route keeps
@@ -366,7 +383,11 @@ export function AppRoutes() {
           <Route
             path="walk-in"
             element={
-              <CanAccess resource="appointments" action="check_in" fallback={<Forbidden resource="appointments" />}>
+              <CanAccess
+                resource="appointments"
+                action="check_in"
+                fallback={<Forbidden resource="appointments" />}
+              >
                 <WalkInRegistration />
               </CanAccess>
             }
@@ -375,7 +396,11 @@ export function AppRoutes() {
         <Route
           path="/employees"
           element={
-            <CanAccess resource="employees" action="list" fallback={<Forbidden resource="employees" />}>
+            <CanAccess
+              resource="employees"
+              action="list"
+              fallback={<Forbidden resource="employees" />}
+            >
               <Outlet />
             </CanAccess>
           }
@@ -386,9 +411,43 @@ export function AppRoutes() {
           <Route path="show/:id" element={<StaffShow />} />
         </Route>
         <Route
+          path="/device-syncs"
+          element={
+            <CanAccess
+              resource="device_syncs"
+              action="list"
+              fallback={<Forbidden resource="device_syncs" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<DeviceSyncList />} />
+          <Route path="show/:id" element={<DeviceSyncShow />} />
+        </Route>
+        <Route
+          path="/sync-failures"
+          element={
+            <CanAccess
+              resource="sync_failures"
+              action="list"
+              fallback={<Forbidden resource="sync_failures" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<SyncFailureList />} />
+          <Route path="show/:id" element={<SyncFailureShow />} />
+        </Route>
+        <Route
           path="/devices"
           element={
-            <CanAccess resource="devices" action="list" fallback={<Forbidden resource="devices" />}>
+            <CanAccess
+              resource="devices"
+              action="list"
+              fallback={<Forbidden resource="devices" />}
+            >
               <Outlet />
             </CanAccess>
           }
@@ -401,7 +460,11 @@ export function AppRoutes() {
         <Route
           path="/my-patients"
           element={
-            <CanAccess resource="my_patients" action="list" fallback={<Forbidden resource="my_patients" />}>
+            <CanAccess
+              resource="my_patients"
+              action="list"
+              fallback={<Forbidden resource="my_patients" />}
+            >
               <Outlet />
             </CanAccess>
           }
@@ -412,7 +475,11 @@ export function AppRoutes() {
         <Route
           path="/view-as"
           element={
-            <CanAccess resource="view_as" action="list" fallback={<Forbidden resource="view_as" />}>
+            <CanAccess
+              resource="view_as"
+              action="list"
+              fallback={<Forbidden resource="view_as" />}
+            >
               <Outlet />
             </CanAccess>
           }
@@ -422,10 +489,22 @@ export function AppRoutes() {
           <Route path="front-desk/:employeeId" element={<ViewAsFrontDesk />} />
           <Route path="patients" element={<ViewAsAllPatients />} />
           <Route path="appointments" element={<ViewAsAllAppointments />} />
-          <Route path="customers/:customerId" element={<ViewAsCustomerAppointments />} />
-          <Route path="customers/:customerId/appointments/:id" element={<ViewAsCustomerAppointment />} />
-          <Route path="employees/:employeeId" element={<ViewAsEmployeePatients />} />
-          <Route path="employees/:employeeId/patients/:customerId" element={<ViewAsEmployeePatient />} />
+          <Route
+            path="customers/:customerId"
+            element={<ViewAsCustomerAppointments />}
+          />
+          <Route
+            path="customers/:customerId/appointments/:id"
+            element={<ViewAsCustomerAppointment />}
+          />
+          <Route
+            path="employees/:employeeId"
+            element={<ViewAsEmployeePatients />}
+          />
+          <Route
+            path="employees/:employeeId/patients/:customerId"
+            element={<ViewAsEmployeePatient />}
+          />
         </Route>
         <Route
           path="/clinical-encounters"
@@ -492,7 +571,11 @@ export function AppRoutes() {
         <Route
           path="/service-orders"
           element={
-            <CanAccess resource="service_orders" action="list" fallback={<Forbidden resource="service_orders" />}>
+            <CanAccess
+              resource="service_orders"
+              action="list"
+              fallback={<Forbidden resource="service_orders" />}
+            >
               <Outlet />
             </CanAccess>
           }
@@ -503,7 +586,11 @@ export function AppRoutes() {
         <Route
           path="/invoices"
           element={
-            <CanAccess resource="invoices" action="list" fallback={<Forbidden resource="invoices" />}>
+            <CanAccess
+              resource="invoices"
+              action="list"
+              fallback={<Forbidden resource="invoices" />}
+            >
               <Outlet />
             </CanAccess>
           }
@@ -513,7 +600,11 @@ export function AppRoutes() {
           <Route
             path="report"
             element={
-              <CanAccess resource="invoices" action="report" fallback={<Forbidden resource="invoices" />}>
+              <CanAccess
+                resource="invoices"
+                action="report"
+                fallback={<Forbidden resource="invoices" />}
+              >
                 <RevenueReportPage />
               </CanAccess>
             }
@@ -522,7 +613,11 @@ export function AppRoutes() {
         <Route
           path="/audit-logs"
           element={
-            <CanAccess resource="audit_logs" action="list" fallback={<Forbidden resource="audit_logs" />}>
+            <CanAccess
+              resource="audit_logs"
+              action="list"
+              fallback={<Forbidden resource="audit_logs" />}
+            >
               <Outlet />
             </CanAccess>
           }
@@ -533,7 +628,11 @@ export function AppRoutes() {
         <Route
           path="/medical-services"
           element={
-            <CanAccess resource="medical_services" action="list" fallback={<Forbidden resource="medical_services" />}>
+            <CanAccess
+              resource="medical_services"
+              action="list"
+              fallback={<Forbidden resource="medical_services" />}
+            >
               <Outlet />
             </CanAccess>
           }
@@ -545,7 +644,11 @@ export function AppRoutes() {
         <Route
           path="/first-aid-articles"
           element={
-            <CanAccess resource="first_aid_articles" action="list" fallback={<Forbidden resource="first_aid_articles" />}>
+            <CanAccess
+              resource="first_aid_articles"
+              action="list"
+              fallback={<Forbidden resource="first_aid_articles" />}
+            >
               <Outlet />
             </CanAccess>
           }
@@ -560,7 +663,11 @@ export function AppRoutes() {
         <Route
           path="/conversations"
           element={
-            <CanAccess resource="conversations" action="list" fallback={<Forbidden resource="conversations" />}>
+            <CanAccess
+              resource="conversations"
+              action="list"
+              fallback={<Forbidden resource="conversations" />}
+            >
               <Outlet />
             </CanAccess>
           }
@@ -568,11 +675,27 @@ export function AppRoutes() {
           <Route index element={<ConversationInbox />} />
           <Route path="show/:id" element={<ConversationInbox />} />
         </Route>
+        <Route
+          path="/my-devices"
+          element={
+            <CanAccess
+              resource="my_devices"
+              action="list"
+              fallback={<Forbidden resource="my_devices" />}
+            >
+              <MyDeviceList />
+            </CanAccess>
+          }
+        />
         {/* A customer's own conversations with clinics. */}
         <Route
           path="/my-conversations"
           element={
-            <CanAccess resource="my_conversations" action="list" fallback={<Forbidden resource="my_conversations" />}>
+            <CanAccess
+              resource="my_conversations"
+              action="list"
+              fallback={<Forbidden resource="my_conversations" />}
+            >
               <Outlet />
             </CanAccess>
           }
@@ -627,11 +750,21 @@ export function AppRoutes() {
         >
           <Route
             index
-            element={<PortalSwitch portal={<PortalAppointments />} staff={<MyAppointmentList />} />}
+            element={
+              <PortalSwitch
+                portal={<PortalAppointments />}
+                staff={<MyAppointmentList />}
+              />
+            }
           />
           <Route
             path="create"
-            element={<PortalSwitch portal={<PortalAppointmentCreate />} staff={<MyAppointmentCreate />} />}
+            element={
+              <PortalSwitch
+                portal={<PortalAppointmentCreate />}
+                staff={<MyAppointmentCreate />}
+              />
+            }
           />
           <Route path="show/:id" element={<MyAppointmentShow />} />
         </Route>
@@ -639,7 +772,11 @@ export function AppRoutes() {
         <Route
           path="/my-results"
           element={
-            <CanAccess resource="my_appointments" action="list" fallback={<Forbidden resource="my_appointments" />}>
+            <CanAccess
+              resource="my_appointments"
+              action="list"
+              fallback={<Forbidden resource="my_appointments" />}
+            >
               <Outlet />
             </CanAccess>
           }
@@ -651,7 +788,11 @@ export function AppRoutes() {
         <Route
           path="/my-payments"
           element={
-            <CanAccess resource="my_appointments" action="list" fallback={<Forbidden resource="my_appointments" />}>
+            <CanAccess
+              resource="my_appointments"
+              action="list"
+              fallback={<Forbidden resource="my_appointments" />}
+            >
               <PortalPayments />
             </CanAccess>
           }
@@ -659,7 +800,11 @@ export function AppRoutes() {
         <Route
           path="/my-profiles"
           element={
-            <CanAccess resource="my_profiles" action="list" fallback={<Forbidden resource="my_profiles" />}>
+            <CanAccess
+              resource="my_profiles"
+              action="list"
+              fallback={<Forbidden resource="my_profiles" />}
+            >
               <Outlet />
             </CanAccess>
           }

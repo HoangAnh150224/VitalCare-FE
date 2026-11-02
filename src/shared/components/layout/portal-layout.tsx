@@ -13,6 +13,7 @@ import {
   LogOutIcon,
   MessagesSquareIcon,
   UsersRoundIcon,
+  WatchIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
@@ -40,11 +41,13 @@ const NAV: NavItem[] = [
   { to: "/my-results", label: "Kết quả", icon: FileHeartIcon },
   { to: "/my-conversations", label: "Tin nhắn", icon: MessagesSquareIcon },
   { to: "/my-profiles", label: "Hồ sơ", icon: UsersRoundIcon },
+  { to: "/my-devices", label: "Thiết bị", icon: WatchIcon },
 ];
 
 /** The phone's tab bar adds the account, which the desktop keeps behind the avatar. */
+// Without "Thiết bị": on a phone the band is the mobile app's; the tab bar keeps to six.
 const TABS: NavItem[] = [
-  ...NAV,
+  ...NAV.filter((item) => item.to !== "/my-devices"),
   { to: "/profile", label: "Tài khoản", icon: CircleUserRoundIcon },
 ];
 

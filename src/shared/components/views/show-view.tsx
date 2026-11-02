@@ -1,6 +1,6 @@
 "use client";
 
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 
 import { ArrowLeftIcon } from "lucide-react";
 import {
@@ -43,6 +43,8 @@ type ShowViewHeaderProps = PropsWithChildren<{
   title?: string;
   /** False hides Edit for a record that can no longer change, whatever the permission says. */
   canEdit?: boolean;
+  /** The page's own controls (issue a secret, run a simulation...), before Refresh/Edit/Delete. */
+  actions?: ReactNode;
   wrapperClassName?: string;
   headerClassName?: string;
 }>;
@@ -51,6 +53,7 @@ export const ShowViewHeader = ({
   resource: resourceFromProps,
   title: titleFromProps,
   canEdit,
+  actions,
   wrapperClassName,
   headerClassName,
 }: ShowViewHeaderProps) => {
@@ -90,7 +93,9 @@ export const ShowViewHeader = ({
           <Button data-print="hide" variant="ghost" size="icon" onClick={back}>
             <ArrowLeftIcon className="h-4 w-4" />
           </Button>
-          <h1 className="min-w-0 truncate text-3xl font-bold leading-9 tracking-tight">{title}</h1>
+          <h1 className="min-w-0 truncate text-3xl font-bold leading-9 tracking-tight">
+            {title}
+          </h1>
         </div>
 
         {/*
@@ -106,7 +111,11 @@ export const ShowViewHeader = ({
           list views already ignore it — honouring it only here would give the
           same resource a Delete on its table and none on its detail page.
         */}
-        <div data-print="hide" className="flex shrink-0 items-center gap-2">
+        <div
+          data-print="hide"
+          className="flex shrink-0 flex-wrap items-center justify-end gap-2"
+        >
+          {actions}
           <RefreshButton
             variant="outline"
             recordItemId={recordItemId}
