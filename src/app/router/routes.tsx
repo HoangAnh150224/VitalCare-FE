@@ -80,6 +80,8 @@ import {
   PortalResult,
   PortalResults,
   QuickCheckIn,
+  WalkInRegistration,
+  AppointmentCalendar,
   StaffList,
   StaffCreate,
   StaffEdit,
@@ -355,6 +357,15 @@ export function AppRoutes() {
                 fallback={<Forbidden resource="appointments" />}
               >
                 <QuickCheckIn />
+              </CanAccess>
+            }
+          />
+          <Route path="calendar" element={<AppointmentCalendar />} />
+          <Route
+            path="walk-in"
+            element={
+              <CanAccess resource="appointments" action="check_in" fallback={<Forbidden resource="appointments" />}>
+                <WalkInRegistration />
               </CanAccess>
             }
           />

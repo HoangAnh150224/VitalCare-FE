@@ -37,9 +37,12 @@ import { DoctorDayHint, doctorLabel, useClinicDoctors } from "./doctor-day";
 export function BookingFields({
   control,
   forOwnAccount = false,
+  todayOnly = false,
 }: {
   control: Control<BookingFormValues>;
   forOwnAccount?: boolean;
+  /** A walk-in: the day is today and cannot be changed. */
+  todayOnly?: boolean;
 }) {
   const { setValue, getValues } = useFormContext<BookingFormValues>();
   const clinicId = useWatch({ control, name: "clinicId" });
@@ -196,7 +199,7 @@ export function BookingFields({
           <FormItem className="md:col-span-3">
             <FormLabel>Ngày khám</FormLabel>
             <FormControl>
-              <Input {...field} type="date" min={clinicToday()} value={field.value ?? ""} />
+              <Input {...field} type="date" min={clinicToday()} value={field.value ?? ""} readOnly={todayOnly} />
             </FormControl>
             <FormMessage />
           </FormItem>

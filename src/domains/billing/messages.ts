@@ -27,6 +27,9 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ["The catalogue has no active examination fee", "Danh mục chưa có phí khám đang áp dụng. Nhờ quản trị thêm trước khi hoàn tất lần khám."],
   ["This encounter is already completed", "Lần khám này đã hoàn tất."],
   ["Write the diagnosis before concluding", "Ghi chẩn đoán trước khi hoàn tất lần khám."],
+  // Paying before the queue and before a service (BF-02, BF-03)
+  ["This service is not paid yet", "Dịch vụ chưa được thanh toán. Bệnh nhân thanh toán xong mới thực hiện."],
+  ["A walk-in is registered for today", "Khám vãng lai chỉ đăng ký cho hôm nay."],
   // Ordering and results
   ["This encounter is concluded", "Lần khám đã hoàn tất nên không chỉ định hay thay đổi dịch vụ được nữa."],
   ["That service is no longer offered", "Dịch vụ này đã ngừng áp dụng."],

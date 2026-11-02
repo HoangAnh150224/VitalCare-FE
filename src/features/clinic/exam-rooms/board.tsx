@@ -199,6 +199,28 @@ export function ExamRoomBoard() {
         }}
       />
 
+      {board && (board.awaitingPayment?.length ?? 0) > 0 && (
+        <Card className="flex flex-col gap-3 p-5">
+          <div>
+            <h3 className="font-semibold">Chờ thanh toán phí khám ({board.awaitingPayment!.length})</h3>
+            <p className="text-muted-foreground text-sm">
+              Đã tiếp nhận nhưng chưa trả phí khám nên chưa vào hàng chờ. Thu phí xong, bệnh nhân được xếp theo thời điểm thanh toán.
+            </p>
+          </div>
+          <ol className="flex flex-col gap-1">
+            {board.awaitingPayment!.map(({ visit, doctor }) => (
+              <li key={visit.appointmentId} className="flex items-center gap-3 text-sm">
+                <span className="w-7 font-semibold tabular-nums">{formatQueueNumber(visit.queueNumber)}</span>
+                <Link to={`/appointments/show/${visit.appointmentId}`} className="min-w-0 flex-1 truncate hover:underline">
+                  {visit.patientName}
+                </Link>
+                <span className="text-muted-foreground truncate text-xs">{doctor.fullName}</span>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
+
       {board && board.withoutRoom.length > 0 && (
         <Card className="flex flex-col gap-3 p-5">
           <div>

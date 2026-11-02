@@ -21,6 +21,7 @@ import type { MedicalService, ServiceOrder } from "@/domains/billing/types";
 import { isOrderOutstanding, SERVICE_CATEGORY_LABELS } from "@/domains/billing/types";
 import { formatDateTime, formatMoney } from "@/shared/lib/format";
 import { billingErrorNotification } from "@/domains/billing/messages";
+import { Badge } from "@/shared/ui/badge";
 import { CancelOrderDialog, OrderFiles, OrderStatusBadge, useOrderActions } from "./order-parts";
 
 /**
@@ -76,6 +77,7 @@ export function EncounterOrdersPanel({ encounterId, open: encounterOpen }: { enc
                   {order.service.name}
                 </Link>
                 <OrderStatusBadge status={order.status} />
+                {order.status === "ordered" && !order.paid && <Badge variant="warning">Chưa thanh toán</Badge>}
                 <span className="text-muted-foreground ms-auto text-sm tabular-nums">{formatMoney(order.unitPrice)}</span>
               </div>
               {order.instruction && <p className="text-muted-foreground text-sm">Ghi chú: {order.instruction}</p>}

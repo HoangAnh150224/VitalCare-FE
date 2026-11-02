@@ -6,7 +6,6 @@ import { useSearchParams } from "react-router";
 import { API_URL } from "@/shared/api/constants";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
-import { customResult } from "@/shared/hooks/use-custom-result";
 import { cn } from "@/shared/lib/utils";
 import type { OwnInvoice } from "@/domains/billing/types";
 import { billingErrorNotification } from "@/domains/billing/messages";
@@ -24,27 +23,29 @@ const RETURN_MESSAGES: Record<string, { type: "success" | "error"; message: stri
 const TRANSFER_POLL_MS = 5_000;
 
 /**
- * The bill on a customer's appointment slip, once the visit is concluded,
- * and paying it: a VietQR code for a bank transfer (confirmed by itself when
- * the money lands), or VNPay. Nothing shows before there is a bill.
+ * The bills on a customer's visit and paying them (BF-02, BF-03): the
+ * examination fee first — paid before the visit, it is what puts the patient
+ * in the queue, ordered by when it was paid — then each ordered service, paid
+ * before it is done. Each by a VietQR bank transfer (confirmed by itself when
+ * the money lands) or VNPay, or at the desk.
  */
 export function MyInvoiceCard({ appointmentId, className }: { appointmentId: number; className?: string }) {
-  const { result, query } = useCustom<OwnInvoice>({
-    url: `${API_URL}/my_appointments/${appointmentId}/invoice`,
+  const { result, query } = useCustom<OwnInvoice[]>({
+    url: `${API_URL}/my_appointments/${appointmentId}/invoice/all`,
     method: "get",
-    // 404 until the doctor concludes the visit: that is "no bill yet", not an error to announce.
     errorNotification: false,
     queryOptions: {
       retry: false,
       // While a transfer is on offer, look again every few seconds: SePay settles it on its own.
       refetchInterval: (query) => {
-        const data = (query.state.data as { data?: OwnInvoice } | undefined)?.data;
-        return data?.invoice?.status === "unpaid" && data.transfer ? TRANSFER_POLL_MS : false;
+        const data = (query.state.data as { data?: OwnInvoice[] } | undefined)?.data;
+        return Array.isArray(data) && data.some((own) => own.invoice.status === "unpaid" && own.transfer)
+          ? TRANSFER_POLL_MS
+          : false;
       },
     },
   });
-  const own = customResult(result?.data, "invoice");
-  const { mutate, mutation } = useCustomMutation<{ url: string }>();
+  const bills = Array.isArray(result?.data) ? result.data.filter((own) => own.invoice.status !== "cancelled") : [];
   const { open } = useNotification();
   const [params, setParams] = useSearchParams();
   const outcome = params.get("payment");
@@ -66,23 +67,34 @@ export function MyInvoiceCard({ appointmentId, className }: { appointmentId: num
     );
   }, [outcome, open, refetch, setParams]);
 
-  // Paid while on screen (the transfer landed): say so once.
-  const status = own?.invoice.status;
-  const previous = useRef(status);
-  useEffect(() => {
-    if (previous.current === "unpaid" && status === "paid") {
-      open?.({ type: "success", message: "Đã nhận thanh toán. Cảm ơn bạn!", key: "transfer-paid" });
-    }
-    previous.current = status;
-  }, [status, open]);
+  if (bills.length === 0) return null;
+  return (
+    <div className={cn("mx-auto flex w-full max-w-md flex-col gap-3", className)}>
+      {bills.map((own) => (
+        <BillCard key={own.invoice.id} own={own} />
+      ))}
+    </div>
+  );
+}
 
-  if (!own) return null;
+function BillCard({ own }: { own: OwnInvoice }) {
   const { invoice, onlinePayment, transfer } = own;
+  const { mutate, mutation } = useCustomMutation<{ url: string }>();
+  const { open } = useNotification();
+
+  // Paid while on screen (the transfer landed): say so once.
+  const previous = useRef(invoice.status);
+  useEffect(() => {
+    if (previous.current === "unpaid" && invoice.status === "paid") {
+      open?.({ type: "success", message: "Đã nhận thanh toán. Cảm ơn bạn!", key: `paid-${invoice.id}` });
+    }
+    previous.current = invoice.status;
+  }, [invoice.status, invoice.id, open]);
 
   const pay = () =>
     mutate(
       {
-        url: `${API_URL}/my_appointments/${appointmentId}/invoice/vnpay`,
+        url: `${API_URL}/my_invoices/${invoice.id}/vnpay`,
         method: "post",
         values: {},
         config: { headers: { "Content-Type": "application/json" } },
@@ -94,14 +106,21 @@ export function MyInvoiceCard({ appointmentId, className }: { appointmentId: num
     );
 
   return (
-    <Card className={cn("mx-auto w-full max-w-md gap-4 px-6 py-5", className)}>
+    <Card className="w-full gap-4 px-6 py-5">
       <div className="flex items-center gap-2">
-        <h3 className="font-semibold">Hóa đơn</h3>
+        <h3 className="font-semibold">{invoice.kind === "service" ? "Phí dịch vụ" : "Phí khám"}</h3>
         <span className="text-muted-foreground font-mono text-xs">{invoice.invoiceNumber}</span>
         <span className="ms-auto">
           <InvoiceStatusBadge status={invoice.status} />
         </span>
       </div>
+      {invoice.status === "unpaid" && (
+        <p className="text-muted-foreground text-sm">
+          {invoice.kind === "service"
+            ? "Thanh toán để được thực hiện dịch vụ bác sĩ đã chỉ định."
+            : "Thanh toán phí khám trước: bạn được xếp hàng chờ khám theo thời điểm thanh toán xong."}
+        </p>
+      )}
       <InvoiceLines invoice={invoice} />
       {invoice.payments.length > 0 && (
         <div className="flex flex-col gap-1">

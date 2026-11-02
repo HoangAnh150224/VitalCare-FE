@@ -62,6 +62,18 @@ export function QueueBanner({ appointment }: { appointment: Appointment }) {
   }
   if (!waiting) return null;
 
+  if (queue?.awaitingPayment) {
+    return (
+      <div role="status" className="bg-warning-subtle text-warning-text flex flex-col gap-0.5 rounded-2xl px-4 py-3">
+        <span className="font-display font-bold">Chưa thanh toán phí khám</span>
+        <span className="text-sm">
+          Bạn chỉ vào hàng chờ khám sau khi thanh toán. Thanh toán ngay bên dưới hoặc tại quầy lễ tân; thứ tự gọi khám
+          tính theo thời điểm thanh toán xong.
+        </span>
+      </div>
+    );
+  }
+
   const headline =
     query.isLoading || !queue || queue.ahead == null
       ? "Đang chờ gọi số"

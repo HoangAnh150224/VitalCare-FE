@@ -1,7 +1,7 @@
 import { useCan } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
-import { ScanLineIcon } from "lucide-react";
+import { CalendarDaysIcon, ScanLineIcon, UserPlusIcon } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router";
 
@@ -209,12 +209,26 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
         description="Các lượt đăng ký khám của phòng khám. Tiếp nhận một khách chưa kích hoạt sẽ đồng thời kích hoạt hồ sơ bệnh nhân."
         actions={
           canCheckIn?.can && !readOnly ? (
-            <Button asChild variant="outline">
-              <Link to="/appointments/check-in">
-                <ScanLineIcon />
-                Tiếp nhận nhanh
-              </Link>
-            </Button>
+            <>
+              <Button asChild variant="outline">
+                <Link to="/appointments/calendar">
+                  <CalendarDaysIcon />
+                  Lịch
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/appointments/walk-in">
+                  <UserPlusIcon />
+                  Khám vãng lai
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/appointments/check-in">
+                  <ScanLineIcon />
+                  Tiếp nhận nhanh
+                </Link>
+              </Button>
+            </>
           ) : undefined
         }
       />

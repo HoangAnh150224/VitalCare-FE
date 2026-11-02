@@ -42,6 +42,8 @@ export type Appointment = {
   cancelledAt: string | null;
   /** Why the clinic cancelled it; null when the customer cancelled their own. */
   cancelReason: string | null;
+  /** When the examination fee was paid (BF-02); null while owed. The queue follows this. */
+  paidAt: string | null;
   createdAt: string;
 };
 
@@ -78,7 +80,14 @@ export type VisitTask = { kind: "service" | "referral"; name: string; status: st
  * waiting; `skipped` when it was called, the patient was not there, and it
  * waits to be called again.
  */
-export type MyQueue = { ahead: number | null; skipped: boolean; returned?: boolean; tasks?: VisitTask[] };
+export type MyQueue = {
+  ahead: number | null;
+  skipped: boolean;
+  returned?: boolean;
+  tasks?: VisitTask[];
+  /** BF-02: checked in, examination fee not paid: not in the line until it is. */
+  awaitingPayment?: boolean;
+};
 
 export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
   scheduled: "Đã đăng ký",

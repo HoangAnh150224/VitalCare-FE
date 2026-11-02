@@ -79,6 +79,8 @@ export function CounterPaymentDialog({ invoice, open, onClose }: { invoice: Invo
     if (!settledByTransfer) return;
     notify?.({ type: "success", message: `Đã nhận chuyển khoản ${formatMoney(total)}`, key: `transfer-${invoice.id}` });
     invalidate({ resource: "invoices", invalidates: ["all"] });
+    invalidate({ resource: "appointments", invalidates: ["all"] });
+    invalidate({ resource: "service_orders", invalidates: ["all"] });
     close();
     // close() is recreated each render; reacting to the settlement alone is the point.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -104,7 +106,11 @@ export function CounterPaymentDialog({ invoice, open, onClose }: { invoice: Invo
           close();
         },
         // Paid or not, the bill on screen may be stale now.
-        onSettled: () => invalidate({ resource: "invoices", invalidates: ["all"] }),
+        onSettled: () => {
+          invalidate({ resource: "invoices", invalidates: ["all"] });
+          invalidate({ resource: "appointments", invalidates: ["all"] });
+          invalidate({ resource: "service_orders", invalidates: ["all"] });
+        },
       },
     );
 

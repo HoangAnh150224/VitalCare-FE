@@ -152,8 +152,8 @@ export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointm
         </LoadingOverlay>
       </Card>
 
-      {/* The customer's own bill; an administrator's read-only copy reads another endpoint and shows none. */}
-      {record?.status === "completed" && !readOnly && <MyInvoiceCard appointmentId={Number(record.id)} />}
+      {/* The customer's own bills — the examination fee is paid before the visit (BF-02); an administrator's read-only copy reads another endpoint and shows none. */}
+      {record && record.status !== "no_show" && !readOnly && <MyInvoiceCard appointmentId={Number(record.id)} />}
     </ShowView>
   );
 };

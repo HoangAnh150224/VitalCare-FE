@@ -7,6 +7,7 @@ import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
 import { DetailList, DetailPanel, DetailRow, EmptyValue } from "@/shared/components/views/record-detail";
 import { Button } from "@/shared/ui/button";
+import { Badge } from "@/shared/ui/badge";
 import { Card } from "@/shared/ui/card";
 import { Textarea } from "@/shared/ui/textarea";
 import type { ServiceOrder } from "@/domains/billing/types";
@@ -47,6 +48,7 @@ export const ServiceOrderShow = () => {
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-lg font-semibold tracking-tight">{order?.service.name ?? "—"}</h2>
                 {order && <OrderStatusBadge status={order.status} />}
+                {order?.status === "ordered" && !order.paid && <Badge variant="warning">Chưa thanh toán</Badge>}
               </div>
               <p className="text-muted-foreground text-sm">
                 {order?.patient.fullName}
@@ -54,10 +56,15 @@ export const ServiceOrderShow = () => {
               </p>
             </div>
             {writable && order?.status === "ordered" && (
-              <Button onClick={() => actions.start(order.id)} disabled={actions.pending}>
-                <PlayIcon />
-                Bắt đầu thực hiện
-              </Button>
+              <div className="flex flex-col items-end gap-1">
+                <Button onClick={() => actions.start(order.id)} disabled={actions.pending || !order.paid}>
+                  <PlayIcon />
+                  Bắt đầu thực hiện
+                </Button>
+                {!order.paid && (
+                  <span className="text-muted-foreground text-xs">Bệnh nhân thanh toán dịch vụ xong mới thực hiện được.</span>
+                )}
+              </div>
             )}
           </div>
         </LoadingOverlay>

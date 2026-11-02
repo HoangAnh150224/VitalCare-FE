@@ -1,8 +1,17 @@
-import { useCan, useInvalidate, useList, useNotification, useShow, useUpdate } from "@refinedev/core";
+import {
+  useCan,
+  useCustom,
+  useInvalidate,
+  useList,
+  useNotification,
+  useShow,
+  useUpdate,
+} from "@refinedev/core";
 import { BanknoteIcon, PencilIcon, PrinterIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
+import { API_URL } from "@/shared/api/constants";
 import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
 import { Badge } from "@/shared/ui/badge";
@@ -27,9 +36,18 @@ import {
   MetaItem,
   MetaStrip,
 } from "@/shared/components/views/record-detail";
-import { formatDateTime, formatLocalDate, formatLocalTime, formatMoney } from "@/shared/lib/format";
+import {
+  formatDateTime,
+  formatLocalDate,
+  formatLocalTime,
+  formatMoney,
+} from "@/shared/lib/format";
 import type { Appointment } from "@/domains/appointment/types";
-import { APPOINTMENT_STATUS_LABELS, formatBookingCode, formatQueueNumber } from "@/domains/appointment/types";
+import {
+  APPOINTMENT_STATUS_LABELS,
+  formatBookingCode,
+  formatQueueNumber,
+} from "@/domains/appointment/types";
 import type { Encounter } from "@/domains/encounter/types";
 import type { Invoice } from "@/domains/billing/types";
 import { CUSTOMER_STATUS_LABELS } from "@/domains/customer/types";
@@ -47,9 +65,18 @@ import { newEncounterPath } from "@/domains/encounter/types";
 export const AppointmentShow = () => {
   const { result: record, query } = useShow<Appointment>({});
   const { isLoading } = query;
-  const { data: canRecordEncounter } = useCan({ resource: "clinical_encounters", action: "create" });
-  const { data: canReadEncounters } = useCan({ resource: "clinical_encounters", action: "list" });
-  const { data: canEdit } = useCan({ resource: "appointments", action: "edit" });
+  const { data: canRecordEncounter } = useCan({
+    resource: "clinical_encounters",
+    action: "create",
+  });
+  const { data: canReadEncounters } = useCan({
+    resource: "clinical_encounters",
+    action: "list",
+  });
+  const { data: canEdit } = useCan({
+    resource: "appointments",
+    action: "edit",
+  });
   const [editing, setEditing] = useState(false);
 
   // "Lượt khám liên quan": the encounter this visit led to, if somebody recorded one.
@@ -57,10 +84,15 @@ export const AppointmentShow = () => {
     resource: "clinical_encounters",
     filters: [{ field: "appointment.id", operator: "eq", value: record?.id }],
     pagination: { pageSize: 5 },
-    queryOptions: { enabled: Boolean(record?.id) && (canReadEncounters?.can ?? false) },
+    queryOptions: {
+      enabled: Boolean(record?.id) && (canReadEncounters?.can ?? false),
+    },
   });
   const related = encounters?.data ?? [];
-  const open = record?.status === "scheduled" || record?.status === "checked_in" || record?.status === "in_exam";
+  const open =
+    record?.status === "scheduled" ||
+    record?.status === "checked_in" ||
+    record?.status === "in_exam";
 
   const status = record?.status;
   const willActivate =
@@ -80,15 +112,17 @@ export const AppointmentShow = () => {
                   {record ? formatLocalDate(record.appointmentDate) : "—"}
                 </h2>
                 {status && (
-                  <Badge variant={APPOINTMENT_STATUS_VARIANTS[status] ?? "secondary"}>
+                  <Badge
+                    variant={APPOINTMENT_STATUS_VARIANTS[status] ?? "secondary"}
+                  >
                     {APPOINTMENT_STATUS_LABELS[status] ?? status}
                   </Badge>
                 )}
               </div>
               {willActivate && (
                 <p className="text-muted-foreground text-sm">
-                  Khách hàng chưa là bệnh nhân. Tiếp nhận lượt này sẽ kích hoạt hồ
-                  sơ bệnh nhân
+                  Khách hàng chưa là bệnh nhân. Tiếp nhận lượt này sẽ kích hoạt
+                  hồ sơ bệnh nhân
                   {record.appointmentDate === clinicToday()
                     ? "."
                     : " — chỉ tiếp nhận được vào đúng ngày khám."}
@@ -101,39 +135,67 @@ export const AppointmentShow = () => {
                     Cập nhật
                   </Button>
                 )}
-                {record && <AppointmentActions appointment={record} resource="appointments" />}
+                {record && (
+                  <AppointmentActions
+                    appointment={record}
+                    resource="appointments"
+                  />
+                )}
               </div>
               {/* The visit follows the check-in: open its encounter from here. */}
-              {(record?.status === "checked_in" || record?.status === "in_exam") && canRecordEncounter?.can && (
-                <Button asChild variant="outline">
-                  <Link
-                    to={newEncounterPath({
-                      customerId: record.customer.id,
-                      patientName: record.customer.fullName,
-                      appointmentId: record.id,
-                    })}
-                  >
-                    Tạo lần khám
-                  </Link>
-                </Button>
-              )}
+              {(record?.status === "checked_in" ||
+                record?.status === "in_exam") &&
+                canRecordEncounter?.can && (
+                  <Button asChild variant="outline">
+                    <Link
+                      to={newEncounterPath({
+                        customerId: record.customer.id,
+                        patientName: record.customer.fullName,
+                        appointmentId: record.id,
+                      })}
+                    >
+                      Tạo lần khám
+                    </Link>
+                  </Button>
+                )}
             </div>
 
             <MetaStrip className="shrink-0">
               <MetaItem label="Dự kiến">
                 <span className="tabular-nums">
                   {formatLocalTime(record?.startTime)}
-                  {record?.endTime ? ` – ${formatLocalTime(record.endTime)}` : ""}
+                  {record?.endTime
+                    ? ` – ${formatLocalTime(record.endTime)}`
+                    : ""}
                 </span>
               </MetaItem>
               <MetaItem label="Mã phiếu">
-                <span className="font-mono">{formatBookingCode(record?.bookingCode)}</span>
+                <span className="font-mono">
+                  {formatBookingCode(record?.bookingCode)}
+                </span>
               </MetaItem>
-              <MetaItem label="Đăng ký lúc">{formatDateTime(record?.createdAt)}</MetaItem>
+              <MetaItem label="Đăng ký lúc">
+                {formatDateTime(record?.createdAt)}
+              </MetaItem>
+              {record &&
+                record.status !== "cancelled" &&
+                record.status !== "no_show" && (
+                  <MetaItem label="Phí khám">
+                    {record?.paidAt ? (
+                      <span className="text-success-text">
+                        Đã trả · {formatDateTime(record.paidAt)}
+                      </span>
+                    ) : (
+                      <span className="text-warning-text">Chưa thanh toán</span>
+                    )}
+                  </MetaItem>
+                )}
               {record?.examRoom && (
                 <MetaItem label="Phòng khám">
                   {record.examRoom.code}
-                  {record.calledAt ? ` · vào lúc ${formatDateTime(record.calledAt)}` : ""}
+                  {record.calledAt
+                    ? ` · vào lúc ${formatDateTime(record.calledAt)}`
+                    : ""}
                 </MetaItem>
               )}
             </MetaStrip>
@@ -141,14 +203,22 @@ export const AppointmentShow = () => {
         </LoadingOverlay>
       </Card>
 
-      {record?.status === "completed" && <VisitBill appointmentId={record.id} />}
+      {record && record.status !== "cancelled" && (
+        <VisitBills
+          appointmentId={record.id}
+          open={record.status !== "completed" && record.status !== "no_show"}
+        />
+      )}
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-3">
         <DetailPanel title="Khách hàng">
           <DetailList>
             <DetailRow label="Họ và tên">
               {record ? (
-                <Link to={`/customers/show/${record.customer.id}`} className="hover:underline">
+                <Link
+                  to={`/customers/show/${record.customer.id}`}
+                  className="hover:underline"
+                >
                   {record.customer.fullName}
                 </Link>
               ) : (
@@ -159,12 +229,20 @@ export const AppointmentShow = () => {
               <span className="font-mono">{record?.customer.phone ?? "—"}</span>
             </DetailRow>
             <DetailRow label="Mã khách hàng">
-              <span className="font-mono">{record?.customer.customerCode ?? "—"}</span>
+              <span className="font-mono">
+                {record?.customer.customerCode ?? "—"}
+              </span>
             </DetailRow>
             <DetailRow label="Trạng thái">
               {record ? (
-                <Badge variant={CUSTOMER_STATUS_VARIANTS[record.customer.status] ?? "secondary"}>
-                  {CUSTOMER_STATUS_LABELS[record.customer.status] ?? record.customer.status}
+                <Badge
+                  variant={
+                    CUSTOMER_STATUS_VARIANTS[record.customer.status] ??
+                    "secondary"
+                  }
+                >
+                  {CUSTOMER_STATUS_LABELS[record.customer.status] ??
+                    record.customer.status}
                 </Badge>
               ) : (
                 <EmptyValue />
@@ -180,29 +258,49 @@ export const AppointmentShow = () => {
                 <span>
                   {record.doctor.fullName}
                   {record.doctor.specialty && (
-                    <span className="text-muted-foreground ml-2 text-xs">{record.doctor.specialty}</span>
+                    <span className="text-muted-foreground ml-2 text-xs">
+                      {record.doctor.specialty}
+                    </span>
                   )}
                 </span>
               ) : (
                 <EmptyValue />
               )}
             </DetailRow>
-            <DetailRow label="Phòng khám">{record?.clinic.name ?? <EmptyValue />}</DetailRow>
-            <DetailRow label="Lý do">{record?.reason ?? <EmptyValue />}</DetailRow>
-            <DetailRow label="Ghi chú nội bộ">{record?.note ?? <EmptyValue />}</DetailRow>
+            <DetailRow label="Phòng khám">
+              {record?.clinic.name ?? <EmptyValue />}
+            </DetailRow>
+            <DetailRow label="Lý do">
+              {record?.reason ?? <EmptyValue />}
+            </DetailRow>
+            <DetailRow label="Ghi chú nội bộ">
+              {record?.note ?? <EmptyValue />}
+            </DetailRow>
           </DetailList>
         </DetailPanel>
 
         <DetailPanel title="Diễn biến">
           <DetailList>
-            <DetailRow label="Đăng ký">{formatDateTime(record?.createdAt)}</DetailRow>
+            <DetailRow label="Đăng ký">
+              {formatDateTime(record?.createdAt)}
+            </DetailRow>
             <DetailRow label="Tiếp nhận">
-              {record?.checkedInAt ? formatDateTime(record.checkedInAt) : <EmptyValue />}
+              {record?.checkedInAt ? (
+                formatDateTime(record.checkedInAt)
+              ) : (
+                <EmptyValue />
+              )}
             </DetailRow>
             <DetailRow label="Huỷ">
-              {record?.cancelledAt ? formatDateTime(record.cancelledAt) : <EmptyValue />}
+              {record?.cancelledAt ? (
+                formatDateTime(record.cancelledAt)
+              ) : (
+                <EmptyValue />
+              )}
             </DetailRow>
-            {record?.cancelReason && <DetailRow label="Lý do huỷ">{record.cancelReason}</DetailRow>}
+            {record?.cancelReason && (
+              <DetailRow label="Lý do huỷ">{record.cancelReason}</DetailRow>
+            )}
             {canReadEncounters?.can && (
               <DetailRow label="Lượt khám liên quan">
                 {related.length ? (
@@ -226,50 +324,101 @@ export const AppointmentShow = () => {
         </DetailPanel>
       </div>
 
-      {record && editing && <EditVisitDialog appointment={record} onClose={() => setEditing(false)} />}
+      {record && editing && (
+        <EditVisitDialog
+          appointment={record}
+          onClose={() => setEditing(false)}
+        />
+      )}
     </ShowView>
   );
 };
 
 /**
- * The visit's bill, where the desk already is once the doctor has concluded:
- * how much, whether it is paid, and taking the money — through the same
- * confirmation as the invoice page. Nothing before there is a bill.
+ * The visit's bills where the desk already is: the examination fee first —
+ * taken before the patient can queue (BF-02) — then one per ordered service,
+ * each paid before it is done (BF-03). Taking the money goes through the same
+ * confirmation as the invoice page.
  */
-function VisitBill({ appointmentId }: { appointmentId: number }) {
+function VisitBills({
+  appointmentId,
+  open,
+}: {
+  appointmentId: number;
+  open: boolean;
+}) {
   const { data: canRead } = useCan({ resource: "invoices", action: "list" });
-  const { data: canCollect } = useCan({ resource: "invoices", action: "edit" });
-  const [paying, setPaying] = useState(false);
-  const { result } = useList<Invoice>({
+  // Asked first: it issues the examination bill of a visit registered before bills came first.
+  const exam = useCustom<Invoice>({
+    url: `${API_URL}/invoices/exam`,
+    method: "get",
+    config: { query: { appointmentId } },
+    errorNotification: false,
+    queryOptions: { enabled: (canRead?.can ?? false) && open },
+  });
+  const { result, query } = useList<Invoice>({
     resource: "invoices",
     filters: [{ field: "appointmentId", operator: "eq", value: appointmentId }],
-    pagination: { currentPage: 1, pageSize: 1 },
-    queryOptions: { enabled: canRead?.can ?? false },
+    pagination: { currentPage: 1, pageSize: 50 },
+    sorters: [{ field: "id", order: "asc" }],
+    queryOptions: {
+      enabled: (canRead?.can ?? false) && (!open || exam.query.isFetched),
+    },
   });
-  const invoice = result?.data?.[0];
-  if (!invoice) return null;
-  const unpaid = invoice.status === "unpaid";
+  const bills = (result?.data ?? [])
+    .filter((invoice) => invoice.status !== "cancelled")
+    .sort((x, y) =>
+      x.kind === y.kind ? x.id - y.id : x.kind === "exam" ? -1 : 1
+    );
+  if (!canRead?.can || (bills.length === 0 && !query.isLoading)) return null;
 
   return (
-    <Card className="flex flex-row flex-wrap items-center gap-x-6 gap-y-3 px-6 py-4">
+    <Card className="gap-0 py-2">
+      {bills.map((invoice) => (
+        <BillRow key={invoice.id} invoice={invoice} />
+      ))}
+    </Card>
+  );
+}
+
+function BillRow({ invoice }: { invoice: Invoice }) {
+  const { data: canCollect } = useCan({ resource: "invoices", action: "edit" });
+  const [paying, setPaying] = useState(false);
+  const unpaid = invoice.status === "unpaid";
+  const what =
+    invoice.kind === "exam"
+      ? "Phí khám"
+      : `Dịch vụ: ${invoice.items.map((item) => item.description).join(", ")}`;
+
+  return (
+    <div className="flex flex-row flex-wrap items-center gap-x-6 gap-y-3 border-b px-6 py-3 last:border-b-0">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-semibold">Hóa đơn</span>
-          <Link to={`/invoices/show/${invoice.id}`} className="font-mono text-sm hover:underline">
+          <span className="font-semibold">{what}</span>
+          <Link
+            to={`/invoices/show/${invoice.id}`}
+            className="font-mono text-sm hover:underline"
+          >
             {invoice.invoiceNumber}
           </Link>
           <InvoiceStatusBadge status={invoice.status} />
         </div>
         <span className="text-muted-foreground text-sm">
-          {unpaid ? "Bệnh nhân chưa thanh toán." : `Đã thanh toán lúc ${formatDateTime(invoice.paidAt)}.`}
+          {unpaid
+            ? invoice.kind === "exam"
+              ? "Chưa thanh toán: bệnh nhân chỉ vào hàng chờ khám sau khi trả phí khám."
+              : "Chưa thanh toán: dịch vụ chỉ được thực hiện sau khi trả."
+            : `Đã thanh toán lúc ${formatDateTime(invoice.paidAt)}.`}
         </span>
       </div>
-      <span className="text-2xl font-semibold tabular-nums">{formatMoney(invoice.totalAmount)}</span>
+      <span className="text-xl font-semibold tabular-nums">
+        {formatMoney(invoice.totalAmount)}
+      </span>
       <div className="flex flex-wrap gap-2">
         {unpaid && canCollect?.can && invoice._can?.write !== false ? (
           <Button onClick={() => setPaying(true)}>
             <BanknoteIcon />
-            Thu tiền
+            {invoice.kind === "exam" ? "Thu phí khám" : "Thu tiền"}
           </Button>
         ) : (
           !unpaid && (
@@ -282,8 +431,12 @@ function VisitBill({ appointmentId }: { appointmentId: number }) {
           )
         )}
       </div>
-      <CounterPaymentDialog invoice={invoice} open={paying} onClose={() => setPaying(false)} />
-    </Card>
+      <CounterPaymentDialog
+        invoice={invoice}
+        open={paying}
+        onClose={() => setPaying(false)}
+      />
+    </div>
   );
 }
 
@@ -292,7 +445,13 @@ function VisitBill({ appointmentId }: { appointmentId: number }) {
  * its own note. Whom it is with and when change by rescheduling, which issues
  * a new number.
  */
-function EditVisitDialog({ appointment, onClose }: { appointment: Appointment; onClose: () => void }) {
+function EditVisitDialog({
+  appointment,
+  onClose,
+}: {
+  appointment: Appointment;
+  onClose: () => void;
+}) {
   const { open } = useNotification();
   const invalidate = useInvalidate();
   const { mutate, mutation } = useUpdate<Appointment>();
@@ -309,7 +468,11 @@ function EditVisitDialog({ appointment, onClose }: { appointment: Appointment; o
       },
       {
         onSuccess: () => {
-          invalidate({ resource: "appointments", invalidates: ["detail", "list"], id: appointment.id });
+          invalidate({
+            resource: "appointments",
+            invalidates: ["detail", "list"],
+            id: appointment.id,
+          });
           open?.({ type: "success", message: "Đã cập nhật đăng ký khám" });
           onClose();
         },
@@ -322,24 +485,43 @@ function EditVisitDialog({ appointment, onClose }: { appointment: Appointment; o
         <DialogHeader>
           <DialogTitle>Cập nhật đăng ký khám</DialogTitle>
           <DialogDescription>
-            Sửa lý do khám và ghi chú. Đổi bác sĩ hoặc ngày khám thì dùng "Đổi ngày khám".
+            Sửa lý do khám và ghi chú. Đổi bác sĩ hoặc ngày khám thì dùng "Đổi
+            ngày khám".
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="visit-reason">Lý do khám</Label>
-            <Input id="visit-reason" maxLength={255} value={reason} onChange={(event) => setReason(event.target.value)} />
+            <Input
+              id="visit-reason"
+              maxLength={255}
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="visit-note">Ghi chú nội bộ</Label>
-            <Textarea id="visit-note" maxLength={2000} rows={3} value={note} onChange={(event) => setNote(event.target.value)} />
+            <Textarea
+              id="visit-note"
+              maxLength={2000}
+              rows={3}
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={mutation.isPending}>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={mutation.isPending}
+          >
             Đóng
           </Button>
-          <Button onClick={save} disabled={reason.trim() === "" || mutation.isPending}>
+          <Button
+            onClick={save}
+            disabled={reason.trim() === "" || mutation.isPending}
+          >
             {mutation.isPending ? "Đang lưu..." : "Lưu"}
           </Button>
         </DialogFooter>

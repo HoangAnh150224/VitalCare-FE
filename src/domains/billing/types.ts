@@ -61,6 +61,8 @@ export type ServiceOrder = {
   /** Empty on a list row; a single order carries its files. */
   files: { id: number; name: string; contentType: string; sizeBytes: number; uploadedAt: string }[];
   _can?: Record<string, boolean>;
+  /** Its own bill is paid (BF-03); the service is done only then. */
+  paid: boolean;
 };
 
 export const SERVICE_ORDER_STATUS_LABELS: Record<ServiceOrderStatus, string> = {
@@ -88,10 +90,21 @@ export type PaymentMethod = "cash" | "bank_transfer" | "vnpay";
 export type PaymentStatus = "pending" | "paid" | "failed";
 
 /** A bill as `GET /invoices` returns it: one per concluded encounter. */
+/** `exam`: a visit's examination fee, paid before it queues (BF-02); `service`: one ordered service (BF-03). */
+export type InvoiceKind = "exam" | "service";
+
+export const INVOICE_KIND_LABELS: Record<InvoiceKind, string> = {
+  exam: "Phí khám",
+  service: "Dịch vụ chỉ định",
+};
+
 export type Invoice = {
   id: number;
   invoiceNumber: string;
   status: InvoiceStatus;
+  kind: InvoiceKind;
+  /** The ordered service a `service` bill is for. */
+  serviceOrderId: number | null;
   patient: { id: number; customerCode: string; fullName: string; phone: string | null };
   clinic: { id: string; name: string } | null;
   appointmentId: number | null;
