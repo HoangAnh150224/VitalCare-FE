@@ -63,6 +63,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   sync_failures: "Bản ghi đồng bộ lỗi",
   my_devices: "Thiết bị của tôi",
   vital_signs: "Sinh hiệu",
+  my_vital_signs: "Sức khỏe của tôi",
   employees: "Nhân viên",
   customers: "Khách hàng",
   appointments: "Đăng ký khám",

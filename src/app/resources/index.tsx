@@ -118,6 +118,12 @@ export const resources: ResourceProps[] = [
       icon: <CalendarCheck className="h-4 w-4" />,
     },
   },
+  // The portal's "Sức khỏe": the account's own vital signs and its relatives' (FE-04).
+  {
+    name: "my_vital_signs",
+    list: "/my-health",
+    meta: { label: "Sức khỏe", icon: <HeartPulse className="h-4 w-4" /> },
+  },
   // The monitoring devices handed to the customer's profiles, and pairing them (FE-02).
   {
     name: "my_devices",
@@ -226,6 +232,17 @@ export const resources: ResourceProps[] = [
     meta: {
       label: "Thiết bị IoMT",
       icon: <Watch className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // FE-04: patients' vital signs — the monitored overview, one patient's view, one reading.
+  {
+    name: "vital_signs",
+    list: "/vital-signs",
+    show: "/vital-signs/show/:id",
+    meta: {
+      label: "Theo dõi sinh hiệu",
+      icon: <HeartPulse className="h-4 w-4" />,
       parent: "clinic",
     },
   },

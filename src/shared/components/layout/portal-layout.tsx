@@ -14,6 +14,7 @@ import {
   MessagesSquareIcon,
   UsersRoundIcon,
   WatchIcon,
+  HeartPulseIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
@@ -39,15 +40,20 @@ const NAV: NavItem[] = [
   { to: "/dashboard", label: "Trang chủ", icon: HouseIcon },
   { to: "/my-appointments", label: "Lượt khám", icon: CalendarCheck2Icon },
   { to: "/my-results", label: "Kết quả", icon: FileHeartIcon },
+  { to: "/my-health", label: "Sức khỏe", icon: HeartPulseIcon },
   { to: "/my-conversations", label: "Tin nhắn", icon: MessagesSquareIcon },
   { to: "/my-profiles", label: "Hồ sơ", icon: UsersRoundIcon },
   { to: "/my-devices", label: "Thiết bị", icon: WatchIcon },
 ];
 
-/** The phone's tab bar adds the account, which the desktop keeps behind the avatar. */
-// Without "Thiết bị": on a phone the band is the mobile app's; the tab bar keeps to six.
+/**
+ * The phone's tab bar adds the account, which the desktop keeps behind the
+ * avatar. It holds six: without "Thiết bị" (on a phone the band is the mobile
+ * app's) and "Hồ sơ" (the home screen's shortcut leads there).
+ */
+const PHONE_ONLY_VIA_HOME = new Set(["/my-devices", "/my-profiles"]);
 const TABS: NavItem[] = [
-  ...NAV.filter((item) => item.to !== "/my-devices"),
+  ...NAV.filter((item) => !PHONE_ONLY_VIA_HOME.has(item.to)),
   { to: "/profile", label: "Tài khoản", icon: CircleUserRoundIcon },
 ];
 

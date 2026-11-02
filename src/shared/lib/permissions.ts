@@ -112,6 +112,7 @@ const PORTAL_RESOURCES = new Set([
   "my_profiles",
   "my_conversations",
   "my_devices",
+  "my_vital_signs",
 ]);
 
 /** Held by every account, staff or customer: no say in which shell it gets. */

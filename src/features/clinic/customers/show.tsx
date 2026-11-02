@@ -13,7 +13,11 @@ import {
   MetaItem,
   MetaStrip,
 } from "@/shared/components/views/record-detail";
-import { formatDateTime, formatLocalDate, formatLocalTime } from "@/shared/lib/format";
+import {
+  formatDateTime,
+  formatLocalDate,
+  formatLocalTime,
+} from "@/shared/lib/format";
 import type { Customer } from "@/domains/customer/types";
 import {
   ACTIVATION_SOURCE_LABELS,
@@ -34,6 +38,7 @@ import { DevicePanel } from "./device-panel";
 import { EncounterHistoryPanel } from "../encounters/encounter-history-panel";
 import { MedicalRecordPanel } from "../encounters/medical-record-panel";
 import { MonitoringNotesPanel } from "../encounters/monitoring-notes-panel";
+import { MonitoringSummaryPanel } from "../vital-signs/monitoring-summary";
 
 /**
  * One customer: who they are, whether they are a patient yet and how they
@@ -47,14 +52,19 @@ export const CustomerShow = () => {
   const { result: record, query } = useShow<Customer>({});
   const { isLoading } = query;
 
-  const { data: canReadAppointments } = useCan({ resource: "appointments", action: "list" });
+  const { data: canReadAppointments } = useCan({
+    resource: "appointments",
+    action: "list",
+  });
   const { data: canReadUsers } = useCan({ resource: "users", action: "show" });
 
   const { result: appointments } = useList<Appointment>({
     resource: "appointments",
     filters: [{ field: "customer.id", operator: "eq", value: record?.id }],
     pagination: { pageSize: 20 },
-    queryOptions: { enabled: Boolean(record?.id) && (canReadAppointments?.can ?? false) },
+    queryOptions: {
+      enabled: Boolean(record?.id) && (canReadAppointments?.can ?? false),
+    },
   });
 
   const status = record?.status;
@@ -72,7 +82,9 @@ export const CustomerShow = () => {
                   {record?.fullName ?? "—"}
                 </h2>
                 {status && (
-                  <Badge variant={CUSTOMER_STATUS_VARIANTS[status] ?? "secondary"}>
+                  <Badge
+                    variant={CUSTOMER_STATUS_VARIANTS[status] ?? "secondary"}
+                  >
                     {CUSTOMER_STATUS_LABELS[status] ?? status}
                   </Badge>
                 )}
@@ -87,7 +99,9 @@ export const CustomerShow = () => {
               <MetaItem label="Mã khách hàng">
                 <span className="font-mono">{record?.customerCode ?? "—"}</span>
               </MetaItem>
-              <MetaItem label="Đăng ký">{formatDateTime(record?.createdAt)}</MetaItem>
+              <MetaItem label="Đăng ký">
+                {formatDateTime(record?.createdAt)}
+              </MetaItem>
             </MetaStrip>
           </div>
         </LoadingOverlay>
@@ -97,21 +111,47 @@ export const CustomerShow = () => {
         <DetailPanel title="Hồ sơ">
           <DetailList>
             <DetailRow label="Ngày sinh">
-              {record?.dateOfBirth ? formatLocalDate(record.dateOfBirth) : <EmptyValue />}
+              {record?.dateOfBirth ? (
+                formatLocalDate(record.dateOfBirth)
+              ) : (
+                <EmptyValue />
+              )}
             </DetailRow>
             <DetailRow label="Giới tính">
               {record?.gender ? GENDER_LABELS[record.gender] : <EmptyValue />}
             </DetailRow>
-            <DetailRow label={record ? ID_TYPE_LABELS[record.nationalIdType ?? "cccd"] : "CCCD"}>
-              {record?.nationalId ? <span className="font-mono">{record.nationalId}</span> : <EmptyValue />}
+            <DetailRow
+              label={
+                record
+                  ? ID_TYPE_LABELS[record.nationalIdType ?? "cccd"]
+                  : "CCCD"
+              }
+            >
+              {record?.nationalId ? (
+                <span className="font-mono">{record.nationalId}</span>
+              ) : (
+                <EmptyValue />
+              )}
             </DetailRow>
             <DetailRow label="Ngày cấp">
-              {record?.nationalIdIssuedOn ? formatLocalDate(record.nationalIdIssuedOn) : <EmptyValue />}
+              {record?.nationalIdIssuedOn ? (
+                formatLocalDate(record.nationalIdIssuedOn)
+              ) : (
+                <EmptyValue />
+              )}
             </DetailRow>
-            <DetailRow label="Dân tộc">{record?.ethnicity ?? <EmptyValue />}</DetailRow>
-            <DetailRow label="Quốc tịch">{record?.nationality ?? <EmptyValue />}</DetailRow>
-            <DetailRow label="Nghề nghiệp">{record?.occupation ?? <EmptyValue />}</DetailRow>
-            <DetailRow label="Địa chỉ">{(record && fullAddress(record)) ?? <EmptyValue />}</DetailRow>
+            <DetailRow label="Dân tộc">
+              {record?.ethnicity ?? <EmptyValue />}
+            </DetailRow>
+            <DetailRow label="Quốc tịch">
+              {record?.nationality ?? <EmptyValue />}
+            </DetailRow>
+            <DetailRow label="Nghề nghiệp">
+              {record?.occupation ?? <EmptyValue />}
+            </DetailRow>
+            <DetailRow label="Địa chỉ">
+              {(record && fullAddress(record)) ?? <EmptyValue />}
+            </DetailRow>
             <DetailRow label="Liên hệ khẩn cấp">
               {record?.emergencyContactName ? (
                 <span>
@@ -128,7 +168,10 @@ export const CustomerShow = () => {
             </DetailRow>
             <DetailRow label="Tài khoản">
               {record?.userId && canReadUsers?.can ? (
-                <Link to={`/users/show/${record.userId}`} className="hover:underline">
+                <Link
+                  to={`/users/show/${record.userId}`}
+                  className="hover:underline"
+                >
                   Xem tài khoản đăng nhập
                 </Link>
               ) : (
@@ -142,7 +185,9 @@ export const CustomerShow = () => {
           <DetailList>
             <DetailRow label="Trạng thái">
               {status ? (
-                <Badge variant={CUSTOMER_STATUS_VARIANTS[status] ?? "secondary"}>
+                <Badge
+                  variant={CUSTOMER_STATUS_VARIANTS[status] ?? "secondary"}
+                >
                   {CUSTOMER_STATUS_LABELS[status] ?? status}
                 </Badge>
               ) : (
@@ -182,10 +227,20 @@ export const CustomerShow = () => {
       {/* The clinical side: both panels hide themselves from anybody without
           the permission, so the front desk and the doctor see what is theirs. */}
       {record && record.status === "patient" && (
+        <MonitoringSummaryPanel customerId={record.id} />
+      )}
+
+      {record && record.status === "patient" && (
         <div className="grid min-w-0 gap-4 lg:grid-cols-2">
           <MedicalRecordPanel key={record.id} customerId={record.id} />
-          <MonitoringNotesPanel key={`notes-${record.id}`} customerId={record.id} />
-          <EncounterHistoryPanel customerId={record.id} patientName={record.fullName} />
+          <MonitoringNotesPanel
+            key={`notes-${record.id}`}
+            customerId={record.id}
+          />
+          <EncounterHistoryPanel
+            customerId={record.id}
+            patientName={record.fullName}
+          />
         </div>
       )}
 
@@ -216,14 +271,22 @@ export const CustomerShow = () => {
                       {appointment.reason ?? appointment.clinic.name}
                     </span>
                   </span>
-                  <Badge variant={APPOINTMENT_STATUS_VARIANTS[appointment.status] ?? "secondary"}>
-                    {APPOINTMENT_STATUS_LABELS[appointment.status] ?? appointment.status}
+                  <Badge
+                    variant={
+                      APPOINTMENT_STATUS_VARIANTS[appointment.status] ??
+                      "secondary"
+                    }
+                  >
+                    {APPOINTMENT_STATUS_LABELS[appointment.status] ??
+                      appointment.status}
                   </Badge>
                 </Link>
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">Chưa có lượt đăng ký khám nào.</p>
+            <p className="text-muted-foreground text-sm">
+              Chưa có lượt đăng ký khám nào.
+            </p>
           )}
         </DetailPanel>
       )}

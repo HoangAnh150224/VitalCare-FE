@@ -131,6 +131,10 @@ import {
   SyncFailureList,
   SyncFailureShow,
   MyDeviceList,
+  VitalSignOverview,
+  PatientVitalSigns,
+  VitalSignShow,
+  MyHealth,
 } from "@/features/clinic";
 import { ErrorComponent } from "@/shared/components/layout/error-component";
 import { Forbidden } from "@/shared/components/layout/forbidden";
@@ -411,6 +415,22 @@ export function AppRoutes() {
           <Route path="show/:id" element={<StaffShow />} />
         </Route>
         <Route
+          path="/vital-signs"
+          element={
+            <CanAccess
+              resource="vital_signs"
+              action="list"
+              fallback={<Forbidden resource="vital_signs" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<VitalSignOverview />} />
+          <Route path="patient/:customerId" element={<PatientVitalSigns />} />
+          <Route path="show/:id" element={<VitalSignShow />} />
+        </Route>
+        <Route
           path="/device-syncs"
           element={
             <CanAccess
@@ -675,6 +695,18 @@ export function AppRoutes() {
           <Route index element={<ConversationInbox />} />
           <Route path="show/:id" element={<ConversationInbox />} />
         </Route>
+        <Route
+          path="/my-health"
+          element={
+            <CanAccess
+              resource="my_vital_signs"
+              action="list"
+              fallback={<Forbidden resource="my_vital_signs" />}
+            >
+              <MyHealth />
+            </CanAccess>
+          }
+        />
         <Route
           path="/my-devices"
           element={

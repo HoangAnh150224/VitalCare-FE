@@ -18,6 +18,7 @@ import { STAFF_TYPE_LABELS } from "@/domains/employee/types";
 import { EncounterHistoryPanel } from "../encounters/encounter-history-panel";
 import { MedicalRecordPanel } from "../encounters/medical-record-panel";
 import { MonitoringNotesPanel } from "../encounters/monitoring-notes-panel";
+import { MonitoringSummaryPanel } from "../vital-signs/monitoring-summary";
 
 /**
  * One patient the caller follows: who they are, who else is on their team and
@@ -32,7 +33,11 @@ type MyPatientShowProps = {
   title?: string;
 };
 
-export const MyPatientShow = ({ resource, id, title }: MyPatientShowProps = {}) => {
+export const MyPatientShow = ({
+  resource,
+  id,
+  title,
+}: MyPatientShowProps = {}) => {
   const { result: record, query } = useShow<MyPatient>({ resource, id });
 
   return (
@@ -43,15 +48,23 @@ export const MyPatientShow = ({ resource, id, title }: MyPatientShowProps = {}) 
         <LoadingOverlay loading={query.isLoading}>
           <div className="flex flex-wrap items-start gap-x-6 gap-y-4 px-6">
             <div className="min-w-0 flex-1 space-y-1">
-              <h2 className="text-lg leading-6 font-semibold tracking-tight">{record?.fullName ?? "—"}</h2>
+              <h2 className="text-lg leading-6 font-semibold tracking-tight">
+                {record?.fullName ?? "—"}
+              </h2>
               <p className="text-muted-foreground font-mono text-sm">
                 {record?.phone ?? "—"} · {record?.customerCode ?? ""}
               </p>
             </div>
             <MetaStrip className="shrink-0">
-              <MetaItem label="Theo dõi từ">{formatDate(record?.followingSince)}</MetaItem>
+              <MetaItem label="Theo dõi từ">
+                {formatDate(record?.followingSince)}
+              </MetaItem>
               <MetaItem label="Thiết bị">
-                {record?.device ? <span className="font-mono">{record.device.deviceCode}</span> : "Chưa đeo"}
+                {record?.device ? (
+                  <span className="font-mono">{record.device.deviceCode}</span>
+                ) : (
+                  "Chưa đeo"
+                )}
               </MetaItem>
             </MetaStrip>
           </div>
@@ -62,14 +75,20 @@ export const MyPatientShow = ({ resource, id, title }: MyPatientShowProps = {}) 
         <DetailPanel title="Thông tin bệnh nhân">
           <DetailList>
             <DetailRow label="Ngày sinh">
-              {record?.dateOfBirth ? formatLocalDate(record.dateOfBirth) : <EmptyValue />}
+              {record?.dateOfBirth ? (
+                formatLocalDate(record.dateOfBirth)
+              ) : (
+                <EmptyValue />
+              )}
             </DetailRow>
             <DetailRow label="Liên hệ khẩn cấp">
               {record?.emergencyContactName ? (
                 <span>
                   {record.emergencyContactName}
                   {record.emergencyContactPhone && (
-                    <span className="text-muted-foreground ml-2 font-mono text-xs">{record.emergencyContactPhone}</span>
+                    <span className="text-muted-foreground ml-2 font-mono text-xs">
+                      {record.emergencyContactPhone}
+                    </span>
                   )}
                 </span>
               ) : (
@@ -82,20 +101,33 @@ export const MyPatientShow = ({ resource, id, title }: MyPatientShowProps = {}) 
         <DetailPanel title="Nhóm chăm sóc" bodyClassName="p-4">
           <ul className="flex flex-col gap-2">
             {(record?.careTeam ?? []).map((member) => (
-              <li key={member.id} className="flex items-center justify-between text-sm">
+              <li
+                key={member.id}
+                className="flex items-center justify-between text-sm"
+              >
                 <span>{member.fullName}</span>
-                <Badge variant="outline">{STAFF_TYPE_LABELS[member.staffType]}</Badge>
+                <Badge variant="outline">
+                  {STAFF_TYPE_LABELS[member.staffType]}
+                </Badge>
               </li>
             ))}
           </ul>
         </DetailPanel>
       </div>
 
+      {record && <MonitoringSummaryPanel customerId={record.id} />}
+
       {record && (
         <div className="grid min-w-0 gap-4 lg:grid-cols-2">
           <MedicalRecordPanel key={record.id} customerId={record.id} />
-          <MonitoringNotesPanel key={`notes-${record.id}`} customerId={record.id} />
-          <EncounterHistoryPanel customerId={record.id} patientName={record.fullName} />
+          <MonitoringNotesPanel
+            key={`notes-${record.id}`}
+            customerId={record.id}
+          />
+          <EncounterHistoryPanel
+            customerId={record.id}
+            patientName={record.fullName}
+          />
         </div>
       )}
     </ShowView>
