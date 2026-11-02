@@ -27,6 +27,7 @@ import {
   ListOrdered,
   BriefcaseMedical,
   MessagesSquare,
+  ScrollText,
 } from "lucide-react";
 
 /**
@@ -411,6 +412,17 @@ export const resources: ResourceProps[] = [
     },
   },
   // The service catalogue and its prices, one for every clinic. ADMIN writes it.
+  // The audit log: every protected action, read-only (FE-20, BR-24).
+  {
+    name: "audit_logs",
+    list: "/audit-logs",
+    show: "/audit-logs/show/:id",
+    meta: {
+      label: "Nhật ký hoạt động",
+      icon: <ScrollText className="h-4 w-4" />,
+      parent: "administration",
+    },
+  },
   {
     name: "medical_services",
     list: "/medical-services",
@@ -489,6 +501,7 @@ export const resources: ResourceProps[] = [
   {
     name: "notifications",
     list: "/notifications",
+    show: "/notifications/show/:id",
     meta: {
       label: "Thông báo",
       canDelete: true,

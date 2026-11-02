@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 
+import { NotificationBell } from "@/shared/components/layout/notification-bell";
 import { ShellVariantContext } from "@/shared/components/layout/shell-variant";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import {
@@ -119,7 +120,8 @@ export function PortalLayout({ children }: PropsWithChildren) {
               ))}
             </nav>
 
-            <div className="ms-auto">
+            <div className="ms-auto flex items-center gap-1">
+              <NotificationBell />
               <AccountMenu />
             </div>
           </div>

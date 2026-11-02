@@ -72,6 +72,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   first_aid_articles: "Nội dung sơ cứu",
   conversations: "Tin nhắn hỗ trợ",
   my_conversations: "Tin nhắn của tôi",
+  audit_logs: "Nhật ký hoạt động",
 };
 
 /** `blog_posts` reads better as "Blog posts" in a group heading. */

@@ -27,7 +27,7 @@ import {
   DepartmentEdit,
   DepartmentShow,
 } from "@/features/departments";
-import { NotificationList } from "@/features/notifications";
+import { NotificationList, NotificationShow } from "@/features/notifications";
 import {
   UserList,
   UserCreate,
@@ -43,6 +43,8 @@ import {
   RowLevelPolicyCreate,
   RowLevelPolicyEdit,
   RowLevelPolicyShow,
+  AuditLogList,
+  AuditLogShow,
 } from "@/features/administration";
 import { ForgotPassword, Login, Profile, Register } from "@/features/identity";
 import { Landing } from "@/features/landing";
@@ -518,6 +520,17 @@ export function AppRoutes() {
           />
         </Route>
         <Route
+          path="/audit-logs"
+          element={
+            <CanAccess resource="audit_logs" action="list" fallback={<Forbidden resource="audit_logs" />}>
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<AuditLogList />} />
+          <Route path="show/:id" element={<AuditLogShow />} />
+        </Route>
+        <Route
           path="/medical-services"
           element={
             <CanAccess resource="medical_services" action="list" fallback={<Forbidden resource="medical_services" />}>
@@ -665,6 +678,7 @@ export function AppRoutes() {
           there is no URL to guard against.
         */}
         <Route path="/notifications" element={<NotificationList />} />
+        <Route path="/notifications/show/:id" element={<NotificationShow />} />
 
         {/* Not a resource: no list of "my accounts", no id in the URL. */}
         <Route path="/profile" element={<Profile />} />

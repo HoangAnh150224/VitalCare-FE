@@ -25,7 +25,18 @@
  */
 export const ACTION_TO_PERMISSION: Record<
   string,
-  "read" | "write" | "delete" | "activate" | "check_in" | "assign" | "assign_staff" | "status" | "operate" | "report" | "conclude" | "review"
+  | "read"
+  | "write"
+  | "delete"
+  | "activate"
+  | "check_in"
+  | "assign"
+  | "assign_staff"
+  | "status"
+  | "operate"
+  | "report"
+  | "conclude"
+  | "review"
 > = {
   // customers:assign — putting a patient in somebody's care and on a device.
   assign: "assign",
@@ -96,7 +107,14 @@ export function permissionFor(
  * than matched on the `my_` prefix: `my_patients` is staff's — the patients
  * in a nurse's care — and must not send a nurse to the patient portal.
  */
-const PORTAL_RESOURCES = new Set(["my_appointments", "my_profiles", "my_conversations"]);
+const PORTAL_RESOURCES = new Set([
+  "my_appointments",
+  "my_profiles",
+  "my_conversations",
+]);
+
+/** Held by every account, staff or customer: no say in which shell it gets. */
+const EVERYONES_RESOURCES = new Set(["notifications"]);
 
 /**
  * Whether an account is a customer's and nothing more: every code it holds is
@@ -106,9 +124,16 @@ const PORTAL_RESOURCES = new Set(["my_appointments", "my_profiles", "my_conversa
  * holding even one other code — staff, an administrator who can also register
  * for themselves — keeps the staff shell, since that is where their work is.
  */
-export function isPortalAccount(permissions: readonly string[] | undefined): boolean {
+export function isPortalAccount(
+  permissions: readonly string[] | undefined
+): boolean {
+  const telling = (permissions ?? []).filter(
+    (code) => !EVERYONES_RESOURCES.has(code.slice(0, code.indexOf(":")))
+  );
   return (
-    Boolean(permissions?.length) &&
-    permissions!.every((code) => PORTAL_RESOURCES.has(code.slice(0, code.indexOf(":"))))
+    telling.length > 0 &&
+    telling.every((code) =>
+      PORTAL_RESOURCES.has(code.slice(0, code.indexOf(":")))
+    )
   );
 }
