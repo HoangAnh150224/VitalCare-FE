@@ -82,6 +82,33 @@ async function post<T>(
  * interface's language. Anything else is shown as the API wrote it.
  */
 export function translateRegistrationMessage(message: string): string {
+  if (
+    message.startsWith("Phone number must be a Vietnamese number") ||
+    message.startsWith("Not a valid Vietnamese phone number")
+  ) {
+    return "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam, ví dụ: 0901234567 hoặc +84901234567.";
+  }
+  if (message.startsWith("Phone number is required")) {
+    return "Vui lòng nhập số điện thoại.";
+  }
+  if (message.startsWith("Full name is required")) {
+    return "Vui lòng nhập họ và tên.";
+  }
+  if (message.startsWith("Full name must be at most")) {
+    return "Họ và tên tối đa 255 ký tự.";
+  }
+  if (message.startsWith("Password is required") || message.startsWith("New password is required")) {
+    return "Vui lòng nhập mật khẩu.";
+  }
+  if (message.startsWith("Password must be between")) {
+    return "Mật khẩu phải có từ 8 đến 72 ký tự.";
+  }
+  if (message.startsWith("The code is required")) {
+    return "Vui lòng nhập mã xác thực.";
+  }
+  if (message.startsWith("The code is the digits")) {
+    return "Mã xác thực là dãy số trong tin nhắn SMS.";
+  }
   if (message.startsWith("That phone number is already in use")) {
     return "Số điện thoại này đã được đăng ký. Hãy đăng nhập.";
   }
