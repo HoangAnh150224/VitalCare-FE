@@ -16,6 +16,7 @@ import { formatDateTime } from "@/shared/lib/format";
 import type { Employee } from "@/domains/employee/types";
 import { EMPLOYEE_STATUS_LABELS, STAFF_TYPE_LABELS } from "@/domains/employee/types";
 import { EMPLOYEE_STATUS_VARIANTS } from "@/shared/lib/status-variants";
+import { ClinicRolesPanel, MembershipPanel } from "./membership";
 
 /** One member of staff and their professional record. */
 export const StaffShow = () => {
@@ -61,6 +62,9 @@ export const StaffShow = () => {
           <DetailRow label="Vị trí công tác">{record?.clinicPosition ?? <EmptyValue />}</DetailRow>
         </DetailList>
       </DetailPanel>
+
+      {record && <MembershipPanel employee={record} />}
+      {record && <ClinicRolesPanel employeeId={record.id} />}
     </ShowView>
   );
 };

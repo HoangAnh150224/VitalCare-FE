@@ -314,6 +314,12 @@ export const resources: ResourceProps[] = [
     },
   },
   // BF-07: when patients come back for their results; FE-07 what they said; FE-17 licenses.
+  // SRS 3.18.10: the roles staff hold at the clinic.
+  {
+    name: "clinic_roles",
+    list: "/clinic-roles",
+    meta: { label: "Vai trò phòng khám", icon: <ShieldCheck className="h-4 w-4" />, parent: "clinic" },
+  },
   // BF-08: patient, device, vital sign and alert summaries over a period.
   {
     name: "reports",

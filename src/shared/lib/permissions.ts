@@ -38,6 +38,7 @@ export const ACTION_TO_PERMISSION: Record<
   | "conclude"
   | "review"
   | "export"
+  | "transfer"
 > = {
   // customers:assign — putting a patient in somebody's care and on a device.
   assign: "assign",
@@ -64,6 +65,8 @@ export const ACTION_TO_PERMISSION: Record<
   review: "review",
   // reports:export — downloading the summary reports (BF-08 Report Export).
   export: "export",
+  // staff_memberships:transfer — moving a member of staff to another clinic, the system administrator's.
+  transfer: "transfer",
 };
 
 /**

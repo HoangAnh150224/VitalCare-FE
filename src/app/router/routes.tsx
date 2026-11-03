@@ -144,6 +144,7 @@ import {
   AlertRuleShow,
   MySharing,
   MonitoringDashboard,
+  ClinicRolesPage,
   ReportsPage,
   ResultReturnList,
   FeedbackList,
@@ -471,6 +472,14 @@ export function AppRoutes() {
           <Route path="readings" element={<AbnormalReadingList />} />
           <Route path="show/:id" element={<AlertShow />} />
         </Route>
+        <Route
+          path="/clinic-roles"
+          element={
+            <CanAccess resource="clinic_roles" action="list" fallback={<Forbidden resource="clinic_roles" />}>
+              <ClinicRolesPage />
+            </CanAccess>
+          }
+        />
         <Route
           path="/reports"
           element={

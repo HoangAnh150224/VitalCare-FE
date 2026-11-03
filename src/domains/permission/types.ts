@@ -80,6 +80,8 @@ const RESOURCE_LABELS: Record<string, string> = {
   licenses: "Giấy phép nhân viên",
   monitoring_dashboard: "Tổng quan theo dõi",
   reports: "Báo cáo tổng hợp",
+  staff_memberships: "Thành viên phòng khám",
+  clinic_roles: "Vai trò tại phòng khám",
   employees: "Nhân viên",
   customers: "Khách hàng",
   appointments: "Đăng ký khám",
