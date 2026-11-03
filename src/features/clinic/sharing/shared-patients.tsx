@@ -16,6 +16,7 @@ import {
 } from "@/domains/alerts/types";
 import type { Appointment } from "@/domains/appointment/types";
 import { VitalMonitor } from "../vital-signs/vital-parts";
+import { CaregiverStart } from "../conversations/caregiver-start";
 
 /** "Người tôi chăm sóc" (BF-06 Shared Patient Information): who shared with this account. */
 export const SharedPatientList = () => {
@@ -100,6 +101,7 @@ export const SharedPatientShow = () => {
           Được xem: {grant ? sharedParts(grant) : ""}
         </p>
       </div>
+      {grant && <CaregiverStart customerId={customerId} name={grant.fullName} />}
       {grant?.shareVitals && (
         <VitalMonitor scope={{ kind: "shared", customerId }} />
       )}

@@ -187,6 +187,7 @@ export function ConversationInbox() {
                   </span>
                   <span className="text-muted-foreground truncate text-xs">
                     {CHAT_KIND_LABELS[conversation.kind]}
+                    {conversation.aboutName && ` của ${conversation.aboutName}`}
                     {conversation.status === "CLOSED" && " · Đã đóng"} ·{" "}
                     {formatDateTime(conversation.lastMessageAt)}
                   </span>
@@ -294,6 +295,11 @@ function OpenConversation({
             >
               {CHAT_KIND_LABELS[conversation.kind]}
             </Badge>
+            {conversation.aboutName && (
+              <span className="text-muted-foreground truncate text-sm font-normal">
+                về bệnh nhân {conversation.aboutName}
+              </span>
+            )}
             {conversation.status === "CLOSED" && (
               <Badge variant="neutral">Đã đóng</Badge>
             )}

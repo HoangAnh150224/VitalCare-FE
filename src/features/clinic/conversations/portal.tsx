@@ -154,6 +154,9 @@ export function PortalConversations() {
               <div className="flex items-center gap-2">
                 <p className="truncate font-semibold">
                   {conversation.clinicName}
+                  {conversation.aboutName && (
+                    <span className="text-muted-foreground font-normal"> · về {conversation.aboutName}</span>
+                  )}
                 </p>
                 {conversation.unread > 0 && (
                   <Badge>{conversation.unread} mới</Badge>
@@ -218,7 +221,9 @@ export function PortalConversationShow() {
               {conversation?.clinicName ?? "Phòng khám"}
             </p>
             <p className="text-muted-foreground text-xs">
-              Trò chuyện riêng với nhân viên phòng khám
+              {conversation?.aboutName
+                ? `Về ${conversation.aboutName}, người đã chia sẻ với bạn`
+                : "Trò chuyện riêng với nhân viên phòng khám"}
             </p>
           </div>
           {conversation?.clinicPhone && (

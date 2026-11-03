@@ -32,6 +32,9 @@ export type OwnConversation = {
   lastMessagePreview: string | null;
   lastSenderKind: ChatSenderKind | null;
   unread: number;
+  /** BF-06: the patient a caregiver writes about; null for the account's own conversation. */
+  aboutCustomerId: number | null;
+  aboutName: string | null;
 };
 
 /** A conversation in the clinic's inbox. */
@@ -39,8 +42,11 @@ export type InboxConversation = {
   id: number;
   clinicId: string;
   clinicName: string | null;
-  kind: "guest" | "customer";
+  kind: "guest" | "customer" | "caregiver";
   contactName: string | null;
+  /** BF-06: the patient a caregiver writes about. */
+  aboutCustomerId: number | null;
+  aboutName: string | null;
   contactPhone: string | null;
   status: ConversationStatus;
   lastMessageAt: string | null;
@@ -65,6 +71,7 @@ export const CHAT_TEXT_MAX = 2000;
 export const CHAT_KIND_LABELS: Record<InboxConversation["kind"], string> = {
   guest: "Khách vãng lai",
   customer: "Bệnh nhân",
+  caregiver: "Người chăm sóc",
 };
 
 /** The API's chat messages, said again in Vietnamese; matched by how they start. */
