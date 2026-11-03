@@ -143,6 +143,8 @@ import {
   AlertRuleEdit,
   AlertRuleShow,
   MySharing,
+  MonitoringDashboard,
+  ReportsPage,
   ResultReturnList,
   FeedbackList,
   MyLicenses,
@@ -200,7 +202,15 @@ export function AppRoutes() {
         <Route
           path="/dashboard"
           element={
-            <PortalSwitch portal={<PortalHome />} staff={<Dashboard />} />
+            <PortalSwitch
+              portal={<PortalHome />}
+              staff={
+                // BF-10 for those who watch the patients; the plain landing for everybody else.
+                <CanAccess resource="monitoring_dashboard" action="list" fallback={<Dashboard />}>
+                  <MonitoringDashboard />
+                </CanAccess>
+              }
+            />
           }
         />
         {/*
@@ -461,6 +471,14 @@ export function AppRoutes() {
           <Route path="readings" element={<AbnormalReadingList />} />
           <Route path="show/:id" element={<AlertShow />} />
         </Route>
+        <Route
+          path="/reports"
+          element={
+            <CanAccess resource="reports" action="list" fallback={<Forbidden resource="reports" />}>
+              <ReportsPage />
+            </CanAccess>
+          }
+        />
         <Route
           path="/result-returns"
           element={

@@ -37,6 +37,7 @@ export const ACTION_TO_PERMISSION: Record<
   | "report"
   | "conclude"
   | "review"
+  | "export"
 > = {
   // customers:assign — putting a patient in somebody's care and on a device.
   assign: "assign",
@@ -61,6 +62,8 @@ export const ACTION_TO_PERMISSION: Record<
   conclude: "conclude",
   // first_aid_articles:review — approving, sending back, publishing and archiving guidance (BR-31).
   review: "review",
+  // reports:export — downloading the summary reports (BF-08 Report Export).
+  export: "export",
 };
 
 /**

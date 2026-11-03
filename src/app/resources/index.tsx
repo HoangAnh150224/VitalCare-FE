@@ -1,5 +1,6 @@
 import type { ResourceProps } from "@refinedev/core";
 import {
+  ChartColumn,
   Award,
   MessageSquareHeart,
   Bell,
@@ -313,6 +314,12 @@ export const resources: ResourceProps[] = [
     },
   },
   // BF-07: when patients come back for their results; FE-07 what they said; FE-17 licenses.
+  // BF-08: patient, device, vital sign and alert summaries over a period.
+  {
+    name: "reports",
+    list: "/reports",
+    meta: { label: "Báo cáo tổng hợp", icon: <ChartColumn className="h-4 w-4" />, parent: "clinic" },
+  },
   {
     name: "result_returns",
     list: "/result-returns",

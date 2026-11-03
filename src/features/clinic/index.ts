@@ -31,3 +31,4 @@ export * from "./vital-signs";
 export * from "./alerts";
 export * from "./sharing";
 export * from "./results";
+export * from "./reports";
