@@ -28,6 +28,7 @@ import {
   type Encounter,
   type VisitVitals,
 } from "@/domains/encounter/types";
+import { billingErrorNotification } from "@/domains/billing/messages";
 
 type TextField = "chiefComplaint" | "examinationFindings" | "clinicalNote" | "diagnosis" | "followUp";
 
@@ -66,7 +67,12 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
     refineCore: { onFinish, query },
     ...form
   } = useForm<Encounter, HttpError, EncounterFormValues>({
-    refineCoreProps: { resource: "clinical_encounters", redirect: "show" },
+    refineCoreProps: {
+      resource: "clinical_encounters",
+      redirect: "show",
+      // The refusal in Vietnamese: a 422 names what is missing (BF-02: the fee unpaid).
+      errorNotification: billingErrorNotification,
+    },
     defaultValues: {
       chiefComplaint: "",
       examinationFindings: "",
@@ -135,7 +141,9 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
             diagnosis: values.diagnosis ?? "",
             followUp: values.followUp ?? "",
             vitals: Object.fromEntries(VITAL_FIELDS.map((f) => [f.name, toNumber(values.vitals?.[f.name])])),
-          } as unknown as EncounterFormValues)
+          } as unknown as EncounterFormValues).catch(() => {
+            // Said by the notification above; nothing left to throw.
+          })
         )}
         className="min-w-0"
         // The ranges are checked below with Vietnamese messages; the browser's own

@@ -28,6 +28,7 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ["This encounter is already completed", "Lần khám này đã hoàn tất."],
   ["Write the diagnosis before concluding", "Ghi chẩn đoán trước khi hoàn tất lần khám."],
   // Paying before the queue and before a service (BF-02, BF-03)
+  ["The examination fee for that appointment is not paid yet", "Bệnh nhân chưa thanh toán phí khám. Lễ tân thu phí xong mới mở được lần khám."],
   ["This service is not paid yet", "Dịch vụ chưa được thanh toán. Bệnh nhân thanh toán xong mới thực hiện."],
   // BF-04: a device only under the patient's recorded consent to monitoring.
   [
