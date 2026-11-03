@@ -1,5 +1,7 @@
 import type { ResourceProps } from "@refinedev/core";
 import {
+  Award,
+  MessageSquareHeart,
   Bell,
   Building2,
   CalendarCheck,
@@ -309,6 +311,27 @@ export const resources: ResourceProps[] = [
       icon: <Stethoscope className="h-4 w-4" />,
       parent: "clinic",
     },
+  },
+  // BF-07: when patients come back for their results; FE-07 what they said; FE-17 licenses.
+  {
+    name: "result_returns",
+    list: "/result-returns",
+    meta: { label: "Hẹn trả kết quả", icon: <CalendarClock className="h-4 w-4" />, parent: "clinic" },
+  },
+  {
+    name: "feedback",
+    list: "/feedback",
+    meta: { label: "Góp ý của bệnh nhân", icon: <MessageSquareHeart className="h-4 w-4" />, parent: "clinic" },
+  },
+  {
+    name: "my_licenses",
+    list: "/my-licenses",
+    meta: { label: "Giấy phép của tôi", icon: <Award className="h-4 w-4" />, parent: "clinic" },
+  },
+  {
+    name: "licenses",
+    list: "/licenses",
+    meta: { label: "Giấy phép nhân viên", icon: <Award className="h-4 w-4" />, parent: "clinic" },
   },
   // The floor: rooms, who is in them, who waits. Rooms are added on the clinic's page.
   {

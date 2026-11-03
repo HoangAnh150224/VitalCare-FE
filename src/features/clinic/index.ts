@@ -30,3 +30,4 @@ export * from "./my-devices";
 export * from "./vital-signs";
 export * from "./alerts";
 export * from "./sharing";
+export * from "./results";

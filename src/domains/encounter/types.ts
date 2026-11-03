@@ -22,6 +22,10 @@ export type Encounter = {
   /** The doctor's: only `clinical_encounters:conclude` may set it. */
   diagnosis: string | null;
   followUp: string | null;
+  /** BF-07: the doctor's conclusion once the service results are in, and what they told the patient. */
+  finalConclusion?: string | null;
+  consultationNotes?: string | null;
+  consultedAt?: string | null;
   _can?: Record<string, boolean>;
 };
 

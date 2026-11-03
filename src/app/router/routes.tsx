@@ -143,6 +143,10 @@ import {
   AlertRuleEdit,
   AlertRuleShow,
   MySharing,
+  ResultReturnList,
+  FeedbackList,
+  MyLicenses,
+  ClinicLicenses,
   SharedPatientList,
   SharedPatientShow,
   EmergencyShow,
@@ -457,6 +461,38 @@ export function AppRoutes() {
           <Route path="readings" element={<AbnormalReadingList />} />
           <Route path="show/:id" element={<AlertShow />} />
         </Route>
+        <Route
+          path="/result-returns"
+          element={
+            <CanAccess resource="result_returns" action="list" fallback={<Forbidden resource="result_returns" />}>
+              <ResultReturnList />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/feedback"
+          element={
+            <CanAccess resource="feedback" action="list" fallback={<Forbidden resource="feedback" />}>
+              <FeedbackList />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/my-licenses"
+          element={
+            <CanAccess resource="my_licenses" action="list" fallback={<Forbidden resource="my_licenses" />}>
+              <MyLicenses />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/licenses"
+          element={
+            <CanAccess resource="licenses" action="list" fallback={<Forbidden resource="licenses" />}>
+              <ClinicLicenses />
+            </CanAccess>
+          }
+        />
         <Route
           path="/alert-rules"
           element={

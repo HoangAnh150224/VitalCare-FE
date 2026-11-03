@@ -117,6 +117,8 @@ const PORTAL_RESOURCES = new Set([
   "my_sharing",
   "shared_patients",
   "emergency_alerts",
+  "my_result_returns",
+  "my_feedback",
 ]);
 
 /** Held by every account, staff or customer: no say in which shell it gets. */

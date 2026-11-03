@@ -27,6 +27,8 @@ import type { Appointment } from "@/domains/appointment/types";
 import type { MyVisitResult, VisitVitals } from "@/domains/encounter/types";
 import { bodyMassIndex, VITAL_FIELDS } from "@/domains/encounter/types";
 import { MyInvoiceCard } from "../invoices/my-invoice-card";
+import { MyFeedbackCard } from "../results/feedback";
+import { MyResultReturn } from "../results/my-return";
 import { OrderFiles, OrderStatusBadge } from "../service-orders/order-parts";
 import { EmptyState, IconChip, PortalSection, type Tone } from "./parts";
 import { formatVisitDay } from "./visit";
@@ -120,6 +122,17 @@ export const PortalResult = () => {
                 {encounter.diagnosis ?? "—"}
               </p>
             </div>
+            {encounter.finalConclusion && (
+              <div className="relative rounded-2xl bg-white/12 p-4 sm:p-5" data-testid="final-conclusion">
+                <h2 className="text-sm font-semibold">Kết luận sau khi có kết quả</h2>
+                <p className="mt-1.5 leading-relaxed whitespace-pre-line text-white/90">{encounter.finalConclusion}</p>
+                {encounter.consultationNotes && (
+                  <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-white/80">
+                    {encounter.consultationNotes}
+                  </p>
+                )}
+              </div>
+            )}
             {encounter.followUp && (
               <div className="relative rounded-2xl bg-white/12 p-4 sm:p-5">
                 <h2 className="text-sm font-semibold">Lời dặn của bác sĩ</h2>
@@ -172,6 +185,9 @@ export const PortalResult = () => {
               </ul>
             </PortalSection>
           )}
+
+          <MyResultReturn appointmentId={id} />
+          {visit?.status === "completed" && <MyFeedbackCard appointmentId={id} />}
 
           <MyInvoiceCard appointmentId={id} className="max-w-none" />
         </>

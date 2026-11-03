@@ -35,6 +35,8 @@ import { billingErrorNotification } from "@/domains/billing/messages";
 import { EncounterOrdersPanel, useEncounterOrders } from "../service-orders/encounter-orders-panel";
 import { VisitPanel } from "./visit-panel";
 import { MonitoringOrdersPanel } from "../monitoring/monitoring-orders-panel";
+import { ConsultationPanel } from "../results/consultation-panel";
+import { ReturnPanel } from "../results/return-panel";
 
 /** One encounter: what was recorded at the visit, and the step that closes it. */
 export const EncounterShow = () => {
@@ -237,6 +239,9 @@ export const EncounterShow = () => {
       {record && readsOrders && (
         <EncounterOrdersPanel encounterId={record.id} open={record.status === "in_progress"} />
       )}
+
+      {record && <ConsultationPanel key={`${record.id}-${record.consultedAt ?? ""}`} encounter={record} />}
+      {record?.appointmentId && <ReturnPanel appointmentId={record.appointmentId} encounterId={record.id} />}
 
       {record?.patient && <MonitoringOrdersPanel customerId={record.patient.id} encounterId={record.id} />}
 
