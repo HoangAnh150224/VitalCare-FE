@@ -37,6 +37,30 @@ type ApiError = {
   errors?: Record<string, string>;
 };
 
+/**
+ * The toast's heading for a failed sign-in: Refine shows the error's name as
+ * the title, so it is a sentence for people, not the type of the error.
+ */
+const LOGIN_FAILED = "Đăng nhập không thành công";
+
+/**
+ * The API's sign-in refusals, said again in Vietnamese. "Incorrect phone
+ * number or password" stays one sentence for every wrong guess on purpose
+ * (see LoginRequest): it is translated, never made more specific.
+ */
+function translateLoginMessage(message: string | undefined): string {
+  if (!message || message.startsWith("Incorrect phone number or password")) {
+    return "Số điện thoại hoặc mật khẩu không đúng.";
+  }
+  if (message.startsWith("This account is no longer active") || message.startsWith("This account no longer exists")) {
+    return "Tài khoản đã bị khoá hoặc ngừng hoạt động. Vui lòng liên hệ phòng khám.";
+  }
+  if (message.startsWith("Phone number is required")) return "Vui lòng nhập số điện thoại.";
+  if (message.startsWith("Password is required")) return "Vui lòng nhập mật khẩu.";
+  if (message.startsWith("Too many")) return "Bạn đã thử quá nhiều lần. Vui lòng đợi một lúc rồi thử lại.";
+  return message;
+}
+
 async function readError(response: Response, fallback: string): Promise<ApiError> {
   try {
     return (await response.json()) as ApiError;
@@ -87,23 +111,23 @@ export const authProvider: AuthProvider = {
 
       if (!response.ok) {
         const error = await readError(response, "Đăng nhập thất bại");
+        const field = error.errors ? Object.values(error.errors).find((v) => typeof v === "string") : undefined;
         return {
           success: false,
           error: {
-            name: "LoginError",
-            // The API answers every failed sign-in with the same message on
-            // purpose; showing it verbatim keeps that property intact.
-            message: error.message ?? "Số điện thoại hoặc mật khẩu không đúng",
+            name: LOGIN_FAILED,
+            // One sentence for every wrong guess, as the API answers it, only in Vietnamese.
+            message: translateLoginMessage((field as string | undefined) ?? error.message),
           },
         };
       }
 
-      return await startSession((await response.json()) as TokenPair, "LoginError");
+      return await startSession((await response.json()) as TokenPair, LOGIN_FAILED);
     } catch {
       return {
         success: false,
         error: {
-          name: "LoginError",
+          name: LOGIN_FAILED,
           message: "Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.",
         },
       };
