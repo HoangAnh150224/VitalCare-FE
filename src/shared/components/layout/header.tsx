@@ -11,6 +11,7 @@ import { LogOutIcon, SearchIcon, UserRoundIcon } from "lucide-react";
 import { Link } from "react-router";
 
 import { NotificationBell } from "@/shared/components/layout/notification-bell";
+import { AlertWatcher } from "@/shared/components/layout/alert-watcher";
 import { ThemeCustomizer } from "@/shared/components/theme/theme-customizer";
 import { ThemeToggle } from "@/shared/components/theme/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
@@ -85,6 +86,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-1">
+          <AlertWatcher />
           <NotificationBell />
           <ThemeToggle className="hidden" />
           <ThemeCustomizer className="hidden" />

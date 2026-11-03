@@ -4,7 +4,9 @@ import { Link, useParams } from "react-router";
 
 import { kyInstance } from "@/shared/api/data";
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
+import { Button } from "@/shared/ui/button";
 import { VitalMonitor } from "./vital-parts";
+import { PatientAlertHistory } from "../alerts/patient-alerts";
 
 type Patient = { customerId: number; customerCode: string; fullName: string };
 
@@ -25,6 +27,10 @@ export const PatientVitalSigns = () => {
   });
   const { data: customers } = useCan({ resource: "customers", action: "show" });
   const { data: mine } = useCan({ resource: "my_patients", action: "show" });
+  const { data: canWriteRules } = useCan({
+    resource: "alert_rules",
+    action: "create",
+  });
   const record = customers?.can
     ? `/customers/show/${customerId}`
     : mine?.can
@@ -53,10 +59,20 @@ export const PatientVitalSigns = () => {
           Không tìm thấy bệnh nhân này, hoặc bạn không có quyền xem.
         </p>
       ) : (
-        <VitalMonitor
-          scope={{ kind: "staff", customerId }}
-          detailHref={(id) => `/vital-signs/show/${id}`}
-        />
+        <>
+          <VitalMonitor
+            scope={{ kind: "staff", customerId }}
+            detailHref={(id) => `/vital-signs/show/${id}`}
+          />
+          <PatientAlertHistory customerId={customerId} />
+          {canWriteRules?.can && (
+            <Button asChild variant="outline" size="sm" className="self-start">
+              <Link to={`/alert-rules/create?customerId=${customerId}`}>
+                Thêm quy tắc cảnh báo riêng
+              </Link>
+            </Button>
+          )}
+        </>
       )}
     </ShowView>
   );

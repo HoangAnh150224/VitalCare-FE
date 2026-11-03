@@ -30,6 +30,8 @@ import {
   ScrollText,
   RefreshCw,
   TriangleAlert,
+  Siren,
+  SlidersHorizontal,
 } from "lucide-react";
 
 /**
@@ -243,6 +245,29 @@ export const resources: ResourceProps[] = [
     meta: {
       label: "Theo dõi sinh hiệu",
       icon: <HeartPulse className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // FE-05: alerts raised from vital signs, and the rules that raise them.
+  {
+    name: "alerts",
+    list: "/alerts",
+    show: "/alerts/show/:id",
+    meta: {
+      label: "Cảnh báo",
+      icon: <Siren className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  {
+    name: "alert_rules",
+    list: "/alert-rules",
+    create: "/alert-rules/create",
+    edit: "/alert-rules/edit/:id",
+    show: "/alert-rules/show/:id",
+    meta: {
+      label: "Quy tắc cảnh báo",
+      icon: <SlidersHorizontal className="h-4 w-4" />,
       parent: "clinic",
     },
   },

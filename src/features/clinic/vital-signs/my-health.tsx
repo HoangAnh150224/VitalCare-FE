@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/shared/lib/utils";
 import type { Profile } from "@/domains/profile/types";
 import { VitalMonitor } from "./vital-parts";
+import { PatientAlertHistory } from "../alerts/patient-alerts";
 
 /**
  * The portal's "Sức khỏe" (FE-04 on the patient side): the account's own vital
@@ -53,10 +54,17 @@ export const MyHealth = () => {
         </div>
       )}
       {current != null && (
-        <VitalMonitor
-          key={current}
-          scope={{ kind: "own", profileId: current }}
-        />
+        <>
+          <VitalMonitor
+            key={current}
+            scope={{ kind: "own", profileId: current }}
+          />
+          <PatientAlertHistory
+            key={`alerts-${current}`}
+            customerId={current}
+            own
+          />
+        </>
       )}
     </div>
   );

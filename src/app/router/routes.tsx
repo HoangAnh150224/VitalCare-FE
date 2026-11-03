@@ -135,6 +135,13 @@ import {
   PatientVitalSigns,
   VitalSignShow,
   MyHealth,
+  AlertList,
+  AlertShow,
+  AbnormalReadingList,
+  AlertRuleList,
+  AlertRuleCreate,
+  AlertRuleEdit,
+  AlertRuleShow,
 } from "@/features/clinic";
 import { ErrorComponent } from "@/shared/components/layout/error-component";
 import { Forbidden } from "@/shared/components/layout/forbidden";
@@ -429,6 +436,39 @@ export function AppRoutes() {
           <Route index element={<VitalSignOverview />} />
           <Route path="patient/:customerId" element={<PatientVitalSigns />} />
           <Route path="show/:id" element={<VitalSignShow />} />
+        </Route>
+        <Route
+          path="/alerts"
+          element={
+            <CanAccess
+              resource="alerts"
+              action="list"
+              fallback={<Forbidden resource="alerts" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<AlertList />} />
+          <Route path="readings" element={<AbnormalReadingList />} />
+          <Route path="show/:id" element={<AlertShow />} />
+        </Route>
+        <Route
+          path="/alert-rules"
+          element={
+            <CanAccess
+              resource="alert_rules"
+              action="list"
+              fallback={<Forbidden resource="alert_rules" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<AlertRuleList />} />
+          <Route path="create" element={<AlertRuleCreate />} />
+          <Route path="edit/:id" element={<AlertRuleEdit />} />
+          <Route path="show/:id" element={<AlertRuleShow />} />
         </Route>
         <Route
           path="/device-syncs"

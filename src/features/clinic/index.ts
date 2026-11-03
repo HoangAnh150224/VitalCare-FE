@@ -28,3 +28,4 @@ export * from "./portal";
 export * from "./device-syncs";
 export * from "./my-devices";
 export * from "./vital-signs";
+export * from "./alerts";
