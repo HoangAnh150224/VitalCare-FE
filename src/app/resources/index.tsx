@@ -126,6 +126,10 @@ export const resources: ResourceProps[] = [
     list: "/my-health",
     meta: { label: "Sức khỏe", icon: <HeartPulse className="h-4 w-4" /> },
   },
+  // BF-06 on the portal: sharing with caregivers, what was shared with me, and emergencies.
+  { name: "my_sharing", list: "/my-sharing", meta: { label: "Chia sẻ" } },
+  { name: "shared_patients", list: "/shared-patients", show: "/shared-patients/:customerId", meta: { label: "Người tôi chăm sóc" } },
+  { name: "emergency_alerts", show: "/emergency/:id", meta: { label: "Cảnh báo khẩn" } },
   // The monitoring devices handed to the customer's profiles, and pairing them (FE-02).
   {
     name: "my_devices",

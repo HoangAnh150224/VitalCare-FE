@@ -114,6 +114,9 @@ const PORTAL_RESOURCES = new Set([
   "my_devices",
   "my_vital_signs",
   "my_alerts",
+  "my_sharing",
+  "shared_patients",
+  "emergency_alerts",
 ]);
 
 /** Held by every account, staff or customer: no say in which shell it gets. */

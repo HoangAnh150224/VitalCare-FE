@@ -41,6 +41,7 @@ import {
   valueWithUnit,
   type AlertDetail,
 } from "@/domains/alerts/types";
+import { CallLogPanel } from "../sharing/call-log-panel";
 
 type Step = "notes" | "resolve" | "dismiss";
 
@@ -294,6 +295,7 @@ export const AlertShow = () => {
               </DetailList>
             </DetailPanel>
           </div>
+          {a && <CallLogPanel alertId={a.id} />}
           <DetailPanel title="Lịch sử xử lý" bodyClassName="p-4">
             <ol className="flex flex-col gap-3" data-testid="alert-history">
               {(data?.history ?? []).map((h) => (

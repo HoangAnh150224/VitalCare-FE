@@ -34,6 +34,7 @@ import { ENCOUNTER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { billingErrorNotification } from "@/domains/billing/messages";
 import { EncounterOrdersPanel, useEncounterOrders } from "../service-orders/encounter-orders-panel";
 import { VisitPanel } from "./visit-panel";
+import { MonitoringOrdersPanel } from "../monitoring/monitoring-orders-panel";
 
 /** One encounter: what was recorded at the visit, and the step that closes it. */
 export const EncounterShow = () => {
@@ -237,13 +238,15 @@ export const EncounterShow = () => {
         <EncounterOrdersPanel encounterId={record.id} open={record.status === "in_progress"} />
       )}
 
+      {record?.patient && <MonitoringOrdersPanel customerId={record.patient.id} encounterId={record.id} />}
+
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Hoàn tất lần khám này?</AlertDialogTitle>
             <AlertDialogDescription>
-              Hệ thống lập hóa đơn gồm phí khám và các dịch vụ đã làm. Nội dung khám còn sửa được trong 24 giờ, rồi
-              sẽ bị khoá vĩnh viễn.
+              Phí khám và dịch vụ đã thu trước khi khám. Nội dung khám còn sửa được trong 24 giờ, rồi sẽ bị khoá
+              vĩnh viễn.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

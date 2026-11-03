@@ -29,6 +29,13 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ["Write the diagnosis before concluding", "Ghi chẩn đoán trước khi hoàn tất lần khám."],
   // Paying before the queue and before a service (BF-02, BF-03)
   ["This service is not paid yet", "Dịch vụ chưa được thanh toán. Bệnh nhân thanh toán xong mới thực hiện."],
+  // BF-04: a device only under the patient's recorded consent to monitoring.
+  [
+    "This patient has no accepted monitoring order",
+    "Bệnh nhân chưa có chỉ định theo dõi được đồng ý. Bác sĩ ghi nhận sự đồng ý của bệnh nhân trước khi gán thiết bị.",
+  ],
+  ["This patient is already wearing a device", "Bệnh nhân đang đeo một thiết bị; thu hồi thiết bị đó trước."],
+  ["That device is not available", "Thiết bị này không sẵn sàng (đang được gán hoặc bảo trì)."],
   ["A walk-in is registered for today", "Khám vãng lai chỉ đăng ký cho hôm nay."],
   // Ordering and results
   ["This encounter is concluded", "Lần khám đã hoàn tất nên không chỉ định hay thay đổi dịch vụ được nữa."],

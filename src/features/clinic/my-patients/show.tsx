@@ -19,6 +19,7 @@ import { EncounterHistoryPanel } from "../encounters/encounter-history-panel";
 import { MedicalRecordPanel } from "../encounters/medical-record-panel";
 import { MonitoringNotesPanel } from "../encounters/monitoring-notes-panel";
 import { MonitoringSummaryPanel } from "../vital-signs/monitoring-summary";
+import { MonitoringOrdersPanel } from "../monitoring/monitoring-orders-panel";
 
 /**
  * One patient the caller follows: who they are, who else is on their team and
@@ -116,6 +117,7 @@ export const MyPatientShow = ({
       </div>
 
       {record && <MonitoringSummaryPanel customerId={record.id} />}
+      {record && <MonitoringOrdersPanel customerId={record.id} />}
 
       {record && (
         <div className="grid min-w-0 gap-4 lg:grid-cols-2">

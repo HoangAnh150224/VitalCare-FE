@@ -26,6 +26,7 @@ import { formatDate } from "@/shared/lib/format";
 import type { Customer } from "@/domains/customer/types";
 import type { DeviceAssignment } from "@/domains/assignment/types";
 import type { Device } from "@/domains/device/types";
+import { translateBillingMessage } from "@/domains/billing/messages";
 
 const JSON_HEADERS = { headers: { "Content-Type": "application/json" } };
 
@@ -71,7 +72,10 @@ export function DevicePanel({ customer }: { customer: Customer }) {
           open?.({ type: "success", message });
         },
         onError: (error: HttpError) =>
-          open?.({ type: "error", message: error.message ?? "Không thực hiện được" }),
+          open?.({
+            type: "error",
+            message: error.message ? translateBillingMessage(error.message) : "Không thực hiện được",
+          }),
       }
     );
 

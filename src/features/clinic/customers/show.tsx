@@ -39,6 +39,8 @@ import { EncounterHistoryPanel } from "../encounters/encounter-history-panel";
 import { MedicalRecordPanel } from "../encounters/medical-record-panel";
 import { MonitoringNotesPanel } from "../encounters/monitoring-notes-panel";
 import { MonitoringSummaryPanel } from "../vital-signs/monitoring-summary";
+import { MonitoringOrdersPanel } from "../monitoring/monitoring-orders-panel";
+import { CaregiversPanel } from "../sharing/caregivers-panel";
 
 /**
  * One customer: who they are, whether they are a patient yet and how they
@@ -228,6 +230,13 @@ export const CustomerShow = () => {
           the permission, so the front desk and the doctor see what is theirs. */}
       {record && record.status === "patient" && (
         <MonitoringSummaryPanel customerId={record.id} />
+      )}
+
+      {record && (
+        <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+          <MonitoringOrdersPanel customerId={record.id} />
+          <CaregiversPanel customerId={record.id} />
+        </div>
       )}
 
       {record && record.status === "patient" && (

@@ -8,6 +8,8 @@ import {
   TriangleAlertIcon,
   UsersRoundIcon,
   WalletIcon,
+  Share2Icon,
+  HandHeartIcon,
 } from "lucide-react";
 import { Link } from "react-router";
 
@@ -69,6 +71,8 @@ export const PortalHome = () => {
     { to: "/my-appointments", label: "Lượt khám", note: `${upcoming.length} sắp tới`, icon: CalendarCheck2Icon, tone: "teal" },
     { to: "/my-results", label: "Kết quả", note: `${results} kết quả`, icon: FileHeartIcon, tone: "sky" },
     { to: "/my-profiles", label: "Hồ sơ", note: `${profiles.length} người`, icon: UsersRoundIcon, tone: "gold" },
+    { to: "/my-sharing", label: "Chia sẻ", note: "Người chăm sóc", icon: Share2Icon, tone: "sky" },
+    { to: "/shared-patients", label: "Chăm sóc", note: "Người thân của tôi", icon: HandHeartIcon, tone: "teal" },
     {
       to: "/my-payments",
       label: "Thanh toán",

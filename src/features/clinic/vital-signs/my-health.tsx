@@ -1,5 +1,6 @@
 import { useList } from "@refinedev/core";
 import { useState } from "react";
+import { Link } from "react-router";
 
 import { cn } from "@/shared/lib/utils";
 import type { Profile } from "@/domains/profile/types";
@@ -28,6 +29,9 @@ export const MyHealth = () => {
           Nhịp tim, SpO₂ và nhiệt độ da đo từ thiết bị theo dõi phòng khám giao
           cho bạn.
         </p>
+        <Link to="/my-sharing" className="text-primary mt-1 inline-block text-sm hover:underline">
+          Chia sẻ với người chăm sóc →
+        </Link>
       </div>
       {profiles.length > 1 && (
         <div

@@ -14,12 +14,14 @@ import {
   MessagesSquareIcon,
   UsersRoundIcon,
   WatchIcon,
+  HandHeartIcon,
   HeartPulseIcon,
   type LucideIcon,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 
 import { NotificationBell } from "@/shared/components/layout/notification-bell";
+import { EmergencyWatcher } from "@/shared/components/layout/emergency-watcher";
 import { ShellVariantContext } from "@/shared/components/layout/shell-variant";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import {
@@ -44,6 +46,7 @@ const NAV: NavItem[] = [
   { to: "/my-conversations", label: "Tin nhắn", icon: MessagesSquareIcon },
   { to: "/my-profiles", label: "Hồ sơ", icon: UsersRoundIcon },
   { to: "/my-devices", label: "Thiết bị", icon: WatchIcon },
+  { to: "/shared-patients", label: "Chăm sóc", icon: HandHeartIcon },
 ];
 
 /**
@@ -51,7 +54,7 @@ const NAV: NavItem[] = [
  * avatar. It holds six: without "Thiết bị" (on a phone the band is the mobile
  * app's) and "Hồ sơ" (the home screen's shortcut leads there).
  */
-const PHONE_ONLY_VIA_HOME = new Set(["/my-devices", "/my-profiles"]);
+const PHONE_ONLY_VIA_HOME = new Set(["/my-devices", "/my-profiles", "/shared-patients"]);
 const TABS: NavItem[] = [
   ...NAV.filter((item) => !PHONE_ONLY_VIA_HOME.has(item.to)),
   { to: "/profile", label: "Tài khoản", icon: CircleUserRoundIcon },
@@ -131,6 +134,7 @@ export function PortalLayout({ children }: PropsWithChildren) {
 
             <div className="ms-auto flex items-center gap-1">
               <NotificationBell />
+              <EmergencyWatcher />
               <AccountMenu />
             </div>
           </div>

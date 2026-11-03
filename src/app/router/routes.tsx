@@ -142,6 +142,10 @@ import {
   AlertRuleCreate,
   AlertRuleEdit,
   AlertRuleShow,
+  MySharing,
+  SharedPatientList,
+  SharedPatientShow,
+  EmergencyShow,
 } from "@/features/clinic";
 import { ErrorComponent } from "@/shared/components/layout/error-component";
 import { Forbidden } from "@/shared/components/layout/forbidden";
@@ -744,6 +748,38 @@ export function AppRoutes() {
               fallback={<Forbidden resource="my_vital_signs" />}
             >
               <MyHealth />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/my-sharing"
+          element={
+            <CanAccess resource="my_sharing" action="list" fallback={<Forbidden resource="my_sharing" />}>
+              <MySharing />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/shared-patients"
+          element={
+            <CanAccess resource="shared_patients" action="list" fallback={<Forbidden resource="shared_patients" />}>
+              <SharedPatientList />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/shared-patients/:customerId"
+          element={
+            <CanAccess resource="shared_patients" action="list" fallback={<Forbidden resource="shared_patients" />}>
+              <SharedPatientShow />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/emergency/:id"
+          element={
+            <CanAccess resource="emergency_alerts" action="list" fallback={<Forbidden resource="emergency_alerts" />}>
+              <EmergencyShow />
             </CanAccess>
           }
         />

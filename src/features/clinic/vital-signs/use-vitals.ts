@@ -13,7 +13,9 @@ import type {
  */
 export type VitalScope =
   | { kind: "staff"; customerId: number }
-  | { kind: "own"; profileId: number | null };
+  | { kind: "own"; profileId: number | null }
+  // A caregiver reading under a patient's grant (BF-06).
+  | { kind: "shared"; customerId: number };
 
 export type VitalRange = "24h" | "7d" | "30d";
 
@@ -33,18 +35,24 @@ const RANGE_HOURS: Record<VitalRange, number> = {
 const LIVE_MS = 30_000;
 
 const base = (scope: VitalScope) =>
-  scope.kind === "staff" ? "vital_signs" : "my_vital_signs";
+  scope.kind === "staff"
+    ? "vital_signs"
+    : scope.kind === "shared"
+    ? `shared_patients/${scope.customerId}/vitals`
+    : "my_vital_signs";
 
 const who = (scope: VitalScope): Record<string, string> =>
   scope.kind === "staff"
     ? { customerId: String(scope.customerId) }
+    : scope.kind === "shared"
+    ? {}
     : scope.profileId != null
     ? { profileId: String(scope.profileId) }
     : {};
 
 const scopeKey = (scope: VitalScope) => [
   base(scope),
-  scope.kind === "staff" ? scope.customerId : scope.profileId,
+  scope.kind === "own" ? scope.profileId : scope.customerId,
 ];
 
 /** The window for a range, ending now — read once per render of the range. */
