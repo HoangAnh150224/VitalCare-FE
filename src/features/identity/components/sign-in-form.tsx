@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Link } from "react-router";
 
 import { useLogin, useRefineOptions } from "@refinedev/core";
+/** Which field a sign-in refusal is about; the auth provider sets it on the error (`app/providers/auth.ts`). */
+type LoginField = "phone" | "password" | null;
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -39,10 +41,29 @@ export const SignInForm = () => {
   const { title } = useRefineOptions();
   const { mutate: login, isPending } = useLogin();
 
+  // The refusal, said once under the field it is about (or under the form).
+  const [error, setError] = useState<{ text: string; field: LoginField } | null>(null);
+
   const handleSignIn = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    login({ phone, password });
+    setError(null);
+    login(
+      { phone, password },
+      {
+        onSuccess: (data) => {
+          if (data.success) return;
+          const failure = data.error as (Error & { field?: LoginField }) | undefined;
+          setError({ text: failure?.message ?? "Đăng nhập không thành công.", field: failure?.field ?? null });
+        },
+      }
+    );
   };
+  const messageFor = (field: LoginField) =>
+    error && error.field === field ? (
+      <p role="alert" className="text-destructive text-sm">
+        {error.text}
+      </p>
+    ) : null;
 
   return (
     <div
@@ -108,8 +129,10 @@ export const SignInForm = () => {
                   autoFocus
                   required
                   value={phone}
+                  aria-invalid={error?.field === "phone" || undefined}
                   onChange={(e) => setPhone(e.target.value)}
                 />
+                {messageFor("phone")}
               </div>
 
               <div className={cn("relative mt-5 flex flex-col gap-2")}>
@@ -120,9 +143,12 @@ export const SignInForm = () => {
                   autoComplete="current-password"
                   required
                   value={password}
+                  aria-invalid={error?.field === "password" || undefined}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                {messageFor("password")}
               </div>
+              {messageFor(null) && <div className="mt-4">{messageFor(null)}</div>}
 
               <Button
                 type="submit"

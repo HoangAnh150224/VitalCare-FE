@@ -43,22 +43,37 @@ type ApiError = {
  */
 const LOGIN_FAILED = "Đăng nhập không thành công";
 
+/** Which field a sign-in refusal is about, for the form to say it there. */
+export type LoginField = "phone" | "password" | null;
+
 /**
- * The API's sign-in refusals, said again in Vietnamese. "Incorrect phone
- * number or password" stays one sentence for every wrong guess on purpose
- * (see LoginRequest): it is translated, never made more specific.
+ * The API's sign-in refusals, said again in Vietnamese, each with the field it
+ * is about: the clinic wants every refusal to say exactly what is wrong.
  */
-function translateLoginMessage(message: string | undefined): string {
-  if (!message || message.startsWith("Incorrect phone number or password")) {
-    return "Số điện thoại hoặc mật khẩu không đúng.";
+export function translateLoginMessage(message: string | undefined): { text: string; field: LoginField } {
+  const m = message ?? "";
+  if (m.startsWith("Phone number must be a Vietnamese number") || m.startsWith("Not a valid Vietnamese phone number")) {
+    return {
+      text: "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam, ví dụ: 0901234567 hoặc +84901234567.",
+      field: "phone",
+    };
   }
-  if (message.startsWith("This account is no longer active") || message.startsWith("This account no longer exists")) {
-    return "Tài khoản đã bị khoá hoặc ngừng hoạt động. Vui lòng liên hệ phòng khám.";
+  if (m.startsWith("Phone number is required")) return { text: "Vui lòng nhập số điện thoại.", field: "phone" };
+  if (m.startsWith("No account uses this phone number")) {
+    return { text: "Số điện thoại này chưa đăng ký tài khoản. Hãy đăng ký trước.", field: "phone" };
   }
-  if (message.startsWith("Phone number is required")) return "Vui lòng nhập số điện thoại.";
-  if (message.startsWith("Password is required")) return "Vui lòng nhập mật khẩu.";
-  if (message.startsWith("Too many")) return "Bạn đã thử quá nhiều lần. Vui lòng đợi một lúc rồi thử lại.";
-  return message;
+  if (m.startsWith("Password is required")) return { text: "Vui lòng nhập mật khẩu.", field: "password" };
+  if (m.startsWith("Incorrect password")) {
+    return { text: "Mật khẩu không đúng. Kiểm tra lại hoặc dùng “Quên mật khẩu?”.", field: "password" };
+  }
+  if (m.startsWith("This account is locked")) {
+    return { text: "Tài khoản đang bị khoá. Vui lòng liên hệ quản trị phòng khám để mở khoá.", field: null };
+  }
+  if (m.startsWith("This account is no longer active") || m.startsWith("This account no longer exists")) {
+    return { text: "Tài khoản đã ngừng hoạt động. Vui lòng liên hệ phòng khám.", field: null };
+  }
+  if (m.startsWith("Too many")) return { text: "Bạn đã thử quá nhiều lần. Vui lòng đợi một lúc rồi thử lại.", field: null };
+  return { text: m || "Đăng nhập không thành công. Vui lòng thử lại.", field: null };
 }
 
 async function readError(response: Response, fallback: string): Promise<ApiError> {
@@ -111,14 +126,12 @@ export const authProvider: AuthProvider = {
 
       if (!response.ok) {
         const error = await readError(response, "Đăng nhập thất bại");
-        const field = error.errors ? Object.values(error.errors).find((v) => typeof v === "string") : undefined;
+        const fieldMessage = error.errors ? Object.values(error.errors).find((v) => typeof v === "string") : undefined;
+        const { text, field } = translateLoginMessage((fieldMessage as string | undefined) ?? error.message);
         return {
           success: false,
-          error: {
-            name: LOGIN_FAILED,
-            // One sentence for every wrong guess, as the API answers it, only in Vietnamese.
-            message: translateLoginMessage((field as string | undefined) ?? error.message),
-          },
+          // `field` rides along for the form, which says the refusal under that field.
+          error: Object.assign(new Error(text), { name: LOGIN_FAILED, field }),
         };
       }
 

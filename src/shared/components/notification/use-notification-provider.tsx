@@ -2,7 +2,7 @@ import type { NotificationProvider } from "@refinedev/core";
 import { toast } from "sonner";
 import { UndoableNotification } from "@/shared/components/notification/undoable-notification";
 
-const SAID_ON_THE_PAGE = new Set(["register-error"]);
+const SAID_ON_THE_PAGE = new Set(["register-error", "login-error"]);
 
 export function useNotificationProvider(): NotificationProvider {
   return {
@@ -14,8 +14,8 @@ export function useNotificationProvider(): NotificationProvider {
       undoableTimeout,
       cancelMutation,
     }) => {
-      // Refine's useRegister toasts every refusal; the sign-up form already says
-      // each one on the page (under its field, or under the form), so once is enough.
+      // Refine's useRegister and useLogin toast every refusal; the sign-up and sign-in
+      // forms already say each one on the page (under its field, or under the form), so once is enough.
       if (key && SAID_ON_THE_PAGE.has(key)) return;
       switch (type) {
         case "success":
