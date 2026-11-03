@@ -86,6 +86,35 @@ export function EmergencyWarning({
   );
 }
 
+/**
+ * The article's video. The address is one the API built (a Google Drive
+ * preview or a YouTube embed) and nothing else, so it is safe to frame.
+ */
+export function GuidanceVideo({
+  url,
+  title,
+  className,
+}: {
+  url: string | null | undefined;
+  title: string;
+  className?: string;
+}) {
+  if (!url) return null;
+  return (
+    <div className={cn("bg-muted aspect-video w-full overflow-hidden rounded-xl", className)}>
+      <iframe
+        src={url}
+        title={`Video hướng dẫn: ${title}`}
+        className="size-full border-0"
+        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+        allowFullScreen
+        loading="lazy"
+        referrerPolicy="strict-origin-when-cross-origin"
+      />
+    </div>
+  );
+}
+
 export function GuidanceDisclaimer({ className }: { className?: string }) {
   return (
     <p className={cn("text-muted-foreground text-sm", className)}>

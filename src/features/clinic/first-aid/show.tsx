@@ -22,6 +22,7 @@ import {
 import {
   EmergencyWarning,
   GuidanceBody,
+  GuidanceVideo,
 } from "@/shared/components/first-aid/guidance";
 import {
   AlertDialog,
@@ -146,6 +147,7 @@ export const FirstAidShow = () => {
         <DetailPanel title="Xem trước nội dung">
           <div className="flex flex-col gap-4 p-5">
             {article && <EmergencyWarning text={article.emergencyWarning} />}
+            {article && <GuidanceVideo url={article.videoUrl} title={article.title} />}
             {article && <GuidanceBody body={article.body} />}
           </div>
         </DetailPanel>

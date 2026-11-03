@@ -77,6 +77,8 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ["Write a short summary", "Nhập tóm tắt."],
   ["Write the guidance", "Nhập nội dung hướng dẫn."],
   ["Say when to call for emergency help", "Nhập cảnh báo khẩn cấp."],
+  ["Paste a Google Drive or YouTube link", "Chỉ nhận link video Google Drive hoặc YouTube."],
+  ["The video link must be at most", "Link video quá dài."],
   // Files
   ["Choose a file", "Chọn một file."],
   ["A file can be at most 10 MB", "File tối đa 10 MB."],

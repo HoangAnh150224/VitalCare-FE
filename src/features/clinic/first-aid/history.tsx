@@ -9,6 +9,7 @@ import { DetailPanel } from "@/shared/components/views/record-detail";
 import {
   EmergencyWarning,
   GuidanceBody,
+  GuidanceVideo,
 } from "@/shared/components/first-aid/guidance";
 import { Button } from "@/shared/ui/button";
 import {
@@ -123,6 +124,7 @@ export const FirstAidHistory = () => {
                           {step.summary}
                         </p>
                         <EmergencyWarning text={step.emergencyWarning} />
+                        <GuidanceVideo url={step.videoUrl} title={step.title} />
                         <GuidanceBody body={step.body} />
                       </div>
                     </TableCell>

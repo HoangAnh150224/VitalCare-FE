@@ -37,6 +37,8 @@ export type FirstAidArticle = {
   summary: string;
   body: string;
   emergencyWarning: string;
+  /** The embed address of its video (Google Drive preview or YouTube embed); null for none. */
+  videoUrl: string | null;
   status: FirstAidStatus;
   revision: number;
   authorId: number | null;
@@ -65,6 +67,7 @@ export type FirstAidStep = {
   summary: string;
   body: string;
   emergencyWarning: string;
+  videoUrl: string | null;
 };
 
 /** A published article as anybody reads it: `GET /public/first_aid`. */
@@ -75,6 +78,7 @@ export type PublishedFirstAid = {
   summary: string;
   body: string;
   emergencyWarning: string;
+  videoUrl: string | null;
   publishedAt: string;
 };
 

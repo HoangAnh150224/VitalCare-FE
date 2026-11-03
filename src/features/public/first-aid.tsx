@@ -12,6 +12,7 @@ import { publicGet, publicRetry } from "@/shared/api/public";
 import {
   EmergencyWarning,
   GuidanceBody,
+  GuidanceVideo,
   GuidanceDisclaimer,
 } from "@/shared/components/first-aid/guidance";
 import { Button } from "@/shared/ui/button";
@@ -210,6 +211,7 @@ export function PublicFirstAidShow() {
             <GuidanceDisclaimer className="mt-2" />
           </header>
           <EmergencyWarning text={article.emergencyWarning} />
+          <GuidanceVideo url={article.videoUrl} title={article.title} />
           <GuidanceBody body={article.body} />
         </article>
       )}

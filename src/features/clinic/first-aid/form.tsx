@@ -18,6 +18,7 @@ import {
 import {
   EmergencyWarning,
   GuidanceBody,
+  GuidanceVideo,
 } from "@/shared/components/first-aid/guidance";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -44,7 +45,7 @@ import type {
   FirstAidCategory,
 } from "@/domains/first-aid/types";
 import { FIRST_AID_CATEGORY_OPTIONS } from "@/domains/first-aid/types";
-import { billingErrorText } from "@/domains/billing/messages";
+import { billingErrorNotification, billingErrorText } from "@/domains/billing/messages";
 import { revisionLabel } from "./parts";
 
 type Values = {
@@ -53,6 +54,7 @@ type Values = {
   summary: string;
   body: string;
   emergencyWarning: string;
+  videoUrl: string;
 };
 
 const EMPTY: Values = {
@@ -62,7 +64,20 @@ const EMPTY: Values = {
   // The headings of SRS 3.17.2, so a new article starts in the shape patients read.
   body: "## Tình huống\n\n\n## Việc cần làm ngay\n1. \n\n## Những điều không nên làm\n- \n\n## Khi nào cần hỗ trợ y tế\n",
   emergencyWarning: "",
+  videoUrl: "",
 };
+
+/**
+ * The embed address of a pasted link, for the preview only: the same two
+ * shapes the API accepts (and rewrites the same way when it saves), or none.
+ */
+function previewVideo(link: string | null | undefined): string | null {
+  const url = (link ?? "").trim();
+  const drive = /^https:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=)([\w-]{20,})(?:[/?&#].*)?$/.exec(url);
+  if (drive) return `https://drive.google.com/file/d/${drive[1]}/preview`;
+  const youtube = /^https:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})(?:[?&#/].*)?$/.exec(url);
+  return youtube ? `https://www.youtube.com/embed/${youtube[1]}` : null;
+}
 
 /** The marks the body understands, inserted at the caret: SRS 3.17.5's toolbar. */
 const MARKS = [
@@ -86,7 +101,12 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
     refineCore: { onFinish, query },
     ...form
   } = useForm<Values, HttpError, Values>({
-    refineCoreProps: { resource: "first_aid_articles", redirect: false },
+    refineCoreProps: {
+      resource: "first_aid_articles",
+      redirect: false,
+      // The server's refusal, in Vietnamese: a 422 names the field and what to fix.
+      errorNotification: billingErrorNotification,
+    },
     defaultValues: mode === "create" ? EMPTY : undefined,
   });
   const current = query?.data?.data as FirstAidArticle | undefined;
@@ -100,6 +120,8 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
         summary: input.summary,
         body: input.body,
         emergencyWarning: input.emergencyWarning,
+        // Empty is "no video": the API keeps none.
+        videoUrl: input.videoUrl?.trim() ?? "",
       });
       const id =
         (result?.data as FirstAidArticle | undefined)?.id ?? current?.id;
@@ -290,6 +312,32 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="videoUrl"
+                rules={{
+                  maxLength: { value: 500, message: "Link quá dài" },
+                  // The API's own rule, said here so a wrong link is refused once, under the field.
+                  validate: (value) =>
+                    !value?.trim() || previewVideo(value) !== null || "Chỉ nhận link video Google Drive hoặc YouTube.",
+                }}
+                render={({ field }) => (
+                  <FormItem className="md:col-span-12">
+                    <FormLabel>Video hướng dẫn (không bắt buộc)</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        placeholder="https://drive.google.com/file/d/…/view hoặc https://youtu.be/…"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Dán link Google Drive (đã chia sẻ “Bất kỳ ai có đường liên kết”) hoặc YouTube.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </FormSection>
             <FormSectionActions>
               <Button type="submit" disabled={busy}>
@@ -323,6 +371,7 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
             {values.emergencyWarning && (
               <EmergencyWarning text={values.emergencyWarning} />
             )}
+            <GuidanceVideo url={previewVideo(values.videoUrl)} title={values.title || "Video"} />
             <GuidanceBody body={values.body ?? ""} />
           </section>
         </div>
