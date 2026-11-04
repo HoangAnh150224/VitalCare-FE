@@ -106,7 +106,7 @@ export const WalkInRegistration = () => {
                   gender: values.gender,
                 }
               : null,
-          employeeId: Number(values.employeeId),
+          clinicId: values.clinicId || undefined,
           reason: values.reason.trim(),
           note: values.note?.trim() || null,
         },

@@ -161,14 +161,14 @@ export const AppointmentShow = () => {
             </div>
 
             <MetaStrip className="shrink-0">
-              <MetaItem label="Dự kiến">
-                <span className="tabular-nums">
-                  {formatLocalTime(record?.startTime)}
-                  {record?.endTime
-                    ? ` – ${formatLocalTime(record.endTime)}`
-                    : ""}
-                </span>
-              </MetaItem>
+              {record?.startTime && (
+                <MetaItem label="Dự kiến">
+                  <span className="tabular-nums">
+                    {formatLocalTime(record.startTime)}
+                    {record.endTime ? ` – ${formatLocalTime(record.endTime)}` : ""}
+                  </span>
+                </MetaItem>
+              )}
               <MetaItem label="Mã phiếu">
                 <span className="font-mono">
                   {formatBookingCode(record?.bookingCode)}
@@ -264,7 +264,7 @@ export const AppointmentShow = () => {
                   )}
                 </span>
               ) : (
-                <EmptyValue />
+                <EmptyValue>Xếp khi gọi vào phòng</EmptyValue>
               )}
             </DetailRow>
             <DetailRow label="Phòng khám">

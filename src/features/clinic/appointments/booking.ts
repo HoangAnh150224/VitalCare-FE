@@ -3,9 +3,10 @@
  * desk's; a customer's own registration never carries a customer — the API
  * takes that from the token.
  *
- * A doctor and a day, nothing finer: the visit gets that doctor's next queue
- * number. `clinicId` only narrows the doctors to choose from; the API takes
- * the clinic from the doctor.
+ * The front desk names a doctor and a day; a customer names only the day
+ * (and the clinic, when there are several) and the clinic places the visit
+ * with one of its doctors working that day. Either way the visit gets that
+ * doctor's next queue number.
  */
 export type BookingFormValues = {
   customerId?: number | string;
@@ -30,7 +31,8 @@ export const EMPTY_BOOKING: BookingFormValues = {
 export function toBookingPayload(values: BookingFormValues) {
   return {
     ...(values.patientId ? { patientId: Number(values.patientId) } : {}),
-    employeeId: Number(values.employeeId),
+    // BF-02 shared line: a clinic and a day; the room that calls the visit in gives its doctor.
+    clinicId: values.clinicId || undefined,
     appointmentDate: values.appointmentDate,
     reason: values.reason.trim(),
   };

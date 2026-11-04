@@ -1,5 +1,6 @@
 import type { HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
+import { billingErrorNotification } from "@/domains/billing/messages";
 import { useNavigate } from "react-router";
 
 import { CreateView, CreateViewHeader } from "@/shared/components/views/create-view";
@@ -29,7 +30,9 @@ export const MyAppointmentCreate = () => {
     ...form
   } = useForm<BookingFormValues, HttpError, BookingFormValues>({
     // Straight to the slip: the code on it is what the customer needs next.
-    refineCoreProps: { redirect: "show" },
+    refineCoreProps: { redirect: "show", errorNotification: billingErrorNotification },
+    // Said once, in Vietnamese: the server's English stays off the fields.
+    disableServerSideValidation: true,
     defaultValues: EMPTY_BOOKING,
   });
 
@@ -47,7 +50,7 @@ export const MyAppointmentCreate = () => {
           <SectionedFormPanel>
             <FormSection
               title="Đăng ký khám"
-              description="Chọn người tới khám, bác sĩ và ngày khám. Bạn sẽ nhận số khám ngay; đến phòng khám, đưa phiếu cho lễ tân để được tiếp nhận."
+              description="Chọn người tới khám và ngày khám. Bạn sẽ nhận số khám ngay; đến phòng khám, đưa phiếu cho lễ tân để được tiếp nhận."
             >
               <BookingFields control={form.control} forOwnAccount />
             </FormSection>

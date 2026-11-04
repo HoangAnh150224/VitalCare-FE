@@ -30,7 +30,8 @@ export type Appointment = {
   /** `YYYY-MM-DD`, a date in the clinic's own time zone. */
   appointmentDate: string;
   /** `HH:mm:ss`. */
-  startTime: string;
+  /** Null for a visit in the clinic's shared line (BF-02): it has a number, not a time. */
+  startTime: string | null;
   endTime: string | null;
   reason: string | null;
   status: AppointmentStatus;

@@ -214,7 +214,29 @@ export function ExamRoomBoard() {
                 <Link to={`/appointments/show/${visit.appointmentId}`} className="min-w-0 flex-1 truncate hover:underline">
                   {visit.patientName}
                 </Link>
-                <span className="text-muted-foreground truncate text-xs">{doctor.fullName}</span>
+                <span className="text-muted-foreground truncate text-xs">{doctor?.fullName ?? "Hàng chờ chung"}</span>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
+
+      {board && (board.sharedQueue?.length ?? 0) > 0 && (
+        <Card className="flex flex-col gap-3 p-5" data-testid="shared-queue">
+          <div>
+            <h3 className="font-semibold">Hàng chờ chung ({board.sharedQueue!.length})</h3>
+            <p className="text-muted-foreground text-sm">
+              Đã tiếp nhận và trả phí, theo thứ tự thanh toán. Phòng nào trống sẽ tự gọi người đầu hàng; bác sĩ của phòng đó khám.
+            </p>
+          </div>
+          <ol className="flex flex-col gap-1">
+            {board.sharedQueue!.map((visit, index) => (
+              <li key={visit.appointmentId} className="flex items-center gap-3 text-sm">
+                <span className="text-muted-foreground w-5 text-xs tabular-nums">{index + 1}.</span>
+                <span className="w-7 font-semibold tabular-nums">{formatQueueNumber(visit.queueNumber)}</span>
+                <Link to={`/appointments/show/${visit.appointmentId}`} className="min-w-0 flex-1 truncate hover:underline">
+                  {visit.patientName}
+                </Link>
               </li>
             ))}
           </ol>

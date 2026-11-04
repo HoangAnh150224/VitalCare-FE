@@ -23,12 +23,14 @@ import type { Profile } from "@/domains/profile/types";
 import { profileKind } from "@/domains/profile/types";
 import type { BookingFormValues } from "./booking";
 import { clinicToday } from "./clinic-day";
-import { DoctorDayHint, doctorLabel, useClinicDoctors } from "./doctor-day";
+import { useClinicDoctors } from "./doctor-day";
 
 /**
- * With whom, which day and why — the part of a registration both the front
- * desk and a customer fill in. No time is chosen: the visit gets the doctor's
- * next queue number for the day, shown on the slip once it is registered.
+ * Which day and why (and, for the front desk, with whom) — the part of a
+ * registration both the front desk and a customer fill in. A customer picks no
+ * doctor: the clinic places the visit with one of its doctors working that day.
+ * No time is chosen: the visit gets the doctor's next queue number for the
+ * day, shown on the slip once it is registered.
  *
  * `forOwnAccount` is the customer's side: it asks first who the visit is for,
  * among the profiles under the account — the owner or a relative. The front
@@ -46,7 +48,6 @@ export function BookingFields({
 }) {
   const { setValue, getValues } = useFormContext<BookingFormValues>();
   const clinicId = useWatch({ control, name: "clinicId" });
-  const employeeId = useWatch({ control, name: "employeeId" });
   const date = useWatch({ control, name: "appointmentDate" });
 
   const patientId = useWatch({ control, name: "patientId" });
@@ -55,7 +56,10 @@ export function BookingFields({
     pagination: { mode: "off" },
     queryOptions: { enabled: forOwnAccount },
   });
-  const profiles = useMemo(() => profilesResult?.data ?? [], [profilesResult?.data]);
+  const profiles = useMemo(
+    () => profilesResult?.data ?? [],
+    [profilesResult?.data]
+  );
   const patient = profiles.find((profile) => String(profile.id) === patientId);
 
   // The owner themselves until somebody chooses otherwise.
@@ -81,13 +85,15 @@ export function BookingFields({
     }
   }, [clinicOptions, getValues, setValue]);
 
-  // A doctor belongs to one clinic; change it and the choice means nothing.
-  useEffect(() => {
-    setValue("employeeId", "");
-  }, [clinicId, setValue]);
 
-  const { doctors } = useClinicDoctors(clinicId, date);
-  const doctor = doctors.find((candidate) => String(candidate.id) === employeeId);
+  const { doctors, isLoading: doctorsLoading } = useClinicDoctors(
+    clinicId,
+    date
+  );
+  // The customer's side picks no doctor; what they need to know is whether the day can be had at all.
+  const dayOpen = doctors.some(
+    (candidate) => candidate.day?.working && candidate.day?.bookable
+  );
 
   return (
     <>
@@ -97,7 +103,9 @@ export function BookingFields({
           name="patientId"
           rules={{
             required: "Vui lòng chọn người tới khám",
-            validate: () => patient?.complete !== false || "Hồ sơ này chưa có ngày sinh và giới tính",
+            validate: () =>
+              patient?.complete !== false ||
+              "Hồ sơ này chưa có ngày sinh và giới tính",
           }}
           render={({ field }) => (
             <FormItem className="md:col-span-8">
@@ -120,7 +128,10 @@ export function BookingFields({
                 {patient && !patient.complete ? (
                   <>
                     Hồ sơ này chưa có ngày sinh và giới tính.{" "}
-                    <Link to={`/my-profiles/edit/${patient.id}`} className="text-foreground underline">
+                    <Link
+                      to={`/my-profiles/edit/${patient.id}`}
+                      className="text-foreground underline"
+                    >
                       Bổ sung hồ sơ
                     </Link>{" "}
                     rồi quay lại đăng ký.
@@ -128,7 +139,10 @@ export function BookingFields({
                 ) : (
                   <>
                     Khám cho người thân?{" "}
-                    <Link to="/my-profiles/create" className="text-foreground underline">
+                    <Link
+                      to="/my-profiles/create"
+                      className="text-foreground underline"
+                    >
                       Thêm người thân
                     </Link>
                   </>
@@ -155,7 +169,10 @@ export function BookingFields({
                 </FormControl>
                 <SelectContent>
                   {clinicOptions.map((option) => (
-                    <SelectItem key={String(option.value)} value={String(option.value)}>
+                    <SelectItem
+                      key={String(option.value)}
+                      value={String(option.value)}
+                    >
                       {option.label}
                     </SelectItem>
                   ))}
@@ -168,57 +185,54 @@ export function BookingFields({
       )}
       <FormField
         control={control}
-        name="employeeId"
-        rules={{ required: "Vui lòng chọn bác sĩ" }}
-        render={({ field }) => (
-          <FormItem className="md:col-span-5">
-            <FormLabel>Bác sĩ</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value ?? ""} disabled={!clinicId}>
-              <FormControl>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={clinicId ? "Chọn bác sĩ" : "Chọn phòng khám trước"} />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {doctors.map((option) => (
-                  <SelectItem key={option.id} value={String(option.id)}>
-                    {doctorLabel(option)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={control}
         name="appointmentDate"
         rules={{ required: "Vui lòng chọn ngày" }}
         render={({ field }) => (
           <FormItem className="md:col-span-3">
             <FormLabel>Ngày khám</FormLabel>
             <FormControl>
-              <Input {...field} type="date" min={clinicToday()} value={field.value ?? ""} readOnly={todayOnly} />
+              <Input
+                {...field}
+                type="date"
+                min={clinicToday()}
+                value={field.value ?? ""}
+                readOnly={todayOnly}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
       {/* Only when that doctor and day cannot be had; it takes no row otherwise. */}
-      <DoctorDayHint doctor={doctor} date={date} />
+            {date && clinicId && !doctorsLoading && !dayOpen && (
+        <p className="text-destructive text-sm md:col-span-8" role="alert">
+          Ngày này phòng khám không có bác sĩ khám hoặc đã hết lượt. Vui lòng
+          chọn ngày khác.
+        </p>
+      )}
+      {forOwnAccount && (
+        <p className="text-muted-foreground text-sm md:col-span-8">
+          Phòng khám sẽ xếp bạn vào một bác sĩ khám trong ngày; tên bác sĩ và số
+          khám hiện trên phiếu sau khi đăng ký.
+        </p>
+      )}
       <FormField
         control={control}
         name="reason"
         rules={{
-          validate: (value) => value.trim() !== "" || "Vui lòng nhập lý do khám",
+          validate: (value) =>
+            value.trim() !== "" || "Vui lòng nhập lý do khám",
           maxLength: { value: 255, message: "Tối đa 255 ký tự" },
         }}
         render={({ field }) => (
           <FormItem className="md:col-span-8">
             <FormLabel>Lý do khám</FormLabel>
             <FormControl>
-              <Input {...field} value={field.value ?? ""} placeholder="Theo dõi sức khỏe định kỳ" />
+              <Input
+                {...field}
+                value={field.value ?? ""}
+                placeholder="Theo dõi sức khỏe định kỳ"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

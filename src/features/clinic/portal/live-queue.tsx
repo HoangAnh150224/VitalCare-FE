@@ -55,7 +55,7 @@ export function QueueBanner({ appointment }: { appointment: Appointment }) {
           ))}
         </ul>
         <span className="text-muted-foreground text-sm">
-          Làm xong bạn tự quay lại hàng chờ của {appointment.doctor?.fullName ?? "bác sĩ"}, được gọi trước.
+          Làm xong bạn tự quay lại hàng chờ của {appointment.doctor?.fullName ?? "phòng khám"}, được gọi trước.
         </span>
       </div>
     );

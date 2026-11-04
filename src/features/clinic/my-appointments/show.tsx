@@ -114,21 +114,19 @@ export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointm
             <div className="w-full text-left">
               <DetailList>
                 <DetailRow label="Người tới khám">{record?.customer.fullName ?? <EmptyValue />}</DetailRow>
-                <DetailRow label="Bác sĩ">{record?.doctor?.fullName ?? <EmptyValue />}</DetailRow>
+                <DetailRow label="Bác sĩ">{record?.doctor?.fullName ?? <EmptyValue>Xếp khi gọi vào phòng</EmptyValue>}</DetailRow>
                 <DetailRow label="Phòng khám">{record?.clinic.name ?? <EmptyValue />}</DetailRow>
                 <DetailRow label="Ngày khám">
                   {record ? formatLocalDate(record.appointmentDate) : <EmptyValue />}
                 </DetailRow>
-                <DetailRow label="Giờ dự kiến">
-                  {record ? (
+                {record?.startTime && (
+                  <DetailRow label="Giờ dự kiến">
                     <span className="tabular-nums">
                       {formatLocalTime(record.startTime)}
                       {record.endTime ? ` – ${formatLocalTime(record.endTime)}` : ""}
                     </span>
-                  ) : (
-                    <EmptyValue />
-                  )}
-                </DetailRow>
+                  </DetailRow>
+                )}
                 <DetailRow label="Lý do">{record?.reason ?? <EmptyValue />}</DetailRow>
                 {record?.cancelReason && (
                   <DetailRow label="Lý do huỷ">{record.cancelReason}</DetailRow>

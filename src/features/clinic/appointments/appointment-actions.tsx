@@ -23,13 +23,6 @@ import {
   DialogTitle,
 } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select";
 import { Textarea } from "@/shared/ui/textarea";
 import type { Appointment } from "@/domains/appointment/types";
 import { GENDER_LABELS, type Customer } from "@/domains/customer/types";
@@ -37,7 +30,7 @@ import { ID_TYPE_LABELS } from "@/domains/profile/types";
 import { formatQueueNumber } from "@/domains/appointment/types";
 import { formatLocalDate } from "@/shared/lib/format";
 import { clinicToday } from "./clinic-day";
-import { DoctorDayHint, doctorLabel, useClinicDoctors } from "./doctor-day";
+import { useClinicDoctors } from "./doctor-day";
 
 type Props = {
   appointment: Appointment;
@@ -84,7 +77,6 @@ export function AppointmentActions({ appointment, resource, size = "default", co
   const desk = resource === "appointments";
   // Rescheduling: another doctor of the same clinic, another day, or both.
   const [rescheduling, setRescheduling] = useState(false);
-  const [newDoctor, setNewDoctor] = useState("");
   const [newDate, setNewDate] = useState("");
 
   const { data: canCheckIn } = useCan({ resource: "appointments", action: "check_in" });
@@ -100,10 +92,10 @@ export function AppointmentActions({ appointment, resource, size = "default", co
   const showChange = !compact && scheduled && writable;
   const showNoShow = showChange && desk && appointment.appointmentDate <= today;
 
-  const { doctors } = useClinicDoctors(rescheduling ? appointment.clinic.id : undefined, newDate);
-  const doctor = doctors.find((candidate) => String(candidate.id) === newDoctor);
-  const samePlace =
-    newDate === appointment.appointmentDate && newDoctor === String(appointment.doctor?.id ?? "");
+  const { doctors, isLoading: doctorsLoading } = useClinicDoctors(rescheduling ? appointment.clinic.id : undefined, newDate);
+  // A new day at the same clinic, in its shared line: what matters is whether that day can be had.
+  const dayOpen = doctors.some((candidate) => candidate.day?.working && candidate.day?.bookable);
+  const samePlace = newDate === appointment.appointmentDate;
 
   if (!showCheckIn && !showComplete && !showChange) {
     return null;
@@ -150,7 +142,7 @@ export function AppointmentActions({ appointment, resource, size = "default", co
       {
         url: `${API_URL}/${resource}/${appointment.id}/reschedule`,
         method: "post",
-        values: { employeeId: Number(newDoctor), appointmentDate: newDate },
+        values: { appointmentDate: newDate },
         config: { headers: { "Content-Type": "application/json" } },
         successNotification: false,
       },
@@ -189,7 +181,6 @@ export function AppointmentActions({ appointment, resource, size = "default", co
           size={size}
           variant="outline"
           onClick={() => {
-            setNewDoctor(String(appointment.doctor?.id ?? ""));
             setNewDate(appointment.appointmentDate);
             setRescheduling(true);
           }}
@@ -226,24 +217,11 @@ export function AppointmentActions({ appointment, resource, size = "default", co
             <DialogTitle>Đổi đăng ký khám</DialogTitle>
             <DialogDescription>
               {visit}
-              {appointment.doctor ? ` với ${appointment.doctor.fullName}` : ""}. Đổi bác sĩ hoặc ngày sẽ được cấp
-              số khám mới; mã phiếu giữ nguyên.
+. Đổi ngày sẽ được cấp số khám mới của ngày đó, vào hàng chờ chung; mã phiếu giữ nguyên.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3">
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_11rem]">
-              <Select value={newDoctor} onValueChange={setNewDoctor}>
-                <SelectTrigger className="w-full" aria-label="Bác sĩ">
-                  <SelectValue placeholder="Chọn bác sĩ" />
-                </SelectTrigger>
-                <SelectContent>
-                  {doctors.map((option) => (
-                    <SelectItem key={option.id} value={String(option.id)}>
-                      {doctorLabel(option)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid gap-3 sm:max-w-[11rem]">
               <Input
                 type="date"
                 aria-label="Ngày khám mới"
@@ -253,16 +231,21 @@ export function AppointmentActions({ appointment, resource, size = "default", co
               />
             </div>
             {samePlace ? (
-              <p className="text-muted-foreground text-sm">Đây là bác sĩ và ngày hiện tại của lượt đăng ký này.</p>
+              <p className="text-muted-foreground text-sm">Đây là ngày hiện tại của lượt đăng ký này.</p>
             ) : (
-              <DoctorDayHint doctor={doctor} date={newDate} />
+              !doctorsLoading &&
+              !dayOpen && (
+                <p className="text-destructive text-sm">
+                  Ngày này phòng khám không có bác sĩ khám hoặc đã hết lượt. Vui lòng chọn ngày khác.
+                </p>
+              )
             )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRescheduling(false)} disabled={busy}>
               Đóng
             </Button>
-            <Button onClick={reschedule} disabled={samePlace || !doctor?.day?.bookable || busy}>
+            <Button onClick={reschedule} disabled={samePlace || !dayOpen || busy}>
               {busy ? "Đang lưu..." : "Xác nhận đổi"}
             </Button>
           </DialogFooter>
@@ -281,7 +264,7 @@ export function AppointmentActions({ appointment, resource, size = "default", co
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirming === "check-in"
-                ? `Số ${formatQueueNumber(appointment.queueNumber)}${appointment.doctor ? ` · ${appointment.doctor.fullName}` : ""}. Đối chiếu thông tin dưới đây với giấy tờ tuỳ thân của người tới khám; tiếp nhận xong không huỷ được.`
+                ? `Số ${formatQueueNumber(appointment.queueNumber)} · ${appointment.doctor ? appointment.doctor.fullName : "vào hàng chờ chung"}. Đối chiếu thông tin dưới đây với giấy tờ tuỳ thân của người tới khám; tiếp nhận xong không huỷ được.`
                 : `${visit}. ${
                     confirming === "no-show"
                       ? "Lượt đăng ký sẽ đóng lại; bệnh nhân muốn khám phải đăng ký mới."

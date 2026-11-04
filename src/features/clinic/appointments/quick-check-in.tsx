@@ -239,8 +239,9 @@ function AppointmentCard({
         </DetailRow>
         <DetailRow label="Thời gian">
           <span className="tabular-nums">
-            {formatLocalDate(appointment.appointmentDate)} · {formatLocalTime(appointment.startTime)}
-            {appointment.endTime ? ` – ${formatLocalTime(appointment.endTime)}` : ""}
+            {formatLocalDate(appointment.appointmentDate)}
+            {appointment.startTime ? ` · ${formatLocalTime(appointment.startTime)}` : ""}
+            {appointment.startTime && appointment.endTime ? ` – ${formatLocalTime(appointment.endTime)}` : ""}
           </span>
         </DetailRow>
         <DetailRow label="Phòng khám">{appointment.clinic.name}</DetailRow>

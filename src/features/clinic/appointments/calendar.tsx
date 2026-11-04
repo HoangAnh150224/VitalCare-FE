@@ -249,7 +249,7 @@ export const AppointmentCalendar = () => {
                   {visit.customer.fullName}
                 </Link>
                 <span className="text-muted-foreground truncate">
-                  {visit.doctor?.fullName}
+                  {visit.doctor?.fullName ?? "Hàng chờ chung"}
                 </span>
                 <Badge
                   variant={

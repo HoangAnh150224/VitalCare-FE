@@ -58,10 +58,11 @@ export function AppointmentTicket({ appointment, footer, status, className }: Pr
             </Badge>
           </div>
           <p className="text-muted-foreground text-sm tabular-nums">
-            Dự kiến {formatLocalTime(appointment.startTime)} · {appointment.clinic.name}
+            {appointment.startTime ? `Dự kiến ${formatLocalTime(appointment.startTime)} · ` : ""}
+            {appointment.clinic.name}
           </p>
           <p className="truncate text-sm">
-            {appointment.doctor?.fullName ?? "Bác sĩ chưa xác định"}
+            {appointment.doctor?.fullName ?? "Bác sĩ: xếp khi gọi vào phòng"}
           </p>
           <p className="text-muted-foreground truncate text-sm">Người tới khám: {appointment.customer.fullName}</p>
         </div>

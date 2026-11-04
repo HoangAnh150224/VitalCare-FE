@@ -84,9 +84,11 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-medium">{formatLocalDate(row.original.appointmentDate)}</span>
-            <span className="text-muted-foreground text-xs tabular-nums">
-              dự kiến {formatLocalTime(row.original.startTime)}
-            </span>
+            {row.original.startTime && (
+              <span className="text-muted-foreground text-xs tabular-nums">
+                dự kiến {formatLocalTime(row.original.startTime)}
+              </span>
+            )}
           </div>
         ),
       }),
@@ -94,7 +96,7 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
         id: "doctor",
         header: "Bác sĩ",
         enableSorting: false,
-        cell: ({ row }) => <span className="text-sm">{row.original.doctor?.fullName ?? "—"}</span>,
+        cell: ({ row }) => <span className="text-sm">{row.original.doctor?.fullName ?? "Xếp khi gọi vào phòng"}</span>,
       }),
       columnHelper.accessor("bookingCode", {
         id: "bookingCode",

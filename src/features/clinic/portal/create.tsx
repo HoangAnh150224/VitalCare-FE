@@ -1,5 +1,6 @@
 import type { HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
+import { billingErrorNotification } from "@/domains/billing/messages";
 import { ChevronLeftIcon } from "lucide-react";
 import { Link } from "react-router";
 
@@ -19,7 +20,14 @@ export const PortalAppointmentCreate = () => {
     ...form
   } = useForm<BookingFormValues, HttpError, BookingFormValues>({
     // Straight to the slip: the number on it is what the customer needs next.
-    refineCoreProps: { resource: "my_appointments", action: "create", redirect: "show" },
+    refineCoreProps: {
+      resource: "my_appointments",
+      action: "create",
+      redirect: "show",
+      // Said once, in Vietnamese: the server's English stays off the fields.
+      errorNotification: billingErrorNotification,
+    },
+    disableServerSideValidation: true,
     defaultValues: EMPTY_BOOKING,
   });
 
@@ -35,7 +43,7 @@ export const PortalAppointmentCreate = () => {
         </Link>
         <h1>Đăng ký khám</h1>
         <p className="text-muted-foreground text-sm">
-          Chọn người tới khám, bác sĩ và ngày khám. Bạn nhận số khám ngay sau khi đăng ký.
+          Chọn người tới khám và ngày khám. Bạn nhận số khám ngay sau khi đăng ký.
         </p>
       </div>
 

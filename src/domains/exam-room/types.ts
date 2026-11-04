@@ -61,5 +61,7 @@ export type RoomBoard = {
   /** Doctors whose patients are waiting with no room to be called into. */
   withoutRoom: { doctor: BoardDoctor; waiting: BoardVisit[]; away?: AwayVisit[] }[];
   /** BF-02: at the desk, examination fee not paid yet; they queue once it is. */
-  awaitingPayment?: { visit: BoardVisit; doctor: BoardDoctor }[];
+  awaitingPayment?: { visit: BoardVisit; doctor: BoardDoctor | null }[];
+  /** BF-02 shared line: paid, checked in, no doctor yet; the first free room calls the first. */
+  sharedQueue?: BoardVisit[];
 };

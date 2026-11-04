@@ -30,6 +30,5 @@ export function isUpcoming(appointment: Appointment, today: string): boolean {
  */
 export const VISIT_SORTERS = [
   { field: "appointmentDate", order: "desc" },
-  { field: "startTime", order: "desc" },
   { field: "queueNumber", order: "desc" },
 ] as const;
