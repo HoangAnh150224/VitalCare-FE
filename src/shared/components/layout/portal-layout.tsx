@@ -99,21 +99,23 @@ export function PortalLayout({ children }: PropsWithChildren) {
           data-print="hide"
           className="bg-card/90 sticky top-0 z-30 shadow-[0_1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] backdrop-blur-lg"
         >
-          <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-6 px-4 sm:px-6">
-            <Link to="/dashboard" className="flex items-center gap-2.5">
+          <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-4 px-4 sm:px-6 lg:gap-6">
+            {/* The name under the mark, so the bar keeps its width for the menu. */}
+            <Link to="/dashboard" className="flex shrink-0 flex-col items-center gap-0.5">
               <img
                 src="/vitalcare-mark.png"
                 alt=""
-                className="size-9 rounded-xl bg-white p-1 shadow-sm"
+                className="size-8 rounded-xl bg-white p-1 shadow-sm"
               />
-              <span className="font-display text-lg font-extrabold tracking-tight">
+              <span className="font-display text-[11px] leading-none font-extrabold tracking-tight">
                 VitalCare
               </span>
             </Link>
 
+            {/* One line, whatever the labels: on a narrow screen the menu scrolls rather than wraps. */}
             <nav
               aria-label="Điều hướng chính"
-              className="hidden items-center gap-1 md:flex"
+              className="hidden min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] md:flex"
             >
               {NAV.map((item) => (
                 <Link
@@ -121,7 +123,7 @@ export function PortalLayout({ children }: PropsWithChildren) {
                   to={item.to}
                   aria-current={isActive(item.to) ? "page" : undefined}
                   className={cn(
-                    "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                    "shrink-0 rounded-full px-3 py-2 text-sm font-semibold whitespace-nowrap transition-colors lg:px-4",
                     isActive(item.to)
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:bg-card hover:text-foreground"
@@ -132,7 +134,7 @@ export function PortalLayout({ children }: PropsWithChildren) {
               ))}
             </nav>
 
-            <div className="ms-auto flex items-center gap-1">
+            <div className="ms-auto flex shrink-0 items-center gap-1">
               <NotificationBell />
               <EmergencyWatcher />
               <AccountMenu />
