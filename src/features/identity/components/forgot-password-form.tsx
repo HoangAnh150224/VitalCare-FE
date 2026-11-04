@@ -96,6 +96,13 @@ export const ForgotPasswordForm = () => {
 
   const handlePhone = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Said under the field, in Vietnamese, as the other refusals (see noValidate on the form).
+    if (!phone.trim()) {
+      setError(null);
+      setFieldErrors({ phone: "Vui lòng nhập số điện thoại." });
+      document.getElementById("phone")?.focus();
+      return;
+    }
     void sendCode();
   };
 
@@ -103,6 +110,18 @@ export const ForgotPasswordForm = () => {
     e.preventDefault();
     setError(null);
     setFieldErrors({});
+
+    // The browser's own checks are off (noValidate): their bubbles follow the browser's language
+    // and sit apart from every other message. The same rules, said in Vietnamese under the field.
+    const missing: Record<string, string> = {};
+    if (!password) missing.newPassword = "Vui lòng nhập mật khẩu mới.";
+    else if (password.length < 8) missing.newPassword = "Mật khẩu phải có từ 8 đến 72 ký tự.";
+    if (!confirmPassword) missing.confirmPassword = "Vui lòng nhập lại mật khẩu.";
+    if (Object.keys(missing).length > 0) {
+      setFieldErrors(missing);
+      document.getElementById(missing.newPassword ? "password" : "confirmPassword")?.focus();
+      return;
+    }
 
     if (password !== confirmPassword) {
       setFieldErrors({ confirmPassword: "Hai mật khẩu không khớp." });
@@ -188,7 +207,7 @@ export const ForgotPasswordForm = () => {
 
           <CardContent className={cn("px-0")}>
             {step === "phone" && (
-              <form onSubmit={handlePhone}>
+              <form onSubmit={handlePhone} noValidate>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="phone">Số điện thoại</Label>
                   <Input
@@ -217,7 +236,7 @@ export const ForgotPasswordForm = () => {
             )}
 
             {step === "code" && (
-              <form onSubmit={handleCode}>
+              <form onSubmit={handleCode} noValidate>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="otp">Mã khôi phục</Label>
                   <InputOTP
@@ -277,7 +296,7 @@ export const ForgotPasswordForm = () => {
             )}
 
             {step === "password" && (
-              <form onSubmit={handleReset}>
+              <form onSubmit={handleReset} noValidate>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="password">Mật khẩu mới</Label>
                   {/* Tells password managers which account the new password is for. */}

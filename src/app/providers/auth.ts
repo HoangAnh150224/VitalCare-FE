@@ -94,10 +94,7 @@ async function readError(response: Response, fallback: string): Promise<ApiError
   }
 }
 
-/**
- * Everything that follows receiving a token pair — from a sign-in or from a
- * registration, which answers with one so the new account lands signed in.
- */
+/** Everything that follows receiving a token pair from a sign-in. */
 async function startSession(tokens: TokenPair, errorName: string): Promise<AuthActionResponse> {
   saveSession(tokens);
 
@@ -182,7 +179,16 @@ export const authProvider: AuthProvider = {
         };
       }
 
-      return await startSession((await response.json()) as TokenPair, "RegisterError");
+      // The API answers with a token pair, but the new account signs in itself on the
+      // sign-in page: hand the refresh token back so no unused session is left behind.
+      const { refreshToken } = (await response.json()) as TokenPair;
+      fetch(`${API_URL}/auth/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      }).catch(() => {});
+      // No redirectTo: the form goes to sign-in itself, carrying the number.
+      return { success: true };
     } catch {
       return {
         success: false,

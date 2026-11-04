@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { useRefineOptions, useRegister } from "@refinedev/core";
 import { Button } from "@/shared/ui/button";
@@ -30,6 +30,7 @@ export const SignUpForm = () => {
   const { title } = useRefineOptions();
   // "always": offline, the request fails now with "cannot reach the server" instead of waiting
   // unseen and creating the account later, when the connection is back (ST-REG-073).
+  const navigate = useNavigate();
   const { mutate: register, isPending: isRegistering } = useRegister({ mutationOptions: { networkMode: "always" } });
 
   const [phone, setPhone] = useState("");
@@ -45,6 +46,20 @@ export const SignUpForm = () => {
     setError(null);
     setFieldErrors({});
 
+    // The browser's own checks are off (noValidate): their bubbles follow the browser's language
+    // and sit apart from every other message. The same rules, said in Vietnamese under the field.
+    const missing: Record<string, string> = {};
+    if (!phone.trim()) missing.phone = "Vui lòng nhập số điện thoại.";
+    if (!fullName.trim()) missing.fullName = "Vui lòng nhập họ và tên.";
+    if (!password) missing.password = "Vui lòng nhập mật khẩu.";
+    else if (password.length < 8) missing.password = "Mật khẩu phải có từ 8 đến 72 ký tự.";
+    if (!confirmPassword) missing.confirmPassword = "Vui lòng nhập lại mật khẩu.";
+    if (Object.keys(missing).length > 0) {
+      setFieldErrors(missing);
+      document.getElementById(Object.keys(missing)[0])?.focus();
+      return;
+    }
+
     if (password !== confirmPassword) {
       setFieldErrors({ confirmPassword: "Hai mật khẩu không khớp." });
       return;
@@ -54,7 +69,11 @@ export const SignUpForm = () => {
       { phone, fullName, password },
       {
         onSuccess: (data) => {
-          if (data.success) return;
+          if (data.success) {
+            // Router state, not the address bar: the number stays out of history and logs.
+            navigate("/login", { state: { registeredPhone: phone.trim() } });
+            return;
+          }
           const failure = data.error as (Error & { fieldErrors?: Record<string, string> }) | undefined;
           setError(failure?.message ? translate(failure.message) : null);
           setFieldErrors(failure?.fieldErrors ?? {});
@@ -103,7 +122,7 @@ export const SignUpForm = () => {
           </CardHeader>
 
           <CardContent className={cn("px-0")}>
-            <form onSubmit={handleRegister}>
+            <form onSubmit={handleRegister} noValidate>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="phone">Số điện thoại</Label>
                 <Input
