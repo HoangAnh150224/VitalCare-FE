@@ -99,13 +99,13 @@ export function PortalLayout({ children }: PropsWithChildren) {
           data-print="hide"
           className="bg-card/90 sticky top-0 z-30 shadow-[0_1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] backdrop-blur-lg"
         >
-          <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-4 px-4 sm:px-6 lg:gap-6">
+          <div className="mx-auto flex h-[4.5rem] w-full max-w-5xl items-center gap-4 px-4 sm:px-6 lg:gap-6">
             {/* The name under the mark, so the bar keeps its width for the menu. */}
-            <Link to="/dashboard" className="flex shrink-0 flex-col items-center gap-0.5">
+            <Link to="/dashboard" className="flex shrink-0 flex-col items-center gap-1">
               <img
                 src="/vitalcare-mark.png"
                 alt=""
-                className="size-8 rounded-xl bg-white p-1 shadow-sm"
+                className="size-10 rounded-xl bg-white p-1 shadow-sm"
               />
               <span className="font-display text-[11px] leading-none font-extrabold tracking-tight">
                 VitalCare
