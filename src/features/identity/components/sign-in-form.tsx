@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 
 import { useLogin, useRefineOptions } from "@refinedev/core";
 /** Which field a sign-in refusal is about; the auth provider sets it on the error (`app/providers/auth.ts`). */
@@ -35,7 +35,9 @@ import { cn } from "@/shared/lib/utils";
  * is on its own.
  */
 export const SignInForm = () => {
-  const [phone, setPhone] = useState("");
+  // Just registered: the sign-up form sends the number here so it need not be typed again.
+  const registeredPhone = (useLocation().state as { registeredPhone?: string } | null)?.registeredPhone;
+  const [phone, setPhone] = useState(registeredPhone ?? "");
   const [password, setPassword] = useState("");
 
   const { title } = useRefineOptions();
@@ -114,6 +116,11 @@ export const SignInForm = () => {
           </CardHeader>
 
           <CardContent className={cn("px-0")}>
+            {registeredPhone && (
+              <p role="status" className="mb-4 rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">
+                Tạo tài khoản thành công. Vui lòng đăng nhập để tiếp tục.
+              </p>
+            )}
             <form onSubmit={handleSignIn}>
               <div className={cn("flex flex-col gap-2")}>
                 <Label htmlFor="phone">Số điện thoại</Label>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { useRefineOptions, useRegister } from "@refinedev/core";
 import { Button } from "@/shared/ui/button";
@@ -30,6 +30,7 @@ export const SignUpForm = () => {
   const { title } = useRefineOptions();
   // "always": offline, the request fails now with "cannot reach the server" instead of waiting
   // unseen and creating the account later, when the connection is back (ST-REG-073).
+  const navigate = useNavigate();
   const { mutate: register, isPending: isRegistering } = useRegister({ mutationOptions: { networkMode: "always" } });
 
   const [phone, setPhone] = useState("");
@@ -54,7 +55,11 @@ export const SignUpForm = () => {
       { phone, fullName, password },
       {
         onSuccess: (data) => {
-          if (data.success) return;
+          if (data.success) {
+            // Router state, not the address bar: the number stays out of history and logs.
+            navigate("/login", { state: { registeredPhone: phone } });
+            return;
+          }
           const failure = data.error as (Error & { fieldErrors?: Record<string, string> }) | undefined;
           setError(failure?.message ? translate(failure.message) : null);
           setFieldErrors(failure?.fieldErrors ?? {});
