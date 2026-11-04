@@ -46,6 +46,20 @@ export const SignUpForm = () => {
     setError(null);
     setFieldErrors({});
 
+    // The browser's own checks are off (noValidate): their bubbles follow the browser's language
+    // and sit apart from every other message. The same rules, said in Vietnamese under the field.
+    const missing: Record<string, string> = {};
+    if (!phone.trim()) missing.phone = "Vui lòng nhập số điện thoại.";
+    if (!fullName.trim()) missing.fullName = "Vui lòng nhập họ và tên.";
+    if (!password) missing.password = "Vui lòng nhập mật khẩu.";
+    else if (password.length < 8) missing.password = "Mật khẩu phải có từ 8 đến 72 ký tự.";
+    if (!confirmPassword) missing.confirmPassword = "Vui lòng nhập lại mật khẩu.";
+    if (Object.keys(missing).length > 0) {
+      setFieldErrors(missing);
+      document.getElementById(Object.keys(missing)[0])?.focus();
+      return;
+    }
+
     if (password !== confirmPassword) {
       setFieldErrors({ confirmPassword: "Hai mật khẩu không khớp." });
       return;
@@ -108,7 +122,7 @@ export const SignUpForm = () => {
           </CardHeader>
 
           <CardContent className={cn("px-0")}>
-            <form onSubmit={handleRegister}>
+            <form onSubmit={handleRegister} noValidate>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="phone">Số điện thoại</Label>
                 <Input

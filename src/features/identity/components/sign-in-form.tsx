@@ -50,6 +50,18 @@ export const SignInForm = () => {
   const handleSignIn = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    // The browser's own checks are off (noValidate): their bubbles follow the browser's language
+    // and sit apart from every other message. The same rules, said in Vietnamese under the field.
+    const missing: { text: string; field: LoginField } | null = !phone.trim()
+      ? { text: "Vui lòng nhập số điện thoại.", field: "phone" }
+      : !password
+        ? { text: "Vui lòng nhập mật khẩu.", field: "password" }
+        : null;
+    if (missing) {
+      setError(missing);
+      document.getElementById(missing.field!)?.focus();
+      return;
+    }
     login(
       { phone, password },
       {
@@ -121,7 +133,7 @@ export const SignInForm = () => {
                 Tạo tài khoản thành công. Vui lòng đăng nhập để tiếp tục.
               </p>
             )}
-            <form onSubmit={handleSignIn}>
+            <form onSubmit={handleSignIn} noValidate>
               <div className={cn("flex flex-col gap-2")}>
                 <Label htmlFor="phone">Số điện thoại</Label>
                 <Input
