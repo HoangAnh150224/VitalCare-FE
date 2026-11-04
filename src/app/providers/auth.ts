@@ -1,7 +1,7 @@
 import type { AuthActionResponse, AuthProvider } from "@refinedev/core";
 
 import { API_URL } from "@/shared/api/constants";
-import { readRegistrationError } from "@/shared/api/registration";
+import { readRegistrationError, translateRegistrationMessage } from "@/shared/api/registration";
 import { connect, disconnect } from "@/shared/api/live";
 import {
   clearSession,
@@ -52,6 +52,14 @@ export type LoginField = "phone" | "password" | null;
  */
 export function translateLoginMessage(message: string | undefined): { text: string; field: LoginField } {
   const m = message ?? "";
+  // The same precise phone messages as registration (too few / too many digits, not digits).
+  if (
+    m.startsWith("Phone number has too few digits") ||
+    m.startsWith("Phone number has too many digits") ||
+    m.startsWith("Phone number may only contain digits")
+  ) {
+    return { text: translateRegistrationMessage(m), field: "phone" };
+  }
   if (m.startsWith("Phone number must be a Vietnamese number") || m.startsWith("Not a valid Vietnamese phone number")) {
     return {
       text: "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam, ví dụ: 0901234567 hoặc +84901234567.",

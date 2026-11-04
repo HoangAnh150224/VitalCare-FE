@@ -28,7 +28,9 @@ import { cn } from "@/shared/lib/utils";
  */
 export const SignUpForm = () => {
   const { title } = useRefineOptions();
-  const { mutate: register, isPending: isRegistering } = useRegister();
+  // "always": offline, the request fails now with "cannot reach the server" instead of waiting
+  // unseen and creating the account later, when the connection is back (ST-REG-073).
+  const { mutate: register, isPending: isRegistering } = useRegister({ mutationOptions: { networkMode: "always" } });
 
   const [phone, setPhone] = useState("");
   const [fullName, setFullName] = useState("");

@@ -39,7 +39,8 @@ export const SignInForm = () => {
   const [password, setPassword] = useState("");
 
   const { title } = useRefineOptions();
-  const { mutate: login, isPending } = useLogin();
+  // "always", as on sign-up: offline, say so now rather than signing in later unseen.
+  const { mutate: login, isPending } = useLogin({ mutationOptions: { networkMode: "always" } });
 
   // The refusal, said once under the field it is about (or under the form).
   const [error, setError] = useState<{ text: string; field: LoginField } | null>(null);

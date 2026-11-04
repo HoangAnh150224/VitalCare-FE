@@ -82,6 +82,22 @@ async function post<T>(
  * interface's language. Anything else is shown as the API wrote it.
  */
 export function translateRegistrationMessage(message: string): string {
+  // Which way a phone number is wrong, as the server tells it (PhoneNumbers.problem).
+  if (message.startsWith("Phone number has too few digits")) {
+    return "Số điện thoại chưa đủ số. Vui lòng nhập số điện thoại gồm 10 chữ số hoặc dạng +84 kèm 9 chữ số.";
+  }
+  if (message.startsWith("Phone number has too many digits")) {
+    return "Số điện thoại thừa chữ số. Vui lòng nhập số điện thoại gồm 10 chữ số hoặc dạng +84 kèm 9 chữ số.";
+  }
+  if (message.startsWith("Phone number may only contain digits")) {
+    return "Số điện thoại sai định dạng. Vui lòng nhập đúng định dạng, ví dụ: 0901234567 hoặc +84901234567.";
+  }
+  if (message.startsWith("Full name may only contain letters")) {
+    return "Họ và tên chỉ được chứa chữ cái và khoảng trắng; không được chứa số hoặc ký tự đặc biệt.";
+  }
+  if (message.startsWith("Password cannot contain only spaces")) {
+    return "Mật khẩu không được chỉ chứa khoảng trắng.";
+  }
   if (
     message.startsWith("Phone number must be a Vietnamese number") ||
     message.startsWith("Not a valid Vietnamese phone number")
@@ -95,7 +111,7 @@ export function translateRegistrationMessage(message: string): string {
     return "Vui lòng nhập họ và tên.";
   }
   if (message.startsWith("Full name must be at most")) {
-    return "Họ và tên tối đa 255 ký tự.";
+    return "Họ và tên không được vượt quá 255 ký tự.";
   }
   if (message.startsWith("Password is required") || message.startsWith("New password is required")) {
     return "Vui lòng nhập mật khẩu.";
