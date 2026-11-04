@@ -57,7 +57,7 @@ export const SignUpForm = () => {
         onSuccess: (data) => {
           if (data.success) {
             // Router state, not the address bar: the number stays out of history and logs.
-            navigate("/login", { state: { registeredPhone: phone } });
+            navigate("/login", { state: { registeredPhone: phone.trim() } });
             return;
           }
           const failure = data.error as (Error & { fieldErrors?: Record<string, string> }) | undefined;
