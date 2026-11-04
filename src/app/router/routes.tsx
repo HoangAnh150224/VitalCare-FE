@@ -27,7 +27,7 @@ import {
   DepartmentEdit,
   DepartmentShow,
 } from "@/features/departments";
-import { NotificationList } from "@/features/notifications";
+import { NotificationList, NotificationShow } from "@/features/notifications";
 import {
   UserList,
   UserCreate,
@@ -43,11 +43,120 @@ import {
   RowLevelPolicyCreate,
   RowLevelPolicyEdit,
   RowLevelPolicyShow,
+  AuditLogList,
+  AuditLogShow,
 } from "@/features/administration";
-import { Login, Profile } from "@/features/identity";
+import { ForgotPassword, Login, Profile, Register } from "@/features/identity";
+import { Landing } from "@/features/landing";
+import {
+  PublicClinics,
+  PublicClinicShow,
+  PublicFirstAid,
+  PublicFirstAidShow,
+  PublicLayout,
+  PublicServices,
+} from "@/features/public";
+import {
+  AppointmentCreate,
+  AppointmentList,
+  AppointmentShow,
+  AssignmentList,
+  AssignmentShow,
+  ClinicCreate,
+  DoctorScheduleCreate,
+  DoctorScheduleEdit,
+  DoctorScheduleList,
+  EncounterCreate,
+  EncounterEdit,
+  EncounterList,
+  EncounterShow,
+  ClinicEdit,
+  ClinicList,
+  ClinicShow,
+  CustomerEdit,
+  CustomerList,
+  CustomerShow,
+  MyAppointmentCreate,
+  MyProfileCreate,
+  MyProfileEdit,
+  MyProfileList,
+  MyAppointmentList,
+  MyAppointmentShow,
+  PortalAppointmentCreate,
+  PortalAppointments,
+  PortalHome,
+  PortalPayments,
+  PortalResult,
+  PortalResults,
+  QuickCheckIn,
+  WalkInRegistration,
+  AppointmentCalendar,
+  StaffList,
+  StaffCreate,
+  StaffEdit,
+  StaffShow,
+  DeviceList,
+  DeviceCreate,
+  DeviceEdit,
+  DeviceShow,
+  MyPatientList,
+  MyPatientShow,
+  ViewAsPick,
+  ViewAsCustomerAppointments,
+  ViewAsCustomerAppointment,
+  ViewAsEmployeePatients,
+  ViewAsEmployeePatient,
+  ViewAsAllAppointments,
+  ViewAsAllPatients,
+  ViewAsFrontDesk,
+  ExamRoomBoard,
+  MedicalServiceList,
+  MedicalServiceCreate,
+  FirstAidList,
+  FirstAidCreate,
+  FirstAidEdit,
+  FirstAidShow,
+  FirstAidHistory,
+  ConversationInbox,
+  PortalConversations,
+  PortalConversationShow,
+  MedicalServiceEdit,
+  ServiceOrderList,
+  ServiceOrderShow,
+  InvoiceList,
+  InvoiceShow,
+  RevenueReportPage,
+  DeviceSyncList,
+  DeviceSyncShow,
+  SyncFailureList,
+  SyncFailureShow,
+  MyDeviceList,
+  VitalSignOverview,
+  PatientVitalSigns,
+  VitalSignShow,
+  MyHealth,
+  AlertList,
+  AlertShow,
+  AbnormalReadingList,
+  AlertRuleList,
+  AlertRuleCreate,
+  AlertRuleEdit,
+  AlertRuleShow,
+  MySharing,
+  MonitoringDashboard,
+  ClinicRolesPage,
+  ReportsPage,
+  ResultReturnList,
+  FeedbackList,
+  MyLicenses,
+  ClinicLicenses,
+  SharedPatientList,
+  SharedPatientShow,
+  EmergencyShow,
+} from "@/features/clinic";
 import { ErrorComponent } from "@/shared/components/layout/error-component";
 import { Forbidden } from "@/shared/components/layout/forbidden";
-import { Layout } from "@/shared/components/layout/layout";
+import { PortalSwitch, ShellLayout } from "./shell";
 
 /**
  * Route tree rendered inside `<Refine>`. Every path here must line up with the
@@ -62,23 +171,49 @@ import { Layout } from "@/shared/components/layout/layout";
 export function AppRoutes() {
   return (
     <Routes>
+      {/*
+        The front door, for everybody: signed in or not, the site opens on the
+        landing page, and signing in leads on to the dashboard.
+      */}
+      <Route path="/" element={<Landing />} />
+      {/*
+        The public site, for everybody too: clinics, prices, first aid. Its
+        own frame, not the app's shell; it reads only /api/public.
+      */}
+      <Route element={<PublicLayout />}>
+        <Route path="/locations" element={<PublicClinics />} />
+        <Route path="/locations/:id" element={<PublicClinicShow />} />
+        <Route path="/services" element={<PublicServices />} />
+        <Route path="/first-aid" element={<PublicFirstAid />} />
+        <Route path="/first-aid/:id" element={<PublicFirstAidShow />} />
+      </Route>
       <Route
         element={
           <Authenticated key="authenticated-routes" redirectOnFail="/login">
-            <Layout>
+            <ShellLayout>
               <Outlet />
-            </Layout>
+            </ShellLayout>
           </Authenticated>
         }
       >
         {/*
-          The application opens on the dashboard rather than on a resource's
-          table. `Navigate` rather than `NavigateToResource`, because the
-          dashboard is a screen and not a resource: there is no `list` action to
-          resolve a path from beyond the one declared above.
+          A signed-in visitor opens on the dashboard (the `/` route above sends
+          them here) rather than on a resource's table.
         */}
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route
+          path="/dashboard"
+          element={
+            <PortalSwitch
+              portal={<PortalHome />}
+              staff={
+                // BF-10 for those who watch the patients; the plain landing for everybody else.
+                <CanAccess resource="monitoring_dashboard" action="list" fallback={<Dashboard />}>
+                  <MonitoringDashboard />
+                </CanAccess>
+              }
+            />
+          }
+        />
         {/*
           Blog posts render their create / edit / show / clone actions as
           dialogs on top of the list. Nesting them under the list route keeps
@@ -243,6 +378,614 @@ export function AppRoutes() {
         </Route>
 
         {/*
+          The clinic. Guarded like the administration routes: the sidebar hides
+          what an account may not open, and these stop a typed URL rendering a
+          screen whose first request would 403.
+        */}
+        <Route
+          path="/appointments"
+          element={
+            <CanAccess
+              resource="appointments"
+              action="list"
+              fallback={<Forbidden resource="appointments" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<AppointmentList />} />
+          <Route path="create" element={<AppointmentCreate />} />
+          <Route path="show/:id" element={<AppointmentShow />} />
+          <Route
+            path="check-in"
+            element={
+              <CanAccess
+                resource="appointments"
+                action="check_in"
+                fallback={<Forbidden resource="appointments" />}
+              >
+                <QuickCheckIn />
+              </CanAccess>
+            }
+          />
+          <Route path="calendar" element={<AppointmentCalendar />} />
+          <Route
+            path="walk-in"
+            element={
+              <CanAccess
+                resource="appointments"
+                action="check_in"
+                fallback={<Forbidden resource="appointments" />}
+              >
+                <WalkInRegistration />
+              </CanAccess>
+            }
+          />
+        </Route>
+        <Route
+          path="/employees"
+          element={
+            <CanAccess
+              resource="employees"
+              action="list"
+              fallback={<Forbidden resource="employees" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<StaffList />} />
+          <Route path="create" element={<StaffCreate />} />
+          <Route path="edit/:id" element={<StaffEdit />} />
+          <Route path="show/:id" element={<StaffShow />} />
+        </Route>
+        <Route
+          path="/vital-signs"
+          element={
+            <CanAccess
+              resource="vital_signs"
+              action="list"
+              fallback={<Forbidden resource="vital_signs" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<VitalSignOverview />} />
+          <Route path="patient/:customerId" element={<PatientVitalSigns />} />
+          <Route path="show/:id" element={<VitalSignShow />} />
+        </Route>
+        <Route
+          path="/alerts"
+          element={
+            <CanAccess
+              resource="alerts"
+              action="list"
+              fallback={<Forbidden resource="alerts" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<AlertList />} />
+          <Route path="readings" element={<AbnormalReadingList />} />
+          <Route path="show/:id" element={<AlertShow />} />
+        </Route>
+        <Route
+          path="/clinic-roles"
+          element={
+            <CanAccess resource="clinic_roles" action="list" fallback={<Forbidden resource="clinic_roles" />}>
+              <ClinicRolesPage />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <CanAccess resource="reports" action="list" fallback={<Forbidden resource="reports" />}>
+              <ReportsPage />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/result-returns"
+          element={
+            <CanAccess resource="result_returns" action="list" fallback={<Forbidden resource="result_returns" />}>
+              <ResultReturnList />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/feedback"
+          element={
+            <CanAccess resource="feedback" action="list" fallback={<Forbidden resource="feedback" />}>
+              <FeedbackList />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/my-licenses"
+          element={
+            <CanAccess resource="my_licenses" action="list" fallback={<Forbidden resource="my_licenses" />}>
+              <MyLicenses />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/licenses"
+          element={
+            <CanAccess resource="licenses" action="list" fallback={<Forbidden resource="licenses" />}>
+              <ClinicLicenses />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/alert-rules"
+          element={
+            <CanAccess
+              resource="alert_rules"
+              action="list"
+              fallback={<Forbidden resource="alert_rules" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<AlertRuleList />} />
+          <Route path="create" element={<AlertRuleCreate />} />
+          <Route path="edit/:id" element={<AlertRuleEdit />} />
+          <Route path="show/:id" element={<AlertRuleShow />} />
+        </Route>
+        <Route
+          path="/device-syncs"
+          element={
+            <CanAccess
+              resource="device_syncs"
+              action="list"
+              fallback={<Forbidden resource="device_syncs" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<DeviceSyncList />} />
+          <Route path="show/:id" element={<DeviceSyncShow />} />
+        </Route>
+        <Route
+          path="/sync-failures"
+          element={
+            <CanAccess
+              resource="sync_failures"
+              action="list"
+              fallback={<Forbidden resource="sync_failures" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<SyncFailureList />} />
+          <Route path="show/:id" element={<SyncFailureShow />} />
+        </Route>
+        <Route
+          path="/devices"
+          element={
+            <CanAccess
+              resource="devices"
+              action="list"
+              fallback={<Forbidden resource="devices" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<DeviceList />} />
+          <Route path="create" element={<DeviceCreate />} />
+          <Route path="edit/:id" element={<DeviceEdit />} />
+          <Route path="show/:id" element={<DeviceShow />} />
+        </Route>
+        <Route
+          path="/my-patients"
+          element={
+            <CanAccess
+              resource="my_patients"
+              action="list"
+              fallback={<Forbidden resource="my_patients" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<MyPatientList />} />
+          <Route path="show/:id" element={<MyPatientShow />} />
+        </Route>
+        <Route
+          path="/view-as"
+          element={
+            <CanAccess
+              resource="view_as"
+              action="list"
+              fallback={<Forbidden resource="view_as" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<ViewAsPick />} />
+          <Route path="front-desk" element={<ViewAsFrontDesk />} />
+          <Route path="front-desk/:employeeId" element={<ViewAsFrontDesk />} />
+          <Route path="patients" element={<ViewAsAllPatients />} />
+          <Route path="appointments" element={<ViewAsAllAppointments />} />
+          <Route
+            path="customers/:customerId"
+            element={<ViewAsCustomerAppointments />}
+          />
+          <Route
+            path="customers/:customerId/appointments/:id"
+            element={<ViewAsCustomerAppointment />}
+          />
+          <Route
+            path="employees/:employeeId"
+            element={<ViewAsEmployeePatients />}
+          />
+          <Route
+            path="employees/:employeeId/patients/:customerId"
+            element={<ViewAsEmployeePatient />}
+          />
+        </Route>
+        <Route
+          path="/clinical-encounters"
+          element={
+            <CanAccess
+              resource="clinical_encounters"
+              action="list"
+              fallback={<Forbidden resource="clinical_encounters" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<EncounterList />} />
+          <Route path="create" element={<EncounterCreate />} />
+          <Route path="edit/:id" element={<EncounterEdit />} />
+          <Route path="show/:id" element={<EncounterShow />} />
+        </Route>
+        <Route
+          path="/doctor-schedules"
+          element={
+            <CanAccess
+              resource="doctor_schedules"
+              action="list"
+              fallback={<Forbidden resource="doctor_schedules" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<DoctorScheduleList />} />
+          <Route path="create" element={<DoctorScheduleCreate />} />
+          <Route path="edit/:id" element={<DoctorScheduleEdit />} />
+        </Route>
+        <Route
+          path="/monitoring-assignments"
+          element={
+            <CanAccess
+              resource="monitoring_assignments"
+              action="list"
+              fallback={<Forbidden resource="monitoring_assignments" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<AssignmentList />} />
+          <Route path="show/:id" element={<AssignmentShow />} />
+        </Route>
+        <Route
+          path="/exam-rooms"
+          element={
+            <CanAccess
+              resource="exam_rooms"
+              action="list"
+              fallback={<Forbidden resource="exam_rooms" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<ExamRoomBoard />} />
+        </Route>
+        <Route
+          path="/service-orders"
+          element={
+            <CanAccess
+              resource="service_orders"
+              action="list"
+              fallback={<Forbidden resource="service_orders" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<ServiceOrderList />} />
+          <Route path="show/:id" element={<ServiceOrderShow />} />
+        </Route>
+        <Route
+          path="/invoices"
+          element={
+            <CanAccess
+              resource="invoices"
+              action="list"
+              fallback={<Forbidden resource="invoices" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<InvoiceList />} />
+          <Route path="show/:id" element={<InvoiceShow />} />
+          <Route
+            path="report"
+            element={
+              <CanAccess
+                resource="invoices"
+                action="report"
+                fallback={<Forbidden resource="invoices" />}
+              >
+                <RevenueReportPage />
+              </CanAccess>
+            }
+          />
+        </Route>
+        <Route
+          path="/audit-logs"
+          element={
+            <CanAccess
+              resource="audit_logs"
+              action="list"
+              fallback={<Forbidden resource="audit_logs" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<AuditLogList />} />
+          <Route path="show/:id" element={<AuditLogShow />} />
+        </Route>
+        <Route
+          path="/medical-services"
+          element={
+            <CanAccess
+              resource="medical_services"
+              action="list"
+              fallback={<Forbidden resource="medical_services" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<MedicalServiceList />} />
+          <Route path="create" element={<MedicalServiceCreate />} />
+          <Route path="edit/:id" element={<MedicalServiceEdit />} />
+        </Route>
+        <Route
+          path="/first-aid-articles"
+          element={
+            <CanAccess
+              resource="first_aid_articles"
+              action="list"
+              fallback={<Forbidden resource="first_aid_articles" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<FirstAidList />} />
+          <Route path="create" element={<FirstAidCreate />} />
+          <Route path="edit/:id" element={<FirstAidEdit />} />
+          <Route path="show/:id" element={<FirstAidShow />} />
+          <Route path="history/:id" element={<FirstAidHistory />} />
+        </Route>
+        {/* The clinic's support inbox; the open conversation is part of the URL. */}
+        <Route
+          path="/conversations"
+          element={
+            <CanAccess
+              resource="conversations"
+              action="list"
+              fallback={<Forbidden resource="conversations" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<ConversationInbox />} />
+          <Route path="show/:id" element={<ConversationInbox />} />
+        </Route>
+        <Route
+          path="/my-health"
+          element={
+            <CanAccess
+              resource="my_vital_signs"
+              action="list"
+              fallback={<Forbidden resource="my_vital_signs" />}
+            >
+              <MyHealth />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/my-sharing"
+          element={
+            <CanAccess resource="my_sharing" action="list" fallback={<Forbidden resource="my_sharing" />}>
+              <MySharing />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/shared-patients"
+          element={
+            <CanAccess resource="shared_patients" action="list" fallback={<Forbidden resource="shared_patients" />}>
+              <SharedPatientList />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/shared-patients/:customerId"
+          element={
+            <CanAccess resource="shared_patients" action="list" fallback={<Forbidden resource="shared_patients" />}>
+              <SharedPatientShow />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/emergency/:id"
+          element={
+            <CanAccess resource="emergency_alerts" action="list" fallback={<Forbidden resource="emergency_alerts" />}>
+              <EmergencyShow />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/my-devices"
+          element={
+            <CanAccess
+              resource="my_devices"
+              action="list"
+              fallback={<Forbidden resource="my_devices" />}
+            >
+              <MyDeviceList />
+            </CanAccess>
+          }
+        />
+        {/* A customer's own conversations with clinics. */}
+        <Route
+          path="/my-conversations"
+          element={
+            <CanAccess
+              resource="my_conversations"
+              action="list"
+              fallback={<Forbidden resource="my_conversations" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<PortalConversations />} />
+          <Route path=":id" element={<PortalConversationShow />} />
+        </Route>
+        <Route
+          path="/clinics"
+          element={
+            <CanAccess
+              resource="clinics"
+              action="list"
+              fallback={<Forbidden resource="clinics" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<ClinicList />} />
+          <Route path="create" element={<ClinicCreate />} />
+          <Route path="edit/:id" element={<ClinicEdit />} />
+          <Route path="show/:id" element={<ClinicShow />} />
+        </Route>
+        <Route
+          path="/customers"
+          element={
+            <CanAccess
+              resource="customers"
+              action="list"
+              fallback={<Forbidden resource="customers" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<CustomerList />} />
+          <Route path="edit/:id" element={<CustomerEdit />} />
+          <Route path="show/:id" element={<CustomerShow />} />
+        </Route>
+        <Route
+          path="/my-appointments"
+          element={
+            <CanAccess
+              resource="my_appointments"
+              action="list"
+              fallback={<Forbidden resource="my_appointments" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route
+            index
+            element={
+              <PortalSwitch
+                portal={<PortalAppointments />}
+                staff={<MyAppointmentList />}
+              />
+            }
+          />
+          <Route
+            path="create"
+            element={
+              <PortalSwitch
+                portal={<PortalAppointmentCreate />}
+                staff={<MyAppointmentCreate />}
+              />
+            }
+          />
+          <Route path="show/:id" element={<MyAppointmentShow />} />
+        </Route>
+        {/* The customer's concluded visits and what came of them; the same grant as their appointments. */}
+        <Route
+          path="/my-results"
+          element={
+            <CanAccess
+              resource="my_appointments"
+              action="list"
+              fallback={<Forbidden resource="my_appointments" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<PortalResults />} />
+          <Route path=":appointmentId" element={<PortalResult />} />
+        </Route>
+        {/* The account's bills and how each was paid; the same grant as their appointments. */}
+        <Route
+          path="/my-payments"
+          element={
+            <CanAccess
+              resource="my_appointments"
+              action="list"
+              fallback={<Forbidden resource="my_appointments" />}
+            >
+              <PortalPayments />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/my-profiles"
+          element={
+            <CanAccess
+              resource="my_profiles"
+              action="list"
+              fallback={<Forbidden resource="my_profiles" />}
+            >
+              <Outlet />
+            </CanAccess>
+          }
+        >
+          <Route index element={<MyProfileList />} />
+          <Route path="create" element={<MyProfileCreate />} />
+          <Route path="edit/:id" element={<MyProfileEdit />} />
+        </Route>
+
+        {/*
           Notifications have a list and nothing else. No create screen, because
           the application raises a notification rather than a person writing
           one; no edit screen, because the only change a recipient may make is
@@ -251,6 +994,7 @@ export function AppRoutes() {
           there is no URL to guard against.
         */}
         <Route path="/notifications" element={<NotificationList />} />
+        <Route path="/notifications/show/:id" element={<NotificationShow />} />
 
         {/* Not a resource: no list of "my accounts", no id in the URL. */}
         <Route path="/profile" element={<Profile />} />
@@ -261,16 +1005,19 @@ export function AppRoutes() {
       {/*
         The unauthenticated half. `fallback` is what renders when there is no
         session; a signed-in visitor is sent to the dashboard instead, so the
-        login URL never shows a form to someone who is already past it.
+        login and registration URLs never show a form to someone who is already
+        past it.
       */}
       <Route
         element={
           <Authenticated key="unauthenticated-routes" fallback={<Outlet />}>
-            <Navigate to="/" replace />
+            <Navigate to="/dashboard" replace />
           </Authenticated>
         }
       >
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Route>
     </Routes>
   );

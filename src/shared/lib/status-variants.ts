@@ -1,6 +1,16 @@
+import type { ActivityStatus } from "@/domains/customer/types";
+import type { ClinicStatus } from "@/domains/clinic/types";
 import type { ComponentProps } from "react";
 
+import type { AppointmentStatus } from "@/domains/appointment/types";
+import type { CustomerStatus } from "@/domains/customer/types";
 import type { DepartmentStatus } from "@/domains/department/types";
+import type { DeviceStatus } from "@/domains/device/types";
+import type { InvoiceStatus, PaymentStatus, ServiceOrderStatus, ServiceStatus } from "@/domains/billing/types";
+import type { EncounterStatus } from "@/domains/encounter/types";
+import type { AssignmentStatus } from "@/domains/assignment/types";
+import type { EmployeeStatus } from "@/domains/employee/types";
+import type { FirstAidStatus } from "@/domains/first-aid/types";
 import type { OrganizationStatus } from "@/domains/organization/types";
 import type { TaskPriority, TaskStatus } from "@/domains/task/types";
 import type { UserStatus } from "@/domains/user/types";
@@ -79,6 +89,46 @@ export const DEPARTMENT_STATUS_VARIANTS: Record<DepartmentStatus, BadgeVariant> 
   };
 
 /**
+ * Patient is the state the whole flow exists to reach, so it is the green one;
+ * neutral is quiet rather than a warning — it is where everybody starts.
+ */
+export const CUSTOMER_STATUS_VARIANTS: Record<CustomerStatus, BadgeVariant> = {
+  neutral: "neutral",
+  patient: "success",
+};
+
+/**
+ * Scheduled is the live state somebody still has to act on, so it is the
+ * coloured one; cancelled is an ordinary end and stays muted.
+ */
+export const APPOINTMENT_STATUS_VARIANTS: Record<AppointmentStatus, BadgeVariant> = {
+  scheduled: "info",
+  checked_in: "warning",
+  // Solid: the one state where something is happening right now.
+  in_exam: "default",
+  awaiting_results: "warning",
+  completed: "success",
+  cancelled: "neutral",
+  no_show: "destructive",
+};
+
+export const EMPLOYEE_STATUS_VARIANTS: Record<EmployeeStatus, BadgeVariant> = {
+  active: "success",
+  inactive: "neutral",
+};
+
+/**
+ * Available is the one a desk is looking for, so it is the green one; assigned
+ * is busy rather than wrong; maintenance wants attention; retired is over.
+ */
+export const DEVICE_STATUS_VARIANTS: Record<DeviceStatus, BadgeVariant> = {
+  available: "success",
+  assigned: "info",
+  maintenance: "warning",
+  retired: "neutral",
+};
+
+/**
  * How each action of a `resource:action` code reads in a badge. `delete` is the
  * only destructive one and the only one coloured as such; `read` stays quiet
  * because most codes are reads and colouring them all would be noise.
@@ -87,6 +137,62 @@ export const DEPARTMENT_STATUS_VARIANTS: Record<DepartmentStatus, BadgeVariant> 
  * out of a code the catalogue returned and nothing guarantees it is one of the
  * three.
  */
+export const ENCOUNTER_STATUS_VARIANTS: Record<EncounterStatus, BadgeVariant> = {
+  in_progress: "info",
+  completed: "success",
+};
+
+export const ASSIGNMENT_STATUS_VARIANTS: Record<AssignmentStatus, BadgeVariant> = {
+  active: "success",
+  ended: "neutral",
+};
+
+export const ACTIVITY_STATUS_VARIANTS: Record<ActivityStatus, BadgeVariant> = {
+  active: "success",
+  inactive: "neutral",
+  paused: "warning",
+};
+
+export const CLINIC_STATUS_VARIANTS: Record<ClinicStatus, BadgeVariant> = {
+  OPERATING: "success",
+  INACTIVE: "neutral",
+};
+
+/** Waiting on staff is info, waiting on the doctor is amber: the result is in and nobody has read it. */
+export const SERVICE_ORDER_STATUS_VARIANTS: Record<ServiceOrderStatus, BadgeVariant> = {
+  ordered: "outline",
+  in_progress: "info",
+  result_ready: "warning",
+  reviewed: "success",
+  cancelled: "neutral",
+};
+
+/** Waiting on a reviewer is amber; out for patients is green. */
+export const FIRST_AID_STATUS_VARIANTS: Record<FirstAidStatus, BadgeVariant> = {
+  draft: "outline",
+  pending_review: "warning",
+  reviewed: "info",
+  published: "success",
+  archived: "neutral",
+};
+
+export const SERVICE_STATUS_VARIANTS: Record<ServiceStatus, BadgeVariant> = {
+  active: "success",
+  inactive: "neutral",
+};
+
+export const INVOICE_STATUS_VARIANTS: Record<InvoiceStatus, BadgeVariant> = {
+  unpaid: "warning",
+  paid: "success",
+  cancelled: "neutral",
+};
+
+export const PAYMENT_STATUS_VARIANTS: Record<PaymentStatus, BadgeVariant> = {
+  pending: "info",
+  paid: "success",
+  failed: "destructive",
+};
+
 export const PERMISSION_ACTION_VARIANTS: Record<string, BadgeVariant> = {
   read: "outline",
   write: "secondary",

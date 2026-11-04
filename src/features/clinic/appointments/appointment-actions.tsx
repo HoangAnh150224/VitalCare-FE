@@ -1,0 +1,335 @@
+import { useCan, useCustomMutation, useInvalidate, useNotification, useOne } from "@refinedev/core";
+import { CalendarClockIcon, CheckIcon, LogInIcon, UserXIcon, XIcon } from "lucide-react";
+import { useState } from "react";
+
+import { API_URL } from "@/shared/api/constants";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
+import { Button } from "@/shared/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog";
+import { Input } from "@/shared/ui/input";
+import { Textarea } from "@/shared/ui/textarea";
+import type { Appointment } from "@/domains/appointment/types";
+import { GENDER_LABELS, type Customer } from "@/domains/customer/types";
+import { ID_TYPE_LABELS } from "@/domains/profile/types";
+import { formatQueueNumber } from "@/domains/appointment/types";
+import { formatLocalDate } from "@/shared/lib/format";
+import { clinicToday } from "./clinic-day";
+import { useClinicDoctors } from "./doctor-day";
+
+type Props = {
+  appointment: Appointment;
+  /**
+   * Which side of the book this is: the front desk (`appointments`) checks
+   * in, completes, reschedules, cancels and marks a no-show; a customer
+   * (`my_appointments`) may reschedule and cancel their own.
+   */
+  resource: "appointments" | "my_appointments";
+  size?: "sm" | "default";
+  /** A list row: only the check-in, which the desk does with the person standing there. */
+  compact?: boolean;
+  /** Called after an action succeeds, with the updated appointment. */
+  onDone?: (appointment: Appointment) => void;
+};
+
+type Action = "check-in" | "complete" | "cancel" | "no-show";
+
+const DONE: Record<Action, string> = {
+  "check-in": "Đã tiếp nhận",
+  complete: "Đã hoàn tất lượt khám",
+  cancel: "Đã huỷ đăng ký khám",
+  "no-show": "Đã ghi nhận không đến",
+};
+
+/**
+ * What can be done to one registered visit.
+ *
+ * Each button shows only when it would succeed: the right permission, the
+ * right status, and — for check-in — today being its date in the clinic. A
+ * button the API is certain to refuse is a button that teaches people to
+ * ignore buttons.
+ */
+export function AppointmentActions({ appointment, resource, size = "default", compact = false, onDone }: Props) {
+  const { open } = useNotification();
+  const invalidate = useInvalidate();
+  const { mutate, mutation } = useCustomMutation<Appointment>();
+  // What cannot be undone asks first: cancelling, a no-show, and a check-in
+  // (there is no un-check-in), which also has the desk match the person to their papers.
+  const [confirming, setConfirming] = useState<"cancel" | "no-show" | "check-in" | null>(null);
+  const [reason, setReason] = useState("");
+  // The clinic cancelling a customer's visit has to say why; the API refuses
+  // it otherwise. A customer cancelling their own only confirms.
+  const desk = resource === "appointments";
+  // Rescheduling: another doctor of the same clinic, another day, or both.
+  const [rescheduling, setRescheduling] = useState(false);
+  const [newDate, setNewDate] = useState("");
+
+  const { data: canCheckIn } = useCan({ resource: "appointments", action: "check_in" });
+  // "cancel" stands for the write permission on either side of the book.
+  const { data: canWrite } = useCan({ resource, action: "cancel" });
+
+  const today = clinicToday();
+  const scheduled = appointment.status === "scheduled";
+  const writable = canWrite?.can ?? false;
+  const showCheckIn = desk && scheduled && (canCheckIn?.can ?? false) && appointment.appointmentDate === today;
+  const showComplete =
+    !compact && desk && writable && (appointment.status === "checked_in" || appointment.status === "in_exam");
+  const showChange = !compact && scheduled && writable;
+  const showNoShow = showChange && desk && appointment.appointmentDate <= today;
+
+  const { doctors, isLoading: doctorsLoading } = useClinicDoctors(rescheduling ? appointment.clinic.id : undefined, newDate);
+  // A new day at the same clinic, in its shared line: what matters is whether that day can be had.
+  const dayOpen = doctors.some((candidate) => candidate.day?.working && candidate.day?.bookable);
+  const samePlace = newDate === appointment.appointmentDate;
+
+  if (!showCheckIn && !showComplete && !showChange) {
+    return null;
+  }
+
+  const finish = (message: string, data: Appointment | undefined, description?: string) => {
+    invalidate({ resource, invalidates: ["detail", "list"], id: appointment.id });
+    open?.({ type: "success", message, description });
+    if (data) onDone?.(data);
+  };
+
+  const run = (action: Action) => {
+    mutate(
+      {
+        url: `${API_URL}/${resource}/${appointment.id}/${action}`,
+        method: "post",
+        values: action === "cancel" && desk ? { reason: reason.trim() } : {},
+        // See ResetPasswordCard: without it Spring answers 415.
+        config: { headers: { "Content-Type": "application/json" } },
+        successNotification: false,
+      },
+      {
+        onSuccess: ({ data }) => {
+          // A check-in can change the customer too.
+          invalidate({ resource: "customers", invalidates: ["detail", "list"], id: appointment.customer.id });
+          const becamePatient =
+            action === "check-in" &&
+            appointment.customer.status === "neutral" &&
+            data?.customer?.status === "patient";
+          finish(
+            DONE[action],
+            data,
+            becamePatient ? `${appointment.customer.fullName} đã được kích hoạt thành bệnh nhân.` : undefined
+          );
+        },
+      }
+    );
+  };
+
+  // Same rule as cancel on both sides: still registered, and the API holds it
+  // to two hours before the visit is expected (SRS BR-26).
+  const reschedule = () => {
+    mutate(
+      {
+        url: `${API_URL}/${resource}/${appointment.id}/reschedule`,
+        method: "post",
+        values: { appointmentDate: newDate },
+        config: { headers: { "Content-Type": "application/json" } },
+        successNotification: false,
+      },
+      {
+        onSuccess: ({ data }) => {
+          setRescheduling(false);
+          finish(
+            "Đã đổi đăng ký khám",
+            data,
+            data?.queueNumber != null ? `Số khám mới: ${formatQueueNumber(data.queueNumber)}.` : undefined
+          );
+        },
+      }
+    );
+  };
+
+  const busy = mutation.isPending;
+  const visit = `${appointment.customer.fullName} · ${formatLocalDate(appointment.appointmentDate)} · số ${formatQueueNumber(appointment.queueNumber)}`;
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {showCheckIn && (
+        <Button size={size} onClick={() => setConfirming("check-in")} disabled={busy}>
+          <LogInIcon />
+          Tiếp nhận
+        </Button>
+      )}
+      {showComplete && (
+        <Button size={size} onClick={() => run("complete")} disabled={busy}>
+          <CheckIcon />
+          Hoàn tất
+        </Button>
+      )}
+      {showChange && (
+        <Button
+          size={size}
+          variant="outline"
+          onClick={() => {
+            setNewDate(appointment.appointmentDate);
+            setRescheduling(true);
+          }}
+          disabled={busy}
+        >
+          <CalendarClockIcon />
+          Đổi ngày khám
+        </Button>
+      )}
+      {showNoShow && (
+        <Button size={size} variant="outline" onClick={() => setConfirming("no-show")} disabled={busy}>
+          <UserXIcon />
+          Không đến
+        </Button>
+      )}
+      {showChange && (
+        <Button
+          size={size}
+          variant="outline"
+          onClick={() => {
+            setReason("");
+            setConfirming("cancel");
+          }}
+          disabled={busy}
+        >
+          <XIcon />
+          Huỷ
+        </Button>
+      )}
+
+      <Dialog open={rescheduling} onOpenChange={setRescheduling}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Đổi đăng ký khám</DialogTitle>
+            <DialogDescription>
+              {visit}
+. Đổi ngày sẽ được cấp số khám mới của ngày đó, vào hàng chờ chung; mã phiếu giữ nguyên.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3">
+            <div className="grid gap-3 sm:max-w-[11rem]">
+              <Input
+                type="date"
+                aria-label="Ngày khám mới"
+                min={today}
+                value={newDate}
+                onChange={(event) => setNewDate(event.target.value)}
+              />
+            </div>
+            {samePlace ? (
+              <p className="text-muted-foreground text-sm">Đây là ngày hiện tại của lượt đăng ký này.</p>
+            ) : (
+              !doctorsLoading &&
+              !dayOpen && (
+                <p className="text-destructive text-sm">
+                  Ngày này phòng khám không có bác sĩ khám hoặc đã hết lượt. Vui lòng chọn ngày khác.
+                </p>
+              )
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRescheduling(false)} disabled={busy}>
+              Đóng
+            </Button>
+            <Button onClick={reschedule} disabled={samePlace || !dayOpen || busy}>
+              {busy ? "Đang lưu..." : "Xác nhận đổi"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={confirming !== null} onOpenChange={(next) => !next && setConfirming(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirming === "check-in"
+                ? `Tiếp nhận ${appointment.customer.fullName}?`
+                : confirming === "no-show"
+                  ? "Ghi nhận bệnh nhân không đến?"
+                  : "Huỷ đăng ký khám này?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirming === "check-in"
+                ? `Số ${formatQueueNumber(appointment.queueNumber)} · ${appointment.doctor ? appointment.doctor.fullName : "vào hàng chờ chung"}. Đối chiếu thông tin dưới đây với giấy tờ tuỳ thân của người tới khám; tiếp nhận xong không huỷ được.`
+                : `${visit}. ${
+                    confirming === "no-show"
+                      ? "Lượt đăng ký sẽ đóng lại; bệnh nhân muốn khám phải đăng ký mới."
+                      : "Đăng ký đã huỷ không khôi phục được, số khám không cấp lại."
+                  }`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {confirming === "check-in" && <CheckInIdentity appointment={appointment} />}
+          {confirming === "cancel" && desk && (
+            <Textarea
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              maxLength={500}
+              placeholder="Lý do huỷ (bắt buộc) — bệnh nhân sẽ thấy nội dung này"
+              aria-label="Lý do huỷ"
+            />
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Không</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={confirming === "cancel" && desk && reason.trim() === ""}
+              onClick={() => confirming && run(confirming)}
+            >
+              {confirming === "check-in"
+                ? "Xác nhận tiếp nhận"
+                : confirming === "no-show"
+                  ? "Xác nhận không đến"
+                  : "Xác nhận huỷ"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+/**
+ * Who is about to be checked in, as their papers would show it: the desk reads
+ * this against the ID card in front of them. Read when the question opens;
+ * without access to the record it falls back to what the visit carries.
+ */
+function CheckInIdentity({ appointment }: { appointment: Appointment }) {
+  const { result: customer, query } = useOne<Customer>({
+    resource: "customers",
+    id: appointment.customer.id,
+    errorNotification: false,
+    queryOptions: { retry: false },
+  });
+  const idLabel = customer?.nationalIdType ? ID_TYPE_LABELS[customer.nationalIdType] : "Giấy tờ";
+  const rows: [string, string][] = [
+    ["Họ và tên", customer?.fullName ?? appointment.customer.fullName],
+    ["Ngày sinh", customer?.dateOfBirth ? formatLocalDate(customer.dateOfBirth) : "—"],
+    ["Giới tính", customer?.gender ? GENDER_LABELS[customer.gender] : "—"],
+    [idLabel, customer?.nationalId ?? "—"],
+    ["Số điện thoại", customer?.phone ?? appointment.customer.phone],
+  ];
+
+  return (
+    <dl className="bg-muted/50 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-lg p-4 text-sm">
+      {rows.map(([label, value]) => (
+        <div key={label} className="contents">
+          <dt className="text-muted-foreground">{label}</dt>
+          <dd className="font-medium tabular-nums">{query.isLoading ? "…" : value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}

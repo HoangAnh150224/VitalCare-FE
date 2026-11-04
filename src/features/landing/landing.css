@@ -1,0 +1,297 @@
+/* The public landing page. The app's teal, deepened for the film at the top
+   and back to mist for the sections below it; one red kept for the pulse
+   and for alerts. */
+.landing {
+  --landing-ink: #0f3d3f;
+  --landing-teal: #008c91;
+  --landing-teal-deep: #0b5f63;
+  --landing-mist: #f3faf8;
+  --landing-mint: #dff3ef;
+  --landing-paper: #ffffff;
+  --landing-muted: #4f6b6d;
+  --landing-pulse: #d6455d;
+  --cine-night: #06282a;
+  --cine-deep: #0b3b3e;
+
+  background-color: var(--landing-mist);
+  color: var(--landing-ink);
+}
+
+.landing-display {
+  font-family: "Be Vietnam Pro", var(--font-sans);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.landing-ink {
+  color: var(--landing-ink);
+}
+
+.landing-muted {
+  color: var(--landing-muted);
+}
+
+.landing a:focus-visible,
+.landing button:focus-visible {
+  outline: 2px solid #5fd4c7;
+  outline-offset: 3px;
+}
+
+.landing-section-title {
+  font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.625rem);
+  line-height: 1.12;
+}
+
+/* --- the film ------------------------------------------------------------- */
+.cine {
+  background:
+    radial-gradient(70% 60% at 75% 45%, #0f4d50 0%, transparent 70%),
+    linear-gradient(160deg, var(--cine-deep), var(--cine-night) 70%);
+  color: #fff;
+}
+
+.cine-photo-wrap {
+  overflow: hidden;
+}
+
+.cine-photo {
+  will-change: transform;
+}
+
+/* Darkens the photo where the headline sits, and towards the stage below. */
+.cine-photo-shade {
+  background:
+    linear-gradient(90deg, rgb(6 40 42 / 0.92) 0%, rgb(6 40 42 / 0.6) 42%, rgb(6 40 42 / 0.15) 75%),
+    linear-gradient(0deg, rgb(6 40 42 / 0.7), transparent 40%);
+}
+
+.cine-glow {
+  background:
+    radial-gradient(40% 40% at 70% 50%, rgb(46 196 182 / 0.12), transparent 70%),
+    linear-gradient(rgb(143 227 217 / 0.04) 1px, transparent 1px) 0 0 / 100% 64px;
+}
+
+.cine-stage {
+  transform-origin: center;
+}
+
+.cine-caption {
+  width: 470px;
+  will-change: transform, opacity;
+}
+
+.cine-title-hero {
+  font-size: 66px;
+  line-height: 1.04;
+}
+
+.cine-title {
+  font-size: 46px;
+  line-height: 1.08;
+}
+
+.cine-body {
+  font-size: 19px;
+  line-height: 1.65;
+  max-width: 34em;
+}
+
+.cine[data-layout="wide"] .cine-caption {
+  left: 110px;
+  top: 230px;
+}
+
+.cine[data-layout="wide"] .cine-caption[data-scene="0"] {
+  top: 290px;
+  width: 660px;
+}
+
+.cine[data-layout="wide"] .cine-visual {
+  left: 600px;
+  top: 150px;
+}
+
+/* Phones: the words above, the picture below, the picture scaled to fit. */
+.cine[data-layout="tall"] .cine-caption {
+  left: 40px;
+  top: 130px;
+  width: 640px;
+}
+
+.cine[data-layout="tall"] .cine-title-hero {
+  font-size: 60px;
+}
+
+.cine[data-layout="tall"] .cine-title {
+  font-size: 46px;
+}
+
+.cine[data-layout="tall"] .cine-body {
+  font-size: 24px;
+}
+
+.cine[data-layout="tall"] .cine-visual {
+  left: 40px;
+  top: 640px;
+  transform: scale(0.68);
+  transform-origin: top left;
+}
+
+.cine-visual {
+  perspective: 1600px;
+}
+
+.cine-layer {
+  will-change: transform, opacity;
+}
+
+.cine-layer-devices,
+.cine-layer-dash {
+  perspective: 1400px;
+}
+
+/* The camera moves inside this frame: zooming on the chart must not spill
+   over the words beside it. */
+.cine-layer-dash {
+  overflow: hidden;
+  border-radius: 22px;
+}
+
+.cine-devices-rig,
+.cine-dash-rig,
+.cine-phone-rig {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.cine-glass {
+  background: rgb(13 68 71 / 0.78);
+  border: 1px solid rgb(143 227 217 / 0.28);
+  box-shadow: 0 20px 40px -24px rgb(0 0 0 / 0.6);
+}
+
+.cine-glass-light {
+  background: rgb(255 255 255 / 0.97);
+  box-shadow: 0 30px 60px -24px rgb(0 0 0 / 0.55);
+}
+
+.cine-particle {
+  filter: drop-shadow(0 0 6px rgb(95 212 199 / 0.9));
+}
+
+.cine-progress-dot {
+  color: rgb(207 233 230 / 0.45);
+  transition: color 0.3s;
+}
+
+.cine-progress-mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+  transition:
+    width 0.3s,
+    background-color 0.3s;
+}
+
+.cine-progress-dot[data-active] {
+  color: #d9f6f2;
+}
+
+.cine-progress-dot[data-active] .cine-progress-mark {
+  width: 22px;
+  background: #5fd4c7;
+}
+
+/* The opening words arrive once on load; everything after is scroll. */
+.cine-caption[data-scene="0"] > * {
+  animation: cine-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.cine-caption[data-scene="0"] > :nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+@keyframes cine-rise {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+  }
+}
+
+/* --- sections after the film ------------------------------------------------ */
+.landing-feature {
+  border-top: 2px solid var(--landing-mint);
+  padding-top: 1.25rem;
+}
+
+.landing-band {
+  background: var(--landing-mint);
+}
+
+.landing-flow-track {
+  background: rgb(0 140 145 / 0.15);
+}
+
+.landing-flow-line {
+  background: var(--landing-teal);
+}
+
+.landing-flow-number {
+  position: relative;
+  display: inline-flex;
+  width: 46px;
+  height: 46px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid var(--landing-teal);
+  background: var(--landing-paper);
+  color: var(--landing-teal);
+  font-size: 1.125rem;
+}
+
+.landing-photo {
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--landing-mint);
+}
+
+.landing-photo img {
+  transition: scale 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.landing-photo:hover img {
+  scale: 1.04;
+}
+
+.landing-ai-card {
+  background: var(--landing-paper);
+  border-radius: 20px;
+  padding: 1.75rem;
+  box-shadow: 0 24px 48px -32px rgb(11 95 99 / 0.45);
+}
+
+.landing-note {
+  border-left: 3px solid var(--landing-teal);
+  padding-left: 0.875rem;
+  color: var(--landing-ink);
+}
+
+.landing-cta {
+  background:
+    radial-gradient(60% 80% at 85% 20%, rgb(46 196 182 / 0.25), transparent 70%),
+    var(--landing-teal-deep);
+  border-radius: 28px;
+}
+
+.landing-rule {
+  border-top: 1px solid var(--landing-mint);
+}
+
+.landing-link {
+  color: var(--landing-teal-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

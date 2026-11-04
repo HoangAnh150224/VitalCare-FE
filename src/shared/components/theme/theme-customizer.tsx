@@ -161,7 +161,7 @@ export function ThemeCustomizer({ className }: { className?: string }) {
                     className={cn(
                       "size-4 shrink-0 rounded-[3px] border",
                       value === "dark"
-                        ? "border-transparent bg-[oklch(0.32_0.117_262)]"
+                        ? "border-transparent bg-sidebar"
                         : "border-border bg-card"
                     )}
                   />

@@ -11,6 +11,7 @@ import { LogOutIcon, SearchIcon, UserRoundIcon } from "lucide-react";
 import { Link } from "react-router";
 
 import { NotificationBell } from "@/shared/components/layout/notification-bell";
+import { AlertWatcher } from "@/shared/components/layout/alert-watcher";
 import { ThemeCustomizer } from "@/shared/components/theme/theme-customizer";
 import { ThemeToggle } from "@/shared/components/theme/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
@@ -29,7 +30,8 @@ type Identity = {
   fullName?: string;
   firstName?: string;
   lastName?: string;
-  email?: string;
+  email?: string | null;
+  phone?: string;
   avatar?: string;
 };
 
@@ -71,7 +73,7 @@ export function Header() {
           {/* On mobile the sidebar brand is off-canvas, so restate it here. */}
           {isMobile && (
             <div className="flex min-w-0 items-center gap-2">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground [&_svg]:size-4">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white p-0.5 shadow-sm">
                 {title.icon}
               </div>
               <span className="truncate text-sm font-bold tracking-tight">
@@ -84,9 +86,10 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-1">
+          <AlertWatcher />
           <NotificationBell />
-          <ThemeToggle />
-          <ThemeCustomizer />
+          <ThemeToggle className="hidden" />
+          <ThemeCustomizer className="hidden" />
           <UserMenu />
         </div>
       </div>
@@ -136,6 +139,8 @@ function UserMenu() {
   const name =
     user?.fullName ??
     [user?.firstName, user?.lastName].filter(Boolean).join(" ");
+  // Email is optional now; the phone number always exists, so it stands in.
+  const contact = user?.email || user?.phone;
 
   return (
     <DropdownMenu>
@@ -155,13 +160,13 @@ function UserMenu() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="min-w-52">
-        {(name || user?.email) && (
+        {(name || contact) && (
           <>
             <DropdownMenuLabel className="flex flex-col gap-0.5">
               <span className="truncate text-sm font-medium">{name}</span>
-              {user?.email && (
+              {contact && (
                 <span className="truncate text-xs font-normal text-muted-foreground">
-                  {user.email}
+                  {contact}
                 </span>
               )}
             </DropdownMenuLabel>

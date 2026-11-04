@@ -147,13 +147,13 @@ export const RowLevelPolicyShow = () => {
 
               <div className="text-muted-foreground grid gap-2 text-xs sm:grid-cols-2">
                 <span>
-                  Tạo bởi {record?.createdBy?.username ?? "—"}
+                  Tạo bởi {record?.createdBy?.fullName ?? "—"}
                   {record?.createdAt
                     ? ` vào ${formatDateTime(record.createdAt)}`
                     : ""}
                 </span>
                 <span>
-                  Cập nhật lần cuối bởi {record?.updatedBy?.username ?? "—"}
+                  Cập nhật lần cuối bởi {record?.updatedBy?.fullName ?? "—"}
                   {record?.updatedAt
                     ? ` vào ${formatDateTime(record.updatedAt)}`
                     : ""}

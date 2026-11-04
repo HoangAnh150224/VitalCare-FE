@@ -54,8 +54,7 @@ export const DEFAULTS = {
  * Swatch metadata for the customizer.
  *
  * `light`/`dark` mirror the `--preset-l|c|h` triplets declared in
- * `styles/theme.css`, so a swatch always shows the colour the preset will
- * actually produce. Change one, change the other.
+ * `styles/theme.css`; the default light swatch uses the exact mobile brand hex.
  */
 export const COLOR_PRESETS: Array<{
   key: ColorPreset;
@@ -63,7 +62,7 @@ export const COLOR_PRESETS: Array<{
   light: string;
   dark: string;
 }> = [
-  { key: "navy", label: "Xanh navy", light: "oklch(0.306 0.091 257)", dark: "oklch(0.72 0.13 257)" },
+  { key: "navy", label: "VitalCare", light: "#008C91", dark: "oklch(0.72 0.13 199.23)" },
   { key: "blue", label: "Xanh dương", light: "oklch(0.49 0.175 250)", dark: "oklch(0.7 0.18 250)" },
   { key: "indigo", label: "Chàm", light: "oklch(0.46 0.175 277)", dark: "oklch(0.68 0.18 277)" },
   { key: "violet", label: "Tím", light: "oklch(0.47 0.185 300)", dark: "oklch(0.7 0.19 300)" },

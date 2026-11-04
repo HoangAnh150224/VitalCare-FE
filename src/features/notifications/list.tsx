@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import React, { type ComponentProps } from "react";
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
@@ -21,7 +22,10 @@ import {
 import { DeleteButton } from "@/shared/components/buttons/delete";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { useNotifications, type Notification } from "@/shared/hooks/use-notifications";
+import {
+  useNotifications,
+  type Notification,
+} from "@/shared/hooks/use-notifications";
 import { cn } from "@/shared/lib/utils";
 import { formatDateTime } from "@/shared/lib/format";
 
@@ -115,9 +119,15 @@ export const NotificationList = () => {
         enableSorting: true,
         cell: ({ row }) => (
           <div className="flex flex-col gap-0.5">
-            <span className={cn("text-sm", !row.original.read && "font-semibold")}>
+            <Link
+              to={`/notifications/show/${row.original.id}`}
+              className={cn(
+                "text-sm hover:underline",
+                !row.original.read && "font-semibold"
+              )}
+            >
               {row.original.title}
-            </span>
+            </Link>
             {row.original.body && (
               <span className="line-clamp-1 text-xs text-muted-foreground">
                 {row.original.body}
@@ -162,7 +172,11 @@ export const NotificationList = () => {
                 Đánh dấu đã đọc
               </Button>
             )}
-            <DeleteButton recordItemId={row.original.id} iconOnly size="icon-sm" />
+            <DeleteButton
+              recordItemId={row.original.id}
+              iconOnly
+              size="icon-sm"
+            />
           </div>
         ),
       }),

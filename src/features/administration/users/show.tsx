@@ -91,7 +91,7 @@ export const UserShow = () => {
                 )}
               </div>
               <p className="text-muted-foreground text-sm">
-                <span className="font-mono">{record?.username ?? "—"}</span>
+                <span className="font-mono">{record?.phone ?? "—"}</span>
                 {record?.email ? ` · ${record.email}` : ""}
               </p>
             </div>
@@ -114,8 +114,8 @@ export const UserShow = () => {
       <div className="grid min-w-0 gap-4 lg:grid-cols-3">
         <DetailPanel title="Thông tin định danh">
           <DetailList>
-            <DetailRow label="Tên đăng nhập">
-              <span className="font-mono">{record?.username ?? "—"}</span>
+            <DetailRow label="Số điện thoại">
+              <span className="font-mono">{record?.phone ?? "—"}</span>
             </DetailRow>
             <DetailRow label="Email">
               {record?.email ? (

@@ -34,6 +34,10 @@ const MESSAGES: Record<string, string> = {
   "buttons.cancel": "Hủy",
   "buttons.undo": "Hoàn tác",
 
+  // The browser tab: "Lịch hẹn | VitalCare", and "VitalCare" where a page has no label.
+  "documentTitle.default": "VitalCare",
+  "documentTitle.suffix": " | VitalCare",
+
   // Refine writes the resource into those sentences as `<identifier>.<identifier>`.
   "users.users": "người dùng",
   "roles.roles": "vai trò",
@@ -45,6 +49,18 @@ const MESSAGES: Record<string, string> = {
   "organizations.organizations": "tổ chức",
   "departments.departments": "phòng ban",
   "notifications.notifications": "thông báo",
+  "customers.customers": "khách hàng",
+  "appointments.appointments": "lượt đăng ký khám",
+  "my_appointments.my_appointments": "lượt đăng ký khám",
+  "my_profiles.my_profiles": "hồ sơ người bệnh",
+  "clinics.clinics": "phòng khám",
+  "employees.employees": "nhân viên",
+  "devices.devices": "thiết bị",
+  "clinical_encounters.clinical_encounters": "lần khám",
+  "doctor_schedules.doctor_schedules": "ca làm việc",
+  "monitoring_assignments.monitoring_assignments": "phân công",
+  "my_patients.my_patients": "bệnh nhân",
+  "view_as.view_as": "xem dưới vai trò",
 };
 
 function interpolate(text: string, values: unknown): string {

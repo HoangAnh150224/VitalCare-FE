@@ -1,0 +1,517 @@
+import { useEffect, useState } from "react";
+import { useCan, useCustom, useCustomMutation, useInvalidate, useList } from "@refinedev/core";
+import {
+  CheckIcon,
+  DoorOpenIcon,
+  PauseIcon,
+  PlayIcon,
+  PhoneCallIcon,
+  SkipForwardIcon,
+  StethoscopeIcon,
+  UserXIcon,
+} from "lucide-react";
+import { Link } from "react-router";
+
+import { API_URL } from "@/shared/api/constants";
+import { subscribe } from "@/shared/api/live";
+import { customResult } from "@/shared/hooks/use-custom-result";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
+import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
+import { formatQueueNumber } from "@/domains/appointment/types";
+import { newEncounterPath, type Encounter } from "@/domains/encounter/types";
+import {
+  EXAM_ROOM_STATUS_LABELS,
+  type AwayVisit,
+  type BoardVisit,
+  type ExamRoomStatus,
+  type RoomBoard,
+} from "@/domains/exam-room/types";
+import { cn } from "@/shared/lib/utils";
+
+type Room = RoomBoard["rooms"][number];
+type RoomAction = "call-next" | "pass-over" | "no-show" | "finish" | "pause" | "resume";
+/** What happens to the patient in the room: each asks before it is done. */
+type Decision = "finish" | "pass-over" | "no-show";
+
+const STATUS_VARIANT: Record<ExamRoomStatus, "success" | "default" | "neutral"> = {
+  available: "success",
+  occupied: "default",
+  paused: "neutral",
+};
+
+/** `HH:mm` of an instant, on the clinic's (the browser's) clock. */
+const clockTime = (value: string | null) =>
+  value ? new Date(value).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "—";
+
+/**
+ * The clinic's floor: every examination room, who is in it, and who waits
+ * for that room's doctor.
+ *
+ * Who goes into a room is the server's to decide (one dispatcher, safe under
+ * any number of callers): a free room with a doctor on duty calls the next
+ * person by itself as soon as somebody checks in or the room frees up. The
+ * buttons here are for what only a person knows: the patient has been seen,
+ * did not answer, or the room has to stop for a while.
+ *
+ * Kept current by a push on `/topic/exam_rooms/{clinicId}` (a nudge to
+ * reload; the board itself comes over HTTP, through the clinic scope), with a
+ * slow poll behind it for when the socket is down.
+ */
+export function ExamRoomBoard() {
+  const { result, query } = useCustom<RoomBoard>({
+    url: `${API_URL}/exam_rooms/board`,
+    method: "get",
+    queryOptions: { refetchInterval: 30_000 },
+  });
+  const board = customResult(result?.data, "rooms");
+  const clinicId = board?.clinicId;
+
+  useEffect(() => {
+    if (!clinicId) return;
+    return subscribe(`/topic/exam_rooms/${clinicId}`, () => void query.refetch());
+    // query.refetch is stable for the life of the query.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clinicId]);
+
+  const { data: canOperate } = useCan({ resource: "exam_rooms", action: "operate" });
+  const { data: canSetUp } = useCan({ resource: "exam_rooms", action: "create" });
+  const { data: canExamine } = useCan({ resource: "clinical_encounters", action: "create" });
+
+  const invalidate = useInvalidate();
+  const { mutate } = useCustomMutation<RoomBoard>();
+  // Per room: two rooms worked at once each keep their own button disabled.
+  const [pending, setPending] = useState<Record<number, RoomAction>>({});
+  // The room and the decision waiting for a yes; the act runs only after it.
+  const [asking, setAsking] = useState<{ room: Room; action: Decision } | null>(null);
+
+  const act = (room: Room, action: RoomAction) => {
+    setPending((current) => ({ ...current, [room.id]: action }));
+    mutate(
+      {
+        url: `${API_URL}/exam_rooms/${room.id}/${action}`,
+        method: "post",
+        values: {},
+        // See ResetPasswordCard: without it Spring answers 415.
+        config: { headers: { "Content-Type": "application/json" } },
+        successNotification: false,
+      },
+      {
+        onSettled: () => {
+          setPending((current) => {
+            const rest = { ...current };
+            delete rest[room.id];
+            return rest;
+          });
+          void query.refetch();
+          // Finishing completes a visit; the appointment lists should show it.
+          invalidate({ resource: "appointments", invalidates: ["list"] });
+        },
+      }
+    );
+  };
+
+  const rooms = board?.rooms ?? [];
+  // The actions go to the room, and the server acts on whoever is in it then.
+  // If the occupant changed while the question was open (someone else let them
+  // go and the next patient was called), the question was about somebody else.
+  const askedAbout = asking?.room.current?.appointmentId;
+  const liveOccupant = asking ? rooms.find((room) => room.id === asking.room.id)?.current?.appointmentId : undefined;
+  const stale = asking !== null && liveOccupant !== askedAbout;
+  useEffect(() => {
+    if (stale) setAsking(null);
+  }, [stale]);
+  const waitingTotal =
+    rooms.reduce((sum, room) => sum + room.waiting.length, 0) +
+    (board?.withoutRoom ?? []).reduce((sum, queue) => sum + queue.waiting.length, 0);
+
+  return (
+    <ListView>
+      <ListViewHeader
+        title="Điều phối phòng khám"
+        canCreate={false}
+        description="Người đã tiếp nhận được tự động gọi vào phòng của bác sĩ mình khi phòng trống. Bảng tự cập nhật."
+      />
+
+      {board && (
+        <div className="text-muted-foreground flex flex-wrap gap-x-6 gap-y-1 text-sm">
+          <span>
+            <strong className="text-foreground tabular-nums">{rooms.filter((r) => r.status === "occupied").length}</strong> /{" "}
+            {rooms.length} phòng đang khám
+          </span>
+          <span>
+            <strong className="text-foreground tabular-nums">{waitingTotal}</strong> người đang chờ
+          </span>
+          <span>Cập nhật lúc {clockTime(board.at)}</span>
+        </div>
+      )}
+
+      {board && rooms.length === 0 && (
+        <Card className="flex flex-col items-start gap-2 p-6">
+          <p className="font-medium">Cơ sở chưa có phòng khám nào.</p>
+          <p className="text-muted-foreground text-sm">
+            {canSetUp?.can
+              ? "Thêm phòng ở trang chi tiết cơ sở, rồi xếp bác sĩ vào phòng trong Lịch bác sĩ."
+              : "Quản trị phòng khám thêm phòng ở trang chi tiết cơ sở."}
+          </p>
+          {canSetUp?.can && (
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/clinics/show/${board.clinicId}`}>Mở trang cơ sở</Link>
+            </Button>
+          )}
+        </Card>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {rooms.map((room) => (
+          <RoomCard
+            key={room.id}
+            room={room}
+            canOperate={canOperate?.can ?? false}
+            canExamine={canExamine?.can ?? false}
+            pending={pending[room.id] ?? null}
+            onAction={(action) =>
+              action === "finish" || action === "pass-over" || action === "no-show"
+                ? setAsking({ room, action })
+                : act(room, action)
+            }
+          />
+        ))}
+      </div>
+
+      <ConfirmDecision
+        asking={asking}
+        onClose={() => setAsking(null)}
+        onConfirm={() => {
+          if (asking && !stale) act(asking.room, asking.action);
+          setAsking(null);
+        }}
+      />
+
+      {board && (board.awaitingPayment?.length ?? 0) > 0 && (
+        <Card className="flex flex-col gap-3 p-5">
+          <div>
+            <h3 className="font-semibold">Chờ thanh toán phí khám ({board.awaitingPayment!.length})</h3>
+            <p className="text-muted-foreground text-sm">
+              Đã tiếp nhận nhưng chưa trả phí khám nên chưa vào hàng chờ. Thu phí xong, bệnh nhân được xếp theo thời điểm thanh toán.
+            </p>
+          </div>
+          <ol className="flex flex-col gap-1">
+            {board.awaitingPayment!.map(({ visit, doctor }) => (
+              <li key={visit.appointmentId} className="flex items-center gap-3 text-sm">
+                <span className="w-7 font-semibold tabular-nums">{formatQueueNumber(visit.queueNumber)}</span>
+                <Link to={`/appointments/show/${visit.appointmentId}`} className="min-w-0 flex-1 truncate hover:underline">
+                  {visit.patientName}
+                </Link>
+                <span className="text-muted-foreground truncate text-xs">{doctor?.fullName ?? "Hàng chờ chung"}</span>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
+
+      {board && (board.sharedQueue?.length ?? 0) > 0 && (
+        <Card className="flex flex-col gap-3 p-5" data-testid="shared-queue">
+          <div>
+            <h3 className="font-semibold">Hàng chờ chung ({board.sharedQueue!.length})</h3>
+            <p className="text-muted-foreground text-sm">
+              Đã tiếp nhận và trả phí, theo thứ tự thanh toán. Phòng nào trống sẽ tự gọi người đầu hàng; bác sĩ của phòng đó khám.
+            </p>
+          </div>
+          <ol className="flex flex-col gap-1">
+            {board.sharedQueue!.map((visit, index) => (
+              <li key={visit.appointmentId} className="flex items-center gap-3 text-sm">
+                <span className="text-muted-foreground w-5 text-xs tabular-nums">{index + 1}.</span>
+                <span className="w-7 font-semibold tabular-nums">{formatQueueNumber(visit.queueNumber)}</span>
+                <Link to={`/appointments/show/${visit.appointmentId}`} className="min-w-0 flex-1 truncate hover:underline">
+                  {visit.patientName}
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
+
+      {board && board.withoutRoom.length > 0 && (
+        <Card className="flex flex-col gap-3 p-5">
+          <div>
+            <h3 className="font-semibold">Đang chờ nhưng bác sĩ chưa có phòng</h3>
+            <p className="text-muted-foreground text-sm">
+              Bác sĩ không có buổi làm việc nào xếp phòng vào lúc này. Xếp phòng trong Lịch bác sĩ để người chờ được gọi vào.
+            </p>
+          </div>
+          {board.withoutRoom.map((queue) => (
+            <div key={queue.doctor.id} className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium">{queue.doctor.fullName}</span>
+              <WaitingList visits={queue.waiting} />
+              <AwayList visits={queue.away ?? []} />
+            </div>
+          ))}
+        </Card>
+      )}
+    </ListView>
+  );
+}
+
+function RoomCard({
+  room,
+  canOperate,
+  canExamine,
+  pending,
+  onAction,
+}: {
+  room: Room;
+  canOperate: boolean;
+  canExamine: boolean;
+  pending: RoomAction | null;
+  onAction: (action: RoomAction) => void;
+}) {
+  const busy = (action: RoomAction) => pending === action;
+  const anyBusy = pending !== null;
+  const current = room.current;
+
+  return (
+    <Card
+      className={cn(
+        "flex flex-col gap-4 p-5",
+        room.status === "occupied" && "border-primary/40",
+        room.status === "paused" && "opacity-80"
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <DoorOpenIcon className="text-muted-foreground size-4 shrink-0" />
+            <span className="font-semibold">{room.code}</span>
+            {room.name && <span className="text-muted-foreground truncate text-sm">· {room.name}</span>}
+          </div>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {room.doctor ? room.doctor.fullName : "Không có bác sĩ trong ca này"}
+          </p>
+        </div>
+        <Badge variant={STATUS_VARIANT[room.status]}>{EXAM_ROOM_STATUS_LABELS[room.status]}</Badge>
+      </div>
+
+      <div className="bg-muted/40 flex min-h-24 items-center gap-4 rounded-lg px-4 py-3">
+        {current ? (
+          <>
+            <span className="text-primary text-4xl font-bold tabular-nums">{formatQueueNumber(current.queueNumber)}</span>
+            <div className="min-w-0">
+              <Link to={`/customers/show/${current.customerId}`} className="block truncate font-medium hover:underline">
+                {current.patientName}
+              </Link>
+              <span className="text-muted-foreground text-sm">Vào phòng lúc {clockTime(current.calledAt)}</span>
+            </div>
+          </>
+        ) : (
+          <span className="text-muted-foreground text-sm">
+            {room.status === "paused"
+              ? "Phòng đang tạm ngưng."
+              : !room.doctor
+                ? "Phòng trống, chưa có bác sĩ trực."
+                : room.waiting.length === 0
+                  ? "Phòng trống, chưa có ai chờ."
+                  : "Phòng trống, đang gọi người kế tiếp…"}
+          </span>
+        )}
+      </div>
+
+      {canOperate && (
+        <div className="flex flex-wrap gap-2">
+          {current && (
+            <>
+              {canExamine && (
+                <Button asChild size="sm">
+                  <Link
+                    to={newEncounterPath({
+                      customerId: current.customerId,
+                      patientName: current.patientName,
+                      appointmentId: current.appointmentId,
+                    })}
+                  >
+                    <StethoscopeIcon />
+                    Ghi lần khám
+                  </Link>
+                </Button>
+              )}
+              <Button size="sm" variant={canExamine ? "outline" : "default"} disabled={anyBusy} onClick={() => onAction("finish")}>
+                <CheckIcon />
+                {busy("finish") ? "Đang lưu…" : "Khám xong"}
+              </Button>
+              <Button size="sm" variant="outline" disabled={anyBusy} onClick={() => onAction("pass-over")}>
+                <SkipForwardIcon />
+                Vắng · gọi người sau
+              </Button>
+              <Button size="sm" variant="ghost" disabled={anyBusy} onClick={() => onAction("no-show")}>
+                <UserXIcon />
+                Không đến
+              </Button>
+            </>
+          )}
+          {!current && room.status === "available" && room.doctor && room.waiting.length > 0 && (
+            <Button size="sm" disabled={anyBusy} onClick={() => onAction("call-next")}>
+              <PhoneCallIcon />
+              {busy("call-next") ? "Đang gọi…" : "Gọi người tiếp theo"}
+            </Button>
+          )}
+          {room.status === "paused" ? (
+            <Button size="sm" variant="outline" disabled={anyBusy} onClick={() => onAction("resume")}>
+              <PlayIcon />
+              Mở lại phòng
+            </Button>
+          ) : (
+            <Button size="sm" variant="ghost" disabled={anyBusy} onClick={() => onAction("pause")}>
+              <PauseIcon />
+              Tạm ngưng
+            </Button>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-muted-foreground text-xs font-medium">Đang chờ ({room.waiting.length})</span>
+        <WaitingList visits={room.waiting} />
+      </div>
+      <AwayList visits={room.away ?? []} />
+    </Card>
+  );
+}
+
+function WaitingList({ visits }: { visits: BoardVisit[] }) {
+  if (visits.length === 0) {
+    return <span className="text-muted-foreground text-sm">Không có ai.</span>;
+  }
+  return (
+    <ol className="flex flex-col gap-1">
+      {visits.map((visit) => (
+        <li key={visit.appointmentId} className="flex items-center gap-3 text-sm">
+          <span className="w-7 font-semibold tabular-nums">{formatQueueNumber(visit.queueNumber)}</span>
+          <span className="min-w-0 flex-1 truncate">{visit.patientName}</span>
+          {visit.returned ? (
+            <span className="text-info-text text-xs font-medium">
+              {visit.referredBy ? `Chuyển từ ${visit.referredBy}` : "Quay lại đọc kết quả"}
+            </span>
+          ) : visit.passedOver ? (
+            <span className="text-warning-text text-xs">Đã gọi, vắng</span>
+          ) : (
+            <span className="text-muted-foreground text-xs tabular-nums">{clockTime(visit.checkedInAt)}</span>
+          )}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+const DECISIONS: Record<Decision, { title: (name: string) => string; text: string; confirm: string }> = {
+  finish: {
+    title: (name) => `Kết thúc lượt khám của ${name}?`,
+    text: "Lượt khám đóng lại, phòng trống và gọi người tiếp theo.",
+    confirm: "Khám xong",
+  },
+  "pass-over": {
+    title: (name) => `${name} vắng mặt?`,
+    text: "Bệnh nhân quay lại hàng chờ, sau những người chưa được gọi, và được gọi lại sau ít phút. Phòng gọi người tiếp theo ngay.",
+    confirm: "Xác nhận vắng",
+  },
+  "no-show": {
+    title: (name) => `Ghi nhận ${name} không đến?`,
+    text: "Lượt khám đóng lại và không khôi phục được; muốn khám phải đăng ký mới.",
+    confirm: "Xác nhận không đến",
+  },
+};
+
+/**
+ * The question before a room's patient is let go. "Khám xong" also looks for
+ * the visit's encounter: closing a visit nobody wrote up leaves the patient
+ * with no result and no bill, which is worth saying before, not after.
+ */
+function ConfirmDecision({
+  asking,
+  onClose,
+  onConfirm,
+}: {
+  asking: { room: Room; action: Decision } | null;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const current = asking?.room.current ?? null;
+  const decision = asking ? DECISIONS[asking.action] : null;
+  const { data: canRead } = useCan({ resource: "clinical_encounters", action: "list" });
+  const finishing = asking?.action === "finish" && current != null;
+  const { result, query } = useList<Encounter>({
+    resource: "clinical_encounters",
+    filters: [{ field: "appointmentId", operator: "eq", value: current?.appointmentId }],
+    pagination: { currentPage: 1, pageSize: 1 },
+    errorNotification: false,
+    queryOptions: { enabled: finishing && (canRead?.can ?? false), retry: false },
+  });
+  const encounter = result?.data?.[0];
+  const known = finishing && (canRead?.can ?? false) && !query.isLoading && !query.isError;
+
+  const warning = !finishing
+    ? null
+    : !known
+      ? "Nếu lượt này chưa ghi lần khám, bệnh nhân sẽ không có kết quả khám và không có hoá đơn."
+      : !encounter
+        ? "Chưa ghi lần khám nào cho lượt này: bệnh nhân sẽ không có kết quả khám và không có hoá đơn."
+        : encounter.status === "in_progress"
+          ? "Lần khám vẫn đang mở. Nhớ bấm “Hoàn tất lần khám” để bệnh nhân có kết quả và hoá đơn."
+          : null;
+
+  return (
+    <AlertDialog open={current !== null} onOpenChange={(open) => !open && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{decision && current ? decision.title(current.patientName) : ""}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {current ? `Số ${formatQueueNumber(current.queueNumber)} · phòng ${asking?.room.code}. ` : ""}
+            {decision?.text}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {warning && (
+          <p role="alert" className="bg-warning-subtle text-warning-text rounded-lg px-3 py-2 text-sm font-medium">
+            {warning}
+          </p>
+        )}
+        <AlertDialogFooter>
+          <AlertDialogCancel>Không</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>{decision?.confirm}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+/** Patients out of the room for ordered services or another doctor, and how far along they are. */
+function AwayList({ visits }: { visits: AwayVisit[] }) {
+  if (visits.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-muted-foreground text-xs font-medium">Đang làm chỉ định / khám thêm ({visits.length})</span>
+      <ol className="flex flex-col gap-1">
+        {visits.map(({ visit, done, total, pending }) => (
+          <li key={visit.appointmentId} className="flex items-start gap-3 text-sm">
+            <span className="w-7 font-semibold tabular-nums">{formatQueueNumber(visit.queueNumber)}</span>
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate">{visit.patientName}</span>
+              <span className="text-warning-text text-xs" title={pending.join(", ")}>
+                {done}/{total} xong{pending.length ? ` · còn ${pending.join(", ")}` : ""}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}

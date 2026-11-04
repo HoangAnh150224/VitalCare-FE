@@ -1,6 +1,7 @@
-import type { AuthProvider } from "@refinedev/core";
+import type { AuthActionResponse, AuthProvider } from "@refinedev/core";
 
 import { API_URL } from "@/shared/api/constants";
+import { readRegistrationError, translateRegistrationMessage } from "@/shared/api/registration";
 import { connect, disconnect } from "@/shared/api/live";
 import {
   clearSession,
@@ -36,6 +37,53 @@ type ApiError = {
   errors?: Record<string, string>;
 };
 
+/**
+ * The toast's heading for a failed sign-in: Refine shows the error's name as
+ * the title, so it is a sentence for people, not the type of the error.
+ */
+const LOGIN_FAILED = "Đăng nhập không thành công";
+
+/** Which field a sign-in refusal is about, for the form to say it there. */
+export type LoginField = "phone" | "password" | null;
+
+/**
+ * The API's sign-in refusals, said again in Vietnamese, each with the field it
+ * is about: the clinic wants every refusal to say exactly what is wrong.
+ */
+export function translateLoginMessage(message: string | undefined): { text: string; field: LoginField } {
+  const m = message ?? "";
+  // The same precise phone messages as registration (too few / too many digits, not digits).
+  if (
+    m.startsWith("Phone number has too few digits") ||
+    m.startsWith("Phone number has too many digits") ||
+    m.startsWith("Phone number may only contain digits")
+  ) {
+    return { text: translateRegistrationMessage(m), field: "phone" };
+  }
+  if (m.startsWith("Phone number must be a Vietnamese number") || m.startsWith("Not a valid Vietnamese phone number")) {
+    return {
+      text: "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam, ví dụ: 0901234567 hoặc +84901234567.",
+      field: "phone",
+    };
+  }
+  if (m.startsWith("Phone number is required")) return { text: "Vui lòng nhập số điện thoại.", field: "phone" };
+  if (m.startsWith("No account uses this phone number")) {
+    return { text: "Số điện thoại này chưa đăng ký tài khoản. Hãy đăng ký trước.", field: "phone" };
+  }
+  if (m.startsWith("Password is required")) return { text: "Vui lòng nhập mật khẩu.", field: "password" };
+  if (m.startsWith("Incorrect password")) {
+    return { text: "Mật khẩu không đúng. Kiểm tra lại hoặc dùng “Quên mật khẩu?”.", field: "password" };
+  }
+  if (m.startsWith("This account is locked")) {
+    return { text: "Tài khoản đang bị khoá. Vui lòng liên hệ quản trị phòng khám để mở khoá.", field: null };
+  }
+  if (m.startsWith("This account is no longer active") || m.startsWith("This account no longer exists")) {
+    return { text: "Tài khoản đã ngừng hoạt động. Vui lòng liên hệ phòng khám.", field: null };
+  }
+  if (m.startsWith("Too many")) return { text: "Bạn đã thử quá nhiều lần. Vui lòng đợi một lúc rồi thử lại.", field: null };
+  return { text: m || "Đăng nhập không thành công. Vui lòng thử lại.", field: null };
+}
+
 async function readError(response: Response, fallback: string): Promise<ApiError> {
   try {
     return (await response.json()) as ApiError;
@@ -46,55 +94,100 @@ async function readError(response: Response, fallback: string): Promise<ApiError
   }
 }
 
+/**
+ * Everything that follows receiving a token pair — from a sign-in or from a
+ * registration, which answers with one so the new account lands signed in.
+ */
+async function startSession(tokens: TokenPair, errorName: string): Promise<AuthActionResponse> {
+  saveSession(tokens);
+
+  // The token says who you are and nothing more, so what this account may
+  // do is a second call. Awaited rather than fired off, because the shell
+  // renders its menu the moment this returns success — starting it and not
+  // waiting would show every user an empty sidebar for a frame.
+  if (!(await loadAuthorities(API_URL))) {
+    clearSession();
+    return {
+      success: false,
+      error: {
+        name: errorName,
+        message: "Đăng nhập thành công nhưng không tải được quyền của bạn. Vui lòng thử lại.",
+      },
+    };
+  }
+
+  // The live channel needs a token, so it cannot open before now. Opening
+  // it here rather than from a component keeps it one connection for the
+  // session instead of one per mount.
+  connect();
+  return { success: true, redirectTo: "/dashboard" };
+}
+
 export const authProvider: AuthProvider = {
-  async login({ username, password }) {
+  async login({ phone, password }) {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ phone, password }),
       });
 
       if (!response.ok) {
         const error = await readError(response, "Đăng nhập thất bại");
+        const fieldMessage = error.errors ? Object.values(error.errors).find((v) => typeof v === "string") : undefined;
+        const { text, field } = translateLoginMessage((fieldMessage as string | undefined) ?? error.message);
         return {
           success: false,
-          error: {
-            name: "LoginError",
-            // The API answers every failed sign-in with the same message on
-            // purpose; showing it verbatim keeps that property intact.
-            message: error.message ?? "Tên đăng nhập hoặc mật khẩu không đúng",
-          },
+          // `field` rides along for the form, which says the refusal under that field.
+          error: Object.assign(new Error(text), { name: LOGIN_FAILED, field }),
         };
       }
 
-      saveSession((await response.json()) as TokenPair);
-
-      // The token says who you are and nothing more, so what this account may
-      // do is a second call. Awaited rather than fired off, because the shell
-      // renders its menu the moment this returns success — starting it and not
-      // waiting would show every user an empty sidebar for a frame.
-      if (!(await loadAuthorities(API_URL))) {
-        clearSession();
-        return {
-          success: false,
-          error: {
-            name: "LoginError",
-            message: "Đăng nhập thành công nhưng không tải được quyền của bạn. Vui lòng thử lại.",
-          },
-        };
-      }
-
-      // The live channel needs a token, so it cannot open before now. Opening
-      // it here rather than from a component keeps it one connection for the
-      // session instead of one per mount.
-      connect();
-      return { success: true, redirectTo: "/" };
+      return await startSession((await response.json()) as TokenPair, LOGIN_FAILED);
     } catch {
       return {
         success: false,
         error: {
-          name: "LoginError",
+          name: LOGIN_FAILED,
+          message: "Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.",
+        },
+      };
+    }
+  },
+
+  /**
+   * Creates an account and signs it in — the API answers a registration with
+   * a token pair, like a sign-in.
+   *
+   * A 422 carries per-field messages; they ride along on the error as
+   * `fieldErrors` so the form can put each under its field instead of only in
+   * a toast.
+   */
+  async register({ phone, fullName, password }) {
+    try {
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, fullName, password }),
+      });
+
+      if (!response.ok) {
+        const error = await readRegistrationError(response);
+        return {
+          success: false,
+          error: Object.assign(new Error(error.message), {
+            name: "RegisterError",
+            fieldErrors: error.fieldErrors,
+          }),
+        };
+      }
+
+      return await startSession((await response.json()) as TokenPair, "RegisterError");
+    } catch {
+      return {
+        success: false,
+        error: {
+          name: "RegisterError",
           message: "Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.",
         },
       };

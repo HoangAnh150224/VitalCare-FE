@@ -39,7 +39,7 @@ import { STATUS_OPTIONS, type UserStatus } from "@/domains/user/types";
  * defaults below and the submit handler agreeing on one type.
  */
 type UserFormValues = {
-  username: string;
+  phone: string;
   email: string;
   fullName: string;
   password: string;
@@ -54,7 +54,7 @@ type UserFormValues = {
  * being pinned to the literal "active" the object happens to start with.
  */
 const DEFAULT_VALUES: UserFormValues = {
-  username: "",
+  phone: "",
   email: "",
   fullName: "",
   password: "",
@@ -106,26 +106,29 @@ export const UserCreate = () => {
             >
               <FormField
                 control={form.control}
-                name="username"
+                name="phone"
                 rules={{
-                  required: "Vui lòng nhập tên đăng nhập",
-                  minLength: { value: 3, message: "Tối thiểu 3 ký tự" },
+                  required: "Vui lòng nhập số điện thoại",
                   // Mirrors the pattern the API enforces, so the message
                   // arrives before the round trip rather than after it.
+                  // Separators and a trailing space are allowed through on
+                  // purpose -- a pasted number carries them, and the server
+                  // stores the +84 form whichever way it was written.
                   pattern: {
-                    value: /^[a-zA-Z0-9._-]+$/,
-                    message:
-                      "Chỉ gồm chữ cái, chữ số, dấu chấm, dấu gạch dưới và dấu gạch ngang",
+                    value: /^[\s.()-]*(?:\+?84|0)(?:[\s.()-]*\d){9}[\s.()-]*$/,
+                    message: "Nhập số điện thoại Việt Nam, ví dụ 0901234567 hoặc +84901234567",
                   },
                 }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
-                    <FormLabel>Tên đăng nhập</FormLabel>
+                    <FormLabel>Số điện thoại</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
+                        type="tel"
+                        inputMode="tel"
                         value={field.value ?? ""}
-                        placeholder="jdoe"
+                        placeholder="0901234567"
                         className="font-mono"
                       />
                     </FormControl>
@@ -141,7 +144,6 @@ export const UserCreate = () => {
                 control={form.control}
                 name="email"
                 rules={{
-                  required: "Vui lòng nhập email",
                   pattern: {
                     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
                     message: "Vui lòng nhập địa chỉ email hợp lệ",
@@ -149,7 +151,7 @@ export const UserCreate = () => {
                 }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Email (không bắt buộc)</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -159,7 +161,7 @@ export const UserCreate = () => {
                       />
                     </FormControl>
                     <FormDescription>
-                      Cũng có thể dùng thay cho tên đăng nhập khi đăng nhập.
+                      Không bắt buộc. Chỉ dùng để gửi thông báo.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

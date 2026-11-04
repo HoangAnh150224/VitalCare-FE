@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { Link } from "react-router";
 
 import { useLogin, useRefineOptions } from "@refinedev/core";
+/** Which field a sign-in refusal is about; the auth provider sets it on the error (`app/providers/auth.ts`). */
+type LoginField = "phone" | "password" | null;
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/shared/ui/card";
@@ -19,13 +21,12 @@ import { cn } from "@/shared/lib/utils";
 /**
  * The sign-in screen.
  *
- * Username *or* email, because the API accepts either and nobody should have to
- * remember which one this system keyed on.
+ * The phone number is the sign-in identifier. Any spelling reaches the same
+ * account -- 0901234567 and +84901234567 alike -- because the server
+ * normalises before it looks anything up, so this form sends what was typed.
  *
- * There is no self-registration and no password-reset link: accounts are
- * created by an administrator on the Users screen, and a forgotten password is
- * reset there too. Offering either link would send people to a page that cannot
- * help them.
+ * Self-registration is linked from here. A forgotten password is recovered
+ * with a code texted to the number, from "Quên mật khẩu?" under the button.
  *
  * The screen sits on `gradient-hero` rather than the page background, and that
  * is the one place in the application where a surface is a picture rather than
@@ -34,16 +35,36 @@ import { cn } from "@/shared/lib/utils";
  * is on its own.
  */
 export const SignInForm = () => {
-  const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
   const { title } = useRefineOptions();
-  const { mutate: login, isPending } = useLogin();
+  // "always", as on sign-up: offline, say so now rather than signing in later unseen.
+  const { mutate: login, isPending } = useLogin({ mutationOptions: { networkMode: "always" } });
+
+  // The refusal, said once under the field it is about (or under the form).
+  const [error, setError] = useState<{ text: string; field: LoginField } | null>(null);
 
   const handleSignIn = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    login({ username, password });
+    setError(null);
+    login(
+      { phone, password },
+      {
+        onSuccess: (data) => {
+          if (data.success) return;
+          const failure = data.error as (Error & { field?: LoginField }) | undefined;
+          setError({ text: failure?.message ?? "Đăng nhập không thành công.", field: failure?.field ?? null });
+        },
+      }
+    );
   };
+  const messageFor = (field: LoginField) =>
+    error && error.field === field ? (
+      <p role="alert" className="text-destructive text-sm">
+        {error.text}
+      </p>
+    ) : null;
 
   return (
     <div
@@ -69,23 +90,20 @@ export const SignInForm = () => {
           {title.icon && (
             <div
               className={cn(
-                "gradient-gold flex size-14 items-center justify-center rounded-xl",
-                "shadow-e4 [&>svg]:size-7",
-                // The glyph sits on gold, so it takes the dark end of the
-                // brand rather than the page's foreground colour, which is
-                // near-white here and would vanish.
-                "text-sidebar-primary-foreground"
+                // The logo is drawn for a white ground; keep that ground here.
+                "flex size-14 items-center justify-center rounded-xl",
+                "bg-white p-1.5 shadow-e4"
               )}
             >
               {title.icon}
             </div>
           )}
           {title.text && (
-            <h1 className="text-xl font-bold tracking-tight text-white">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
               {title.text}
             </h1>
           )}
-          <p className="text-overline text-white/55">Quản trị</p>
+          <p className="text-overline text-auth-description">Quản trị</p>
         </div>
 
         <Card className={cn("mt-8 w-full p-8 shadow-e4", "sm:w-[420px]")}>
@@ -93,25 +111,29 @@ export const SignInForm = () => {
             <CardTitle className={cn("text-2xl font-semibold")}>
               Đăng nhập
             </CardTitle>
-            <CardDescription>
-              Nhập thông tin đăng nhập để tiếp tục.
-            </CardDescription>
           </CardHeader>
 
           <CardContent className={cn("px-0")}>
             <form onSubmit={handleSignIn}>
               <div className={cn("flex flex-col gap-2")}>
-                <Label htmlFor="username">Tên đăng nhập hoặc email</Label>
+                <Label htmlFor="phone">Số điện thoại</Label>
                 <Input
-                  id="username"
-                  name="username"
-                  type="text"
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  inputMode="tel"
+                  // "username", not "tel": password managers pair the saved
+                  // password with the field marked as the sign-in identifier,
+                  // whatever shape that identifier happens to have.
                   autoComplete="username"
+                  placeholder="0901234567"
                   autoFocus
                   required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={phone}
+                  aria-invalid={error?.field === "phone" || undefined}
+                  onChange={(e) => setPhone(e.target.value)}
                 />
+                {messageFor("phone")}
               </div>
 
               <div className={cn("relative mt-5 flex flex-col gap-2")}>
@@ -122,9 +144,12 @@ export const SignInForm = () => {
                   autoComplete="current-password"
                   required
                   value={password}
+                  aria-invalid={error?.field === "password" || undefined}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                {messageFor("password")}
               </div>
+              {messageFor(null) && <div className="mt-4">{messageFor(null)}</div>}
 
               <Button
                 type="submit"
@@ -134,6 +159,12 @@ export const SignInForm = () => {
               >
                 {isPending ? "Đang đăng nhập…" : "Đăng nhập"}
               </Button>
+
+              <div className="mt-4 text-right">
+                <Link to="/forgot-password" className="text-link text-sm font-medium hover:underline">
+                  Quên mật khẩu?
+                </Link>
+              </div>
             </form>
 
             <p
@@ -142,8 +173,10 @@ export const SignInForm = () => {
                 "text-center text-xs"
               )}
             >
-              Tài khoản do quản trị viên tạo. Hãy liên hệ quản trị viên nếu bạn
-              không đăng nhập được.
+              Chưa có tài khoản?{" "}
+              <Link to="/register" className="text-link font-medium hover:underline">
+                Đăng ký bằng số điện thoại
+              </Link>
             </p>
           </CardContent>
         </Card>

@@ -39,8 +39,8 @@ export const AUTH_VERSION_HEADER = "X-Auth-Version";
 /** The signed-in identity, exactly as `CurrentUserResponse` reports it. */
 export type Identity = {
   id: number;
-  username: string;
-  email: string;
+  phone: string;
+  email: string | null;
   fullName: string;
 };
 

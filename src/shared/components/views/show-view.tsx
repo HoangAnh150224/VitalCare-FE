@@ -1,6 +1,6 @@
 "use client";
 
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 
 import { ArrowLeftIcon } from "lucide-react";
 import {
@@ -41,6 +41,10 @@ export function ShowView({ children, className }: ShowViewProps) {
 type ShowViewHeaderProps = PropsWithChildren<{
   resource?: string;
   title?: string;
+  /** False hides Edit for a record that can no longer change, whatever the permission says. */
+  canEdit?: boolean;
+  /** The page's own controls (issue a secret, run a simulation...), before Refresh/Edit/Delete. */
+  actions?: ReactNode;
   wrapperClassName?: string;
   headerClassName?: string;
 }>;
@@ -48,6 +52,8 @@ type ShowViewHeaderProps = PropsWithChildren<{
 export const ShowViewHeader = ({
   resource: resourceFromProps,
   title: titleFromProps,
+  canEdit,
+  actions,
   wrapperClassName,
   headerClassName,
 }: ShowViewHeaderProps) => {
@@ -87,7 +93,9 @@ export const ShowViewHeader = ({
           <Button data-print="hide" variant="ghost" size="icon" onClick={back}>
             <ArrowLeftIcon className="h-4 w-4" />
           </Button>
-          <h1 className="min-w-0 truncate text-3xl font-bold leading-9 tracking-tight">{title}</h1>
+          <h1 className="min-w-0 truncate text-3xl font-bold leading-9 tracking-tight">
+            {title}
+          </h1>
         </div>
 
         {/*
@@ -103,7 +111,11 @@ export const ShowViewHeader = ({
           list views already ignore it — honouring it only here would give the
           same resource a Delete on its table and none on its detail page.
         */}
-        <div data-print="hide" className="flex shrink-0 items-center gap-2">
+        <div
+          data-print="hide"
+          className="flex shrink-0 flex-wrap items-center justify-end gap-2"
+        >
+          {actions}
           <RefreshButton
             variant="outline"
             recordItemId={recordItemId}
@@ -114,8 +126,15 @@ export const ShowViewHeader = ({
             in the cluster. Before this, Refresh and Edit were both outlines
             and Delete was a solid red — which made the loudest control on a
             detail screen the one that destroys the record being read.
+
+            Only for a resource that declares an edit route. A write permission
+            can cover state changes with no form behind them -- appointments:write
+            books and cancels -- and a button that navigates to a route nobody
+            declared lands on the 404 page.
           */}
-          <EditButton recordItemId={recordItemId} resource={resourceName} />
+          {resource?.edit && canEdit !== false && (
+            <EditButton recordItemId={recordItemId} resource={resourceName} />
+          )}
           {/*
             Unlike the one in a list row, this delete has to navigate. The
             screen it sits on is *about* the record it just removed, so staying

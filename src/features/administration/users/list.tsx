@@ -41,7 +41,7 @@ import { formatDate } from "@/shared/lib/format";
  */
 const STATIC_FILTER_FIELDS: AdvancedFilterField[] = [
   { field: "id", label: "ID", type: "number", placeholder: "Bất kỳ" },
-  { field: "username", label: "Tên đăng nhập", type: "text", placeholder: "Bất kỳ" },
+  { field: "phone", label: "Số điện thoại", type: "text", placeholder: "Bất kỳ" },
   { field: "email", label: "Email", type: "text", placeholder: "Bất kỳ" },
   { field: "fullName", label: "Họ và tên", type: "text", placeholder: "Bất kỳ" },
   {
@@ -90,16 +90,16 @@ export const UserList = () => {
     const columnHelper = createColumnHelper<User>();
 
     return [
-      columnHelper.accessor("username", {
-        id: "username",
+      columnHelper.accessor("phone", {
+        id: "phone",
         enableResizing: true,
-        header: "Tên đăng nhập",
+        header: "Số điện thoại",
         enableSorting: true,
         cell: ({ row }) => (
           <div className="flex flex-col">
-            <span className="font-medium">{row.original.username}</span>
+            <span className="font-medium font-mono">{row.original.phone}</span>
             <span className="text-muted-foreground text-xs">
-              {row.original.email}
+              {row.original.email ?? "—"}
             </span>
           </div>
         ),

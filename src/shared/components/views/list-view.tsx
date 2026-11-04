@@ -50,6 +50,8 @@ type ListHeaderProps = PropsWithChildren<{
    */
   description?: string;
   canCreate?: boolean;
+  /** What the create button says, where "Tạo mới" is not the word for it. */
+  createLabel?: string;
   /** Extra controls beside Create — export, a bulk action, a view switch. */
   actions?: ReactNode;
   headerClassName?: string;
@@ -58,6 +60,7 @@ type ListHeaderProps = PropsWithChildren<{
 
 export const ListViewHeader = ({
   canCreate,
+  createLabel,
   resource: resourceFromProps,
   title: titleFromProps,
   description,
@@ -74,12 +77,13 @@ export const ListViewHeader = ({
 
   const isCreateButtonVisible = canCreate ?? !!resource?.create;
 
+  // A label is already what a person reads, and Vietnamese has no plural to
+  // add: pluralising "Đăng ký khám" gives "Đăng ký kháms". Only a raw
+  // resource name ("blog_posts") is made friendly.
   const title =
     titleFromProps ??
-    getUserFriendlyName(
-      resource?.meta?.label ?? identifier ?? resource?.name,
-      "plural"
-    );
+    resource?.meta?.label ??
+    getUserFriendlyName(identifier ?? resource?.name, "plural");
 
   const hasActions = isCreateButtonVisible || actions;
 
@@ -115,7 +119,7 @@ export const ListViewHeader = ({
         {hasActions && (
           <div data-print="hide" className="flex shrink-0 items-center gap-2">
             {actions}
-            {isCreateButtonVisible && <CreateButton resource={resourceName} />}
+            {isCreateButtonVisible && <CreateButton resource={resourceName}>{createLabel}</CreateButton>}
           </div>
         )}
       </div>

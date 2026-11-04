@@ -9,18 +9,64 @@
  */
 
 /**
- * Refine's six actions, mapped onto the three the API grants.
+ * Refine's six actions, mapped onto the actions the API grants — plus the
+ * custom actions some resources check on their own.
  *
  * `clone` needs `write` rather than `read` even though it opens a form
  * pre-filled from an existing record: what it produces is a create.
+ *
+ * `activate` and `check_in` are permission actions of their own on the API
+ * (`customers:activate`, `appointments:check_in`), because turning somebody
+ * into a patient is a different grant from editing their address. Without an
+ * entry here `permissionFor` would answer `null` for them — which the access
+ * control provider reads as "allowed" — and the buttons would show to
+ * everybody, only for the API to refuse the click. `cancel` is a state change
+ * covered by `write`.
  */
-export const ACTION_TO_PERMISSION: Record<string, "read" | "write" | "delete"> = {
+export const ACTION_TO_PERMISSION: Record<
+  string,
+  | "read"
+  | "write"
+  | "delete"
+  | "activate"
+  | "check_in"
+  | "assign"
+  | "assign_staff"
+  | "status"
+  | "operate"
+  | "report"
+  | "conclude"
+  | "review"
+  | "export"
+  | "transfer"
+> = {
+  // customers:assign — putting a patient in somebody's care and on a device.
+  assign: "assign",
+  // customers:assign_staff — the care team; the clinic administrator's alone (SRS 3.1.3).
+  assign_staff: "assign_staff",
   list: "read",
   show: "read",
   create: "write",
   edit: "write",
   clone: "write",
   delete: "delete",
+  cancel: "write",
+  activate: "activate",
+  // customers:status — active, inactive or paused (SRS 3.8.5).
+  status: "status",
+  check_in: "check_in",
+  // exam_rooms:operate — calling the next patient in, passing one over, pausing a room.
+  operate: "operate",
+  // invoices:report — the clinic's revenue, the clinic administrator's.
+  report: "report",
+  // clinical_encounters:conclude — the diagnosis and completing the visit, the doctor's.
+  conclude: "conclude",
+  // first_aid_articles:review — approving, sending back, publishing and archiving guidance (BR-31).
+  review: "review",
+  // reports:export — downloading the summary reports (BF-08 Report Export).
+  export: "export",
+  // staff_memberships:transfer — moving a member of staff to another clinic, the system administrator's.
+  transfer: "transfer",
 };
 
 /**
@@ -60,4 +106,48 @@ export function permissionFor(
   if (!resource || UNGUARDED_RESOURCES.has(resource)) return null;
   const suffix = ACTION_TO_PERMISSION[action];
   return suffix ? `${resource}:${suffix}` : null;
+}
+
+/**
+ * The resources a customer holds about themselves. Named one by one rather
+ * than matched on the `my_` prefix: `my_patients` is staff's — the patients
+ * in a nurse's care — and must not send a nurse to the patient portal.
+ */
+const PORTAL_RESOURCES = new Set([
+  "my_appointments",
+  "my_profiles",
+  "my_conversations",
+  "my_devices",
+  "my_vital_signs",
+  "my_alerts",
+  "my_sharing",
+  "shared_patients",
+  "emergency_alerts",
+  "my_result_returns",
+  "my_feedback",
+]);
+
+/** Held by every account, staff or customer: no say in which shell it gets. */
+const EVERYONES_RESOURCES = new Set(["notifications"]);
+
+/**
+ * Whether an account is a customer's and nothing more: every code it holds is
+ * about its own visits and profiles.
+ *
+ * Such an account gets the patient portal instead of the staff shell. Anybody
+ * holding even one other code — staff, an administrator who can also register
+ * for themselves — keeps the staff shell, since that is where their work is.
+ */
+export function isPortalAccount(
+  permissions: readonly string[] | undefined
+): boolean {
+  const telling = (permissions ?? []).filter(
+    (code) => !EVERYONES_RESOURCES.has(code.slice(0, code.indexOf(":")))
+  );
+  return (
+    telling.length > 0 &&
+    telling.every((code) =>
+      PORTAL_RESOURCES.has(code.slice(0, code.indexOf(":")))
+    )
+  );
 }

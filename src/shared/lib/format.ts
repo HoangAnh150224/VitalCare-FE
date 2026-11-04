@@ -44,3 +44,36 @@ export function formatDateTime(value?: string | null): string {
     ? EMPTY
     : date.toLocaleString(LOCALE, DATE_TIME);
 }
+
+/**
+ * A calendar date the API sends as `YYYY-MM-DD` — an appointment day.
+ *
+ * Not `formatDate`: `new Date("2026-10-05")` is midnight UTC, which a browser
+ * west of Greenwich shows as the 4th. This date has no time zone to convert
+ * from; it is the clinic's day, written as it is.
+ */
+export function formatLocalDate(value?: string | null): string {
+  if (!value) return EMPTY;
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return EMPTY;
+  return new Date(year, month - 1, day).toLocaleDateString(LOCALE, DATE);
+}
+
+/** Whole đồng, grouped the Vietnamese way: "270.000 ₫". */
+export function formatMoney(value?: number | null): string {
+  if (value == null) return EMPTY;
+  return `${value.toLocaleString(LOCALE, { maximumFractionDigits: 0 })} ₫`;
+}
+
+/** A wall-clock time the API sends as `HH:mm:ss`, shown as `HH:mm`. */
+export function formatLocalTime(value?: string | null): string {
+  if (!value) return EMPTY;
+  return value.slice(0, 5);
+}
+
+/** "Nguyễn Văn An" → "NA": first and last word, for an avatar with no picture. */
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}

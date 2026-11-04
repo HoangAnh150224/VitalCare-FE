@@ -1,0 +1,125 @@
+/**
+ * The API's messages for services and billing are English, written for logs
+ * as much as for people. The ones staff and patients meet on these screens are
+ * said again here in Vietnamese, matched by how they start (a few carry a
+ * number). Anything not listed is shown as the API wrote it.
+ * Same approach as `translateRegistrationMessage` in `shared/api/registration.ts`.
+ */
+const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] = [
+  // Payment
+  ["This bill is already settled", "Hóa đơn này đã được thanh toán."],
+  [
+    "The patient started paying online",
+    "Bệnh nhân đang thanh toán qua VNPay (trong 15 phút gần đây). Chờ giao dịch xong hoặc hết hạn rồi mới thu tại quầy.",
+  ],
+  ["Online payment is not set up", "Phòng khám chưa bật thanh toán online. Vui lòng thanh toán tại quầy."],
+  ["At the counter: cash or bank transfer", "Tại quầy chỉ nhận tiền mặt hoặc chuyển khoản."],
+  ["Pick how it was paid", "Chọn hình thức thanh toán."],
+  // Revenue report
+  ["The end date is before the start", "Ngày kết thúc phải sau ngày bắt đầu."],
+  ["A report covers at most a year", "Báo cáo tối đa một năm."],
+  ["The revenue report is a clinic's", "Tài khoản của bạn không thuộc cơ sở nào nên không có báo cáo doanh thu."],
+  // Concluding a visit
+  [
+    "ordered service(s) still have no reviewed result",
+    (message) => `Còn ${parseInt(message, 10) || "một số"} dịch vụ chưa có kết quả hoặc bác sĩ chưa xem. Xem hoặc huỷ trước khi hoàn tất.`,
+  ],
+  ["The catalogue has no active examination fee", "Danh mục chưa có phí khám đang áp dụng. Nhờ quản trị thêm trước khi hoàn tất lần khám."],
+  ["This encounter is already completed", "Lần khám này đã hoàn tất."],
+  ["Write the diagnosis before concluding", "Ghi chẩn đoán trước khi hoàn tất lần khám."],
+  // Paying before the queue and before a service (BF-02, BF-03)
+  ["The examination fee for that appointment is not paid yet", "Bệnh nhân chưa thanh toán phí khám. Lễ tân thu phí xong mới mở được lần khám."],
+  ["This service is not paid yet", "Dịch vụ chưa được thanh toán. Bệnh nhân thanh toán xong mới thực hiện."],
+  // BF-04: a device only under the patient's recorded consent to monitoring.
+  [
+    "This patient has no accepted monitoring order",
+    "Bệnh nhân chưa có chỉ định theo dõi được đồng ý. Bác sĩ ghi nhận sự đồng ý của bệnh nhân trước khi gán thiết bị.",
+  ],
+  ["This patient is already wearing a device", "Bệnh nhân đang đeo một thiết bị; thu hồi thiết bị đó trước."],
+  ["That device is not available", "Thiết bị này không sẵn sàng (đang được gán hoặc bảo trì)."],
+  ["A walk-in is registered for today", "Khám vãng lai chỉ đăng ký cho hôm nay."],
+  // Ordering and results
+  ["This encounter is concluded", "Lần khám đã hoàn tất nên không chỉ định hay thay đổi dịch vụ được nữa."],
+  ["That service is no longer offered", "Dịch vụ này đã ngừng áp dụng."],
+  ["Pick a service", "Chọn một dịch vụ trong danh mục."],
+  ["The examination fee is billed on its own", "Phí khám đã tự tính vào hóa đơn, không cần chỉ định."],
+  ["Only an order not yet started can be started", "Chỉ định này đã được bắt đầu."],
+  ["Only a result that is in can be reviewed", "Chỉ định chưa có kết quả để xem."],
+  ["Only an order without a result can be cancelled", "Chỉ định đã có kết quả nên không huỷ được."],
+  ["This order is closed", "Chỉ định đã đóng (bác sĩ đã xem hoặc đã huỷ), không sửa được nữa."],
+  ["Say why it is cancelled", "Nhập lý do huỷ."],
+  ["Write the result", "Nhập kết quả."],
+  ["The result must be at most", "Kết quả quá dài (tối đa 20.000 ký tự)."],
+  ["The instruction must be at most", "Ghi chú quá dài (tối đa 1.000 ký tự)."],
+  // Sending a patient out, and referrals
+  ["Nothing ordered is waiting to be done", "Chưa có chỉ định nào cần làm. Chỉ định dịch vụ trước rồi mới cho bệnh nhân đi làm."],
+  ["Only a patient in the room can be sent out", "Chỉ cho đi làm chỉ định khi bệnh nhân đang ở trong phòng."],
+  ["Only a visit under way can be referred", "Chỉ chuyển khám được khi lượt khám đang diễn ra."],
+  ["The patient is already referred to that doctor today", "Bệnh nhân đã được chuyển tới bác sĩ này hôm nay rồi."],
+  ["This encounter is not tied to a registered visit", "Lần khám này không gắn với lượt đăng ký khám nào."],
+  ["Pick another doctor", "Chọn một bác sĩ khác với bác sĩ phụ trách lượt khám."],
+  ["Pick a doctor of the same clinic", "Chọn bác sĩ cùng cơ sở."],
+  ["Pick the doctor to refer to", "Chọn bác sĩ để chuyển khám."],
+  ["Pick one of the clinic's doctors", "Chọn một bác sĩ của phòng khám."],
+  ["Say why the patient is referred", "Nhập lý do chuyển khám."],
+  ["That doctor does not see patients on that day", "Bác sĩ này không khám hôm nay."],
+  ["That doctor has no turn left on that day", "Bác sĩ này đã hết lượt khám hôm nay."],
+  // A customer's registration, placed by the clinic with one of its doctors (no doctor chosen).
+  ["No doctor has a turn left at that clinic on that day", "Ngày này phòng khám không có bác sĩ khám hoặc đã hết lượt. Vui lòng chọn ngày khác."],
+  ["There is already a visit registered at that clinic on that day", "Bạn đã đăng ký khám tại phòng khám này trong ngày đó rồi."],
+  ["Pick a clinic", "Vui lòng chọn phòng khám."],
+  ["The date cannot be in the past", "Ngày khám không được ở quá khứ."],
+  ["Registration is open up to", "Ngày khám vượt quá thời gian mở đăng ký."],
+  // First-aid content
+  ["Only a draft can be sent for review", "Chỉ gửi duyệt được bản nháp."],
+  ["Only content waiting for review can be approved", "Nội dung này không ở trạng thái chờ duyệt."],
+  ["Only content waiting for review can be sent back", "Nội dung này không ở trạng thái chờ duyệt."],
+  ["Only approved content can be published", "Chỉ xuất bản được nội dung đã phê duyệt."],
+  ["This content is already archived", "Nội dung đã được lưu trữ."],
+  ["This content is waiting for review", "Nội dung đang chờ duyệt, chưa sửa được. Đợi người duyệt quyết định trước."],
+  ["Content is reviewed by somebody other than its author", "Người duyệt phải khác người viết nội dung."],
+  ["Say why it is sent back", "Nhập lý do từ chối."],
+  ["Give the article a title", "Nhập tiêu đề."],
+  ["Pick a category", "Chọn danh mục."],
+  ["Write a short summary", "Nhập tóm tắt."],
+  ["Write the guidance", "Nhập nội dung hướng dẫn."],
+  ["Say when to call for emergency help", "Nhập cảnh báo khẩn cấp."],
+  ["Paste a Google Drive or YouTube link", "Chỉ nhận link video Google Drive hoặc YouTube."],
+  ["The video link must be at most", "Link video quá dài."],
+  // Files
+  ["Choose a file", "Chọn một file."],
+  ["A file can be at most 10 MB", "File tối đa 10 MB."],
+  ["Only PDF, PNG and JPEG files are accepted", "Chỉ nhận file PDF, PNG hoặc JPEG."],
+  ["The file's content does not match its type", "Nội dung file không đúng định dạng của nó."],
+  // Catalogue
+  ["Another service already has that code", "Mã dịch vụ này đã có."],
+  // Shared by every endpoint, and the browser's own when the network drops
+  ["Failed to fetch", "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại."],
+  ["You do not have permission", "Bạn không có quyền thực hiện thao tác này."],
+  ["This record was just changed by someone else", "Dữ liệu vừa được người khác thay đổi. Tải lại rồi thử lại."],
+];
+
+export function translateBillingMessage(message: string): string {
+  for (const [prefix, vi] of MESSAGES) {
+    if (message.startsWith(prefix) || (typeof vi === "function" && message.includes(prefix))) {
+      return typeof vi === "function" ? vi(message) : vi;
+    }
+  }
+  return message;
+}
+
+/**
+ * The error as one Vietnamese sentence. A 422's own message is the generic
+ * "Validation failed"; the field message under it says what to fix.
+ */
+export function billingErrorText(error: { message?: string; errors?: Record<string, unknown> } | null | undefined) {
+  const field = error?.errors ? Object.values(error.errors).find((value) => typeof value === "string") : undefined;
+  const message = (field as string | undefined) ?? error?.message;
+  return message ? translateBillingMessage(message) : "Không thực hiện được. Vui lòng thử lại.";
+}
+
+/** For `errorNotification` on a mutation: the toast says what went wrong, in Vietnamese. */
+export const billingErrorNotification = (error?: { message?: string; errors?: Record<string, unknown> }) => ({
+  type: "error" as const,
+  message: billingErrorText(error),
+});

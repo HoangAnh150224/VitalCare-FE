@@ -1,7 +1,19 @@
 import type { ResourceProps } from "@refinedev/core";
 import {
+  ChartColumn,
+  Award,
+  MessageSquareHeart,
   Bell,
   Building2,
+  CalendarCheck,
+  CalendarDays,
+  Contact,
+  HeartPulse,
+  Hospital,
+  CalendarClock,
+  ClipboardList,
+  Stethoscope,
+  Watch,
   LayoutDashboard,
   KeyRound,
   ListChecks,
@@ -11,6 +23,18 @@ import {
   ShieldHalf,
   Tags,
   Users,
+  Eye,
+  DoorOpen,
+  FlaskConical,
+  ReceiptText,
+  ListOrdered,
+  BriefcaseMedical,
+  MessagesSquare,
+  ScrollText,
+  RefreshCw,
+  TriangleAlert,
+  Siren,
+  SlidersHorizontal,
 } from "lucide-react";
 
 /**
@@ -60,7 +84,7 @@ export const resources: ResourceProps[] = [
     name: "dashboard",
     list: "/dashboard",
     meta: {
-      label: "HoangAnh-FrameWork",
+      label: "VitalCare",
       icon: <LayoutDashboard className="h-4 w-4" />,
     },
   },
@@ -85,6 +109,337 @@ export const resources: ResourceProps[] = [
   // `useMenu` keeps it because it has children (it drops items that have
   // neither a `list` route nor children), and the sidebar renders it as a
   // section because of `meta.group`.
+  // A customer's own appointments. Only the CUSTOMER role holds
+  // `my_appointments:read`, so staff never see it in the menu — and a
+  // customer sees little else.
+  {
+    name: "my_appointments",
+    list: "/my-appointments",
+    create: "/my-appointments/create",
+    // The appointment slip, with its code and QR.
+    show: "/my-appointments/show/:id",
+    meta: {
+      label: "Đăng ký khám của tôi",
+      icon: <CalendarCheck className="h-4 w-4" />,
+    },
+  },
+  // The portal's "Sức khỏe": the account's own vital signs and its relatives' (FE-04).
+  {
+    name: "my_vital_signs",
+    list: "/my-health",
+    meta: { label: "Sức khỏe", icon: <HeartPulse className="h-4 w-4" /> },
+  },
+  // BF-06 on the portal: sharing with caregivers, what was shared with me, and emergencies.
+  { name: "my_sharing", list: "/my-sharing", meta: { label: "Chia sẻ" } },
+  { name: "shared_patients", list: "/shared-patients", show: "/shared-patients/:customerId", meta: { label: "Người tôi chăm sóc" } },
+  { name: "emergency_alerts", show: "/emergency/:id", meta: { label: "Cảnh báo khẩn" } },
+  // The monitoring devices handed to the customer's profiles, and pairing them (FE-02).
+  {
+    name: "my_devices",
+    list: "/my-devices",
+    meta: { label: "Thiết bị của tôi", icon: <Watch className="h-4 w-4" /> },
+  },
+  // The customer's conversations with clinics (SRS 3.16); the portal's "Tin nhắn".
+  {
+    name: "my_conversations",
+    list: "/my-conversations",
+    show: "/my-conversations/:id",
+    meta: {
+      label: "Tin nhắn của tôi",
+      icon: <MessagesSquare className="h-4 w-4" />,
+    },
+  },
+  // The patient profiles under the account: the owner's own and their relatives'.
+  {
+    name: "my_profiles",
+    list: "/my-profiles",
+    create: "/my-profiles/create",
+    edit: "/my-profiles/edit/:id",
+    meta: {
+      label: "Hồ sơ cá nhân",
+      icon: <ClipboardList className="h-4 w-4" />,
+    },
+  },
+
+  // A doctor's or nurse's own caseload. Only DOCTOR and NURSE hold
+  // `my_patients:read`, so nobody else sees it in the menu.
+  {
+    name: "my_patients",
+    list: "/my-patients",
+    show: "/my-patients/show/:id",
+    meta: {
+      label: "Bệnh nhân của tôi",
+      icon: <HeartPulse className="h-4 w-4" />,
+    },
+  },
+
+  // An administrator looking at a customer's or a member of staff's own
+  // screens, read-only. Only ADMIN holds `view_as:read`.
+  {
+    name: "view_as",
+    list: "/view-as",
+    meta: {
+      label: "Xem dưới vai trò",
+      icon: <Eye className="h-4 w-4" />,
+    },
+  },
+
+  // The clinic's side: everybody who registered, and the appointment book whose
+  // check-in turns a neutral customer into a patient. No create for customers
+  // (they register themselves) and no edit for appointments (a booking changes
+  // by being checked in or cancelled, not by being rewritten).
+  {
+    name: "clinic",
+    meta: {
+      label: "Phòng khám",
+      group: true,
+    },
+  },
+  {
+    name: "appointments",
+    list: "/appointments",
+    create: "/appointments/create",
+    show: "/appointments/show/:id",
+    meta: {
+      label: "Đăng ký khám",
+      icon: <CalendarDays className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  {
+    name: "customers",
+    list: "/customers",
+    edit: "/customers/edit/:id",
+    show: "/customers/show/:id",
+    meta: {
+      label: "Khách hàng",
+      icon: <Contact className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // Read by every booking screen without a permission; `clinics:read` only
+  // decides who sees this screen in the menu, `clinics:write` who may change
+  // its details.
+  {
+    name: "employees",
+    list: "/employees",
+    create: "/employees/create",
+    edit: "/employees/edit/:id",
+    show: "/employees/show/:id",
+    meta: {
+      label: "Nhân viên y tế",
+      icon: <Stethoscope className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  {
+    name: "devices",
+    list: "/devices",
+    create: "/devices/create",
+    edit: "/devices/edit/:id",
+    show: "/devices/show/:id",
+    meta: {
+      label: "Thiết bị IoMT",
+      icon: <Watch className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // FE-04: patients' vital signs — the monitored overview, one patient's view, one reading.
+  {
+    name: "vital_signs",
+    list: "/vital-signs",
+    show: "/vital-signs/show/:id",
+    meta: {
+      label: "Theo dõi sinh hiệu",
+      icon: <HeartPulse className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // FE-05: alerts raised from vital signs, and the rules that raise them.
+  {
+    name: "alerts",
+    list: "/alerts",
+    show: "/alerts/show/:id",
+    meta: {
+      label: "Cảnh báo",
+      icon: <Siren className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  {
+    name: "alert_rules",
+    list: "/alert-rules",
+    create: "/alert-rules/create",
+    edit: "/alert-rules/edit/:id",
+    show: "/alert-rules/show/:id",
+    meta: {
+      label: "Quy tắc cảnh báo",
+      icon: <SlidersHorizontal className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // FE-06: every upload from a device, and the readings refused, to retry.
+  {
+    name: "device_syncs",
+    list: "/device-syncs",
+    show: "/device-syncs/show/:id",
+    meta: {
+      label: "Lịch sử đồng bộ",
+      icon: <RefreshCw className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  {
+    name: "sync_failures",
+    list: "/sync-failures",
+    show: "/sync-failures/show/:id",
+    meta: {
+      label: "Bản ghi đồng bộ lỗi",
+      icon: <TriangleAlert className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // Opened from a patient, so the list has no create button; the create route
+  // exists for the links on a patient's page and on a checked-in appointment.
+  {
+    name: "clinical_encounters",
+    list: "/clinical-encounters",
+    create: "/clinical-encounters/create",
+    edit: "/clinical-encounters/edit/:id",
+    show: "/clinical-encounters/show/:id",
+    meta: {
+      label: "Lần khám",
+      icon: <Stethoscope className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // BF-07: when patients come back for their results; FE-07 what they said; FE-17 licenses.
+  // SRS 3.18.10: the roles staff hold at the clinic.
+  {
+    name: "clinic_roles",
+    list: "/clinic-roles",
+    meta: { label: "Vai trò phòng khám", icon: <ShieldCheck className="h-4 w-4" />, parent: "clinic" },
+  },
+  // BF-08: patient, device, vital sign and alert summaries over a period.
+  {
+    name: "reports",
+    list: "/reports",
+    meta: { label: "Báo cáo tổng hợp", icon: <ChartColumn className="h-4 w-4" />, parent: "clinic" },
+  },
+  {
+    name: "result_returns",
+    list: "/result-returns",
+    meta: { label: "Hẹn trả kết quả", icon: <CalendarClock className="h-4 w-4" />, parent: "clinic" },
+  },
+  {
+    name: "feedback",
+    list: "/feedback",
+    meta: { label: "Góp ý của bệnh nhân", icon: <MessageSquareHeart className="h-4 w-4" />, parent: "clinic" },
+  },
+  {
+    name: "my_licenses",
+    list: "/my-licenses",
+    meta: { label: "Giấy phép của tôi", icon: <Award className="h-4 w-4" />, parent: "clinic" },
+  },
+  {
+    name: "licenses",
+    list: "/licenses",
+    meta: { label: "Giấy phép nhân viên", icon: <Award className="h-4 w-4" />, parent: "clinic" },
+  },
+  // The floor: rooms, who is in them, who waits. Rooms are added on the clinic's page.
+  {
+    name: "exam_rooms",
+    list: "/exam-rooms",
+    meta: {
+      label: "Điều phối phòng khám",
+      icon: <DoorOpen className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // Ordered in an encounter (on its page), carried out from here: no create.
+  {
+    name: "service_orders",
+    list: "/service-orders",
+    show: "/service-orders/show/:id",
+    meta: {
+      label: "Chỉ định dịch vụ",
+      icon: <FlaskConical className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // The clinic's support inbox (SRS 3.16): patients and guests writing in.
+  {
+    name: "conversations",
+    list: "/conversations",
+    show: "/conversations/show/:id",
+    meta: {
+      label: "Tin nhắn",
+      icon: <MessagesSquare className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // First-aid guidance, written and reviewed by clinical staff (SRS 3.17).
+  // What is published is read on the public site, not here.
+  {
+    name: "first_aid_articles",
+    list: "/first-aid-articles",
+    create: "/first-aid-articles/create",
+    edit: "/first-aid-articles/edit/:id",
+    show: "/first-aid-articles/show/:id",
+    meta: {
+      label: "Nội dung sơ cứu",
+      icon: <BriefcaseMedical className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // Issued by concluding an encounter: no create. The report sits under it
+  // as a route of its own, guarded by `invoices:report`.
+  {
+    name: "invoices",
+    list: "/invoices",
+    show: "/invoices/show/:id",
+    meta: {
+      label: "Hóa đơn",
+      icon: <ReceiptText className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // No show page: a period is a row, read in the list and changed in its form.
+  {
+    name: "doctor_schedules",
+    list: "/doctor-schedules",
+    create: "/doctor-schedules/create",
+    edit: "/doctor-schedules/edit/:id",
+    meta: {
+      label: "Lịch bác sĩ",
+      icon: <CalendarClock className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // Read-only: an assignment is made and ended on the patient's page.
+  {
+    name: "monitoring_assignments",
+    list: "/monitoring-assignments",
+    show: "/monitoring-assignments/show/:id",
+    meta: {
+      label: "Phân công theo dõi",
+      icon: <ClipboardList className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  {
+    name: "clinics",
+    list: "/clinics",
+    create: "/clinics/create",
+    edit: "/clinics/edit/:id",
+    show: "/clinics/show/:id",
+    meta: {
+      label: "Cơ sở",
+      icon: <Hospital className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+
   {
     name: "content",
     meta: {
@@ -167,6 +522,29 @@ export const resources: ResourceProps[] = [
       group: true,
     },
   },
+  // The service catalogue and its prices, one for every clinic. ADMIN writes it.
+  // The audit log: every protected action, read-only (FE-20, BR-24).
+  {
+    name: "audit_logs",
+    list: "/audit-logs",
+    show: "/audit-logs/show/:id",
+    meta: {
+      label: "Nhật ký hoạt động",
+      icon: <ScrollText className="h-4 w-4" />,
+      parent: "administration",
+    },
+  },
+  {
+    name: "medical_services",
+    list: "/medical-services",
+    create: "/medical-services/create",
+    edit: "/medical-services/edit/:id",
+    meta: {
+      label: "Dịch vụ y tế",
+      icon: <ListOrdered className="h-4 w-4" />,
+      parent: "administration",
+    },
+  },
   {
     name: "users",
     list: "/users",
@@ -234,6 +612,7 @@ export const resources: ResourceProps[] = [
   {
     name: "notifications",
     list: "/notifications",
+    show: "/notifications/show/:id",
     meta: {
       label: "Thông báo",
       canDelete: true,

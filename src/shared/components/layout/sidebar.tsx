@@ -55,7 +55,8 @@ type Identity = {
   fullName?: string;
   firstName?: string;
   lastName?: string;
-  email?: string;
+  email?: string | null;
+  phone?: string;
   avatar?: string;
 };
 
@@ -253,8 +254,9 @@ function BrandMark({
     <div
       className={cn(
         "flex size-8 shrink-0 items-center justify-center rounded-lg",
-        "bg-sidebar-primary text-sidebar-primary-foreground",
-        "[&_svg]:size-4"
+        // White in either sidebar tone: the logo's blues and greens disappear
+        // into the navy rail otherwise.
+        "bg-white p-0.5 shadow-sm"
       )}
     >
       {icon}
@@ -501,6 +503,8 @@ function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
   if (!authProvider?.getIdentity) return null;
 
   const name = user?.fullName ?? [user?.firstName, user?.lastName].filter(Boolean).join(" ");
+  // Email is optional now; the phone number always exists, so it stands in.
+  const contact = user?.email || user?.phone;
   const avatar = (
     <Avatar className="size-8 shrink-0">
       {user?.avatar && <AvatarImage src={user.avatar} alt={name} />}
@@ -527,9 +531,9 @@ function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
               <span className="truncate text-sm font-medium text-sidebar-foreground">
                 {name || "Tài khoản"}
               </span>
-              {user?.email && (
+              {contact && (
                 <span className="truncate text-xs text-sidebar-foreground/60">
-                  {user.email}
+                  {contact}
                 </span>
               )}
             </div>
