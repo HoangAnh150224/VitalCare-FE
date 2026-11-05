@@ -93,16 +93,16 @@ async function post<T>(
 export function translateRegistrationMessage(message: string): string {
   // Which way a phone number is wrong, as the server tells it (PhoneNumbers.problem).
   if (message.startsWith("Phone number has too few digits")) {
-    return "Số điện thoại chưa đủ số. Vui lòng nhập số điện thoại gồm 10 chữ số hoặc dạng +84 kèm 9 chữ số.";
+    return "Số điện thoại chưa đủ 10 chữ số. Vui lòng nhập số điện thoại di động Việt Nam bắt đầu bằng 03, 05, 07, 08 hoặc 09 (hoặc dạng +84 kèm 9 chữ số).";
   }
   if (message.startsWith("Phone number has too many digits")) {
-    return "Số điện thoại thừa chữ số. Vui lòng nhập số điện thoại gồm 10 chữ số hoặc dạng +84 kèm 9 chữ số.";
+    return "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại di động Việt Nam gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09 (hoặc dạng +84 kèm 9 chữ số).";
   }
   if (message.startsWith("Phone number cannot be all zeros")) {
     return "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại di động Việt Nam đang sử dụng.";
   }
   if (message.startsWith("Phone number may only contain digits")) {
-    return "Số điện thoại sai định dạng. Vui lòng nhập đúng định dạng, ví dụ: 0901234567 hoặc +84901234567.";
+    return "Số điện thoại chứa ký tự không hợp lệ. Chỉ nhập chữ số và ký tự phân cách như khoảng trắng, dấu chấm, gạch ngang hoặc ngoặc đơn; dấu + chỉ dùng ở đầu số.";
   }
   if (message.startsWith("Full name may only contain letters")) {
     return "Họ và tên chỉ được chứa chữ cái và khoảng trắng; không được chứa số hoặc ký tự đặc biệt.";
@@ -117,7 +117,7 @@ export function translateRegistrationMessage(message: string): string {
     message.startsWith("Phone number must be a Vietnamese number") ||
     message.startsWith("Not a valid Vietnamese phone number")
   ) {
-    return "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam, ví dụ: 0901234567 hoặc +84901234567.";
+    return "Mã vùng hoặc đầu số không hợp lệ. Vui lòng nhập số di động Việt Nam gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09; hoặc nhập dạng +84 kèm 9 chữ số.";
   }
   if (message.startsWith("Phone number is required")) {
     return "Vui lòng nhập số điện thoại.";
