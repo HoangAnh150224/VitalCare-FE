@@ -24,6 +24,18 @@ import { cn } from "@/shared/lib/utils";
 
 const CODE_LENGTH = 6;
 
+const isAllZeroPhone = (phone: string) => {
+  const compact = phone.replace(/[\s().-]/g, "");
+  const hasCountryCode = compact.startsWith("+84") || compact.startsWith("84");
+  const national = compact.startsWith("+84")
+    ? compact.slice(3)
+    : compact.startsWith("84")
+      ? compact.slice(2)
+      : compact;
+  const significant = !hasCountryCode && national.startsWith("0") ? national.slice(1) : national;
+  return /^0{9}$/.test(significant);
+};
+
 /**
  * Self-registration verifies the phone by SMS before the API creates the
  * account and its customer record.
@@ -83,6 +95,9 @@ export const SignUpForm = () => {
     // The browser's own checks are off (noValidate): their bubbles follow the browser's language
     // and sit apart from every other message. The same rules, said in Vietnamese under the field.
     const missing: Record<string, string> = {};
+    if (phone.trim() && isAllZeroPhone(phone)) {
+      missing.phone = translate("Phone number cannot be all zeros");
+    }
     if (
       fullName.trim() &&
       !/^[\p{L}\p{M}]+(?:\s+[\p{L}\p{M}]+)*$/u.test(fullName.trim())
