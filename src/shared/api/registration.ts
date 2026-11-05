@@ -107,6 +107,9 @@ export function translateRegistrationMessage(message: string): string {
   if (message.startsWith("Full name may only contain letters")) {
     return "Họ và tên chỉ được chứa chữ cái và khoảng trắng; không được chứa số hoặc ký tự đặc biệt.";
   }
+  if (message.startsWith("Full name must contain at least 2 characters")) {
+    return "Họ và tên phải có ít nhất 2 ký tự.";
+  }
   if (message.startsWith("Password cannot contain only spaces")) {
     return "Mật khẩu không được chỉ chứa khoảng trắng.";
   }

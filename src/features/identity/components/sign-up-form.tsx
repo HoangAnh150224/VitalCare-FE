@@ -98,6 +98,9 @@ export const SignUpForm = () => {
     if (phone.trim() && isAllZeroPhone(phone)) {
       missing.phone = translate("Phone number cannot be all zeros");
     }
+    if (fullName.trim() && fullName.trim().length < 2) {
+      missing.fullName = translate("Full name must contain at least 2 characters");
+    }
     if (fullName.length > 255) {
       missing.fullName = translate("Full name must be at most 255 characters");
     }
