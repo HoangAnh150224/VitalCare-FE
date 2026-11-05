@@ -83,6 +83,12 @@ export const SignUpForm = () => {
     // The browser's own checks are off (noValidate): their bubbles follow the browser's language
     // and sit apart from every other message. The same rules, said in Vietnamese under the field.
     const missing: Record<string, string> = {};
+    if (
+      fullName.trim() &&
+      !/^[\p{L}\p{M}]+(?:\s+[\p{L}\p{M}]+)*$/u.test(fullName.trim())
+    ) {
+      missing.fullName = translate("Full name may only contain letters and spaces");
+    }
     if (!phone.trim()) missing.phone = "Vui lòng nhập số điện thoại.";
     if (!fullName.trim()) missing.fullName = "Vui lòng nhập họ và tên.";
     if (!password) missing.password = "Vui lòng nhập mật khẩu.";
