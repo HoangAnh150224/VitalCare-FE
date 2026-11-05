@@ -1,6 +1,6 @@
 import { API_URL } from "@/shared/api/constants";
 
-/** What `POST /auth/password-reset/otp` answers: a code is on its way. */
+/** What an OTP request answers: a code is on its way. */
 export type OtpSent = {
   /** Seconds the code stays usable. */
   expiresIn: number;
@@ -13,6 +13,15 @@ export type RegistrationError = {
   /** Per-field messages from a 422, keyed by request field (`phone`, `otp`, ...). */
   fieldErrors?: Record<string, string>;
 };
+
+const REGISTER_FAILED = "Không thể gửi mã xác thực";
+
+/** Asks the API to text a one-time registration code to this number. */
+export async function requestRegistrationCode(
+  phone: string
+): Promise<{ ok: true; value: OtpSent } | { ok: false; error: RegistrationError }> {
+  return post(`${API_URL}/auth/register/otp`, { phone }, REGISTER_FAILED);
+}
 
 /**
  * Asks for a password-recovery code to be texted to this phone number.
