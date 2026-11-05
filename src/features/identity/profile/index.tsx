@@ -49,7 +49,9 @@ export const Profile = () => {
   const authorities = getAuthorities();
   const { open } = useNotification();
   const { mutate, mutation } = useCustomMutation<TokenPair>();
-  const { mutate: logout, isPending: isLoggingOut } = useLogout();
+  const { mutate: logout, isPending: isLoggingOut } = useLogout({
+    mutationOptions: { networkMode: "always" },
+  });
   // A customer has no use for role names and permission codes: in the portal
   // the account is a name, a number and a way to sign out (SRS 3.2.4).
   const portal = useShellVariant() === "portal";

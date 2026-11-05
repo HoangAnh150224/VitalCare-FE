@@ -498,7 +498,9 @@ function NavIcon({
 function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
   const authProvider = useActiveAuthProvider();
   const { data: user } = useGetIdentity<Identity>();
-  const { mutate: logout, isPending: isLoggingOut } = useLogout();
+  const { mutate: logout, isPending: isLoggingOut } = useLogout({
+    mutationOptions: { networkMode: "always" },
+  });
 
   if (!authProvider?.getIdentity) return null;
 
