@@ -174,22 +174,6 @@ export const Profile = () => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-                Quyền ({authorities?.permissions.length ?? 0})
-              </span>
-              <div className="flex flex-wrap gap-1">
-                {authorities?.permissions.map((permission) => (
-                  <Badge
-                    key={permission}
-                    variant="secondary"
-                    className="font-mono text-[11px]"
-                  >
-                    {permission}
-                  </Badge>
-                ))}
-              </div>
-            </div>
           </CardContent>
         </Card>
         )}
