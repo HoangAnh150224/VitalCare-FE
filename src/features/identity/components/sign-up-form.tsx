@@ -240,6 +240,7 @@ export const SignUpForm = () => {
                     id="confirmPassword"
                     name="confirmPassword"
                     autoComplete="new-password"
+                    placeholder="Nhập lại mật khẩu để xác nhận"
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
