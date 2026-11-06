@@ -1,6 +1,8 @@
+import { useCan } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 import React, { useState } from "react";
+import { Link } from "react-router";
 
 import {
   actionsColumnWidth,
@@ -14,6 +16,7 @@ import { Input } from "@/shared/ui/input";
 import type { Clinic } from "@/domains/clinic/types";
 import { CLINIC_STATUS_LABELS } from "@/domains/clinic/types";
 import { CLINIC_STATUS_VARIANTS } from "@/shared/lib/status-variants";
+import { Button } from "@/shared/ui/button";
 
 /**
  * The clinics (SRS 3.18.1). The API answers with all of them, so the search
@@ -21,6 +24,7 @@ import { CLINIC_STATUS_VARIANTS } from "@/shared/lib/status-variants";
  */
 export const ClinicList = () => {
   const [term, setTerm] = useState("");
+  const { data: canCreateStaff } = useCan({ resource: "employees", action: "create" });
 
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<Clinic>();
@@ -76,7 +80,16 @@ export const ClinicList = () => {
 
   return (
     <ListView>
-      <ListViewHeader description="Các phòng khám, trạng thái hoạt động và số nhân viên của từng cơ sở." />
+      <ListViewHeader
+        description="Các phòng khám, trạng thái hoạt động và số nhân viên của từng cơ sở."
+        actions={
+          canCreateStaff?.can ? (
+            <Button asChild>
+              <Link to="/employees/create">Tạo tài khoản nhân sự</Link>
+            </Button>
+          ) : undefined
+        }
+      />
       <DataTable
         table={table}
         toolbar={

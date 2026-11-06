@@ -53,6 +53,7 @@ export const SignUpForm = () => {
   const [step, setStep] = useState<"details" | "otp">("details");
   const [phone, setPhone] = useState("");
   const [fullName, setFullName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [otp, setOtp] = useState("");
@@ -147,7 +148,7 @@ export const SignUpForm = () => {
     }
 
     register(
-      { phone, fullName, password, otp },
+      { phone, fullName, password, otp, dateOfBirth: dateOfBirth || undefined },
       {
         onSuccess: (data) => {
           if (data.success) {
@@ -240,6 +241,22 @@ export const SignUpForm = () => {
                     onChange={(e) => setFullName(e.target.value)}
                   />
                   {fieldError("fullName")}
+                </div>
+
+                <div className="mt-5 flex flex-col gap-2">
+                  <Label htmlFor="dateOfBirth">Ngày sinh (nếu đã từng khám tại VitalCare)</Label>
+                  <Input
+                    id="dateOfBirth"
+                    name="dateOfBirth"
+                    type="date"
+                    autoComplete="bday"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    Họ tên, ngày sinh và số điện thoại đã xác thực giúp liên kết đúng hồ sơ Walk-in.
+                  </p>
+                  {fieldError("dateOfBirth")}
                 </div>
 
                 <div className="mt-5 flex flex-col gap-2">

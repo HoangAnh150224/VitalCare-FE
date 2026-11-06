@@ -28,6 +28,7 @@ import {
   SectionedFormPanel,
 } from "@/shared/components/form/form-section";
 import { STAFF_TYPE_OPTIONS, type StaffType } from "@/domains/employee/types";
+import { getAuthorities } from "@/shared/api/session";
 import { useClinicOptions } from "../clinics/use-clinic-options";
 import { ProfileFields } from "./profile-fields";
 
@@ -62,14 +63,24 @@ const DEFAULT_VALUES: StaffFormValues = {
  */
 export const StaffCreate = () => {
   const navigate = useNavigate();
+  const permissions = getAuthorities()?.permissions ?? [];
+  const canCreateClinicAdmin = permissions.includes("clinics:write");
+  const canCreateClinicStaff = permissions.includes("employees:write");
+  const staffTypeOptions = STAFF_TYPE_OPTIONS.filter((option) =>
+    option.value === "clinic_admin" ? canCreateClinicAdmin : canCreateClinicStaff,
+  );
   const {
     refineCore: { onFinish },
     ...form
   } = useForm<StaffFormValues, HttpError, StaffFormValues>({
     refineCoreProps: { redirect: "show" },
-    defaultValues: DEFAULT_VALUES,
+    defaultValues: {
+      ...DEFAULT_VALUES,
+      staffType: canCreateClinicAdmin && !canCreateClinicStaff ? "clinic_admin" : "doctor",
+    },
   });
   const clinics = useClinicOptions();
+  const selectedStaffType = form.watch("staffType");
 
   return (
     <CreateView>
@@ -151,7 +162,7 @@ export const StaffCreate = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {STAFF_TYPE_OPTIONS.map((option) => (
+                        {staffTypeOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
@@ -162,7 +173,7 @@ export const StaffCreate = () => {
                   </FormItem>
                 )}
               />
-              {clinics.several && (
+              {(clinics.several || selectedStaffType === "clinic_admin") && (
                 <FormField
                   control={form.control}
                   name="clinicId"

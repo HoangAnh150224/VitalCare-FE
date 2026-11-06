@@ -49,13 +49,14 @@ type WalkInValues = BookingFormValues & {
   fullName: string;
   phone: string;
   dateOfBirth: string;
+  nationalId: string;
   gender: string;
 };
 
 /**
  * Walk-in registration (FE-10): somebody at the counter to be seen today.
- * The desk picks them, or takes a new patient down (they get an account on
- * their phone number and sign in later through "forgot password"); the visit
+ * The desk picks an existing profile, or creates a new accountless patient
+ * profile; the visit
  * is registered with the next number of the doctor's day and checked in at
  * once. The examination fee is taken next, on the visit's page: the patient
  * queues once it is paid (BF-02).
@@ -77,6 +78,7 @@ export const WalkInRegistration = () => {
       fullName: "",
       phone: "",
       dateOfBirth: "",
+      nationalId: "",
       gender: "",
     },
   });
@@ -85,7 +87,7 @@ export const WalkInRegistration = () => {
   const { options: customerOptions, onSearch } = useSelect<Customer>({
     resource: "customers",
     optionLabel: (customer) =>
-      `${customer.fullName} · ${customer.phone} · ${customer.customerCode}`,
+      `${customer.fullName} · ${customer.phone} · ${customer.customerCode}${customer.nationalId ? ` · ID …${customer.nationalId.slice(-4)}` : ""}`,
     optionValue: "id",
     onSearch: (value) => [{ field: "q", operator: "eq", value }],
   });
@@ -103,6 +105,7 @@ export const WalkInRegistration = () => {
                   fullName: values.fullName.trim(),
                   phone: values.phone,
                   dateOfBirth: values.dateOfBirth,
+                  nationalId: values.nationalId.trim() || null,
                   gender: values.gender,
                 }
               : null,
@@ -156,7 +159,7 @@ export const WalkInRegistration = () => {
           <SectionedFormPanel>
             <FormSection
               title="Bệnh nhân"
-              description="Khách đã có hồ sơ thì tìm; khách mới thì nhập thông tin, hệ thống tạo tài khoản theo số điện thoại."
+              description="Tìm hồ sơ theo tên, số điện thoại, mã hồ sơ hoặc giấy tờ định danh để tránh tạo trùng. Khách mới được tạo hồ sơ bệnh nhân mà chưa cần tài khoản."
             >
               <div className="md:col-span-12">
                 <ToggleGroup
@@ -180,7 +183,7 @@ export const WalkInRegistration = () => {
                     <FormItem className="md:col-span-8">
                       <FormLabel>Khách hàng</FormLabel>
                       <Input
-                        placeholder="Tìm theo tên, số điện thoại hoặc mã khách hàng"
+                        placeholder="Tìm theo tên, số điện thoại, mã hồ sơ hoặc giấy tờ định danh"
                         onChange={(event) => onSearch(event.target.value)}
                       />
                       <Select
@@ -249,10 +252,7 @@ export const WalkInRegistration = () => {
                             placeholder="0901234567"
                           />
                         </FormControl>
-                        <FormDescription>
-                          Dùng để đăng nhập; khách tự đặt mật khẩu qua “Quên mật
-                          khẩu”.
-                        </FormDescription>
+                        <FormDescription>Số liên hệ của hồ sơ; không tạo tài khoản đăng nhập cho bệnh nhân vãng lai.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -267,6 +267,21 @@ export const WalkInRegistration = () => {
                         <FormControl>
                           <Input {...field} type="date" max={clinicToday()} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="nationalId"
+                    rules={{ maxLength: { value: 32, message: "Tối đa 32 ký tự" } }}
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-6">
+                        <FormLabel>Số giấy tờ định danh (nếu có)</FormLabel>
+                        <FormControl>
+                          <Input {...field} maxLength={32} />
+                        </FormControl>
+                        <FormDescription>Dùng cùng họ tên, ngày sinh và số liên hệ để phát hiện hồ sơ trùng.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

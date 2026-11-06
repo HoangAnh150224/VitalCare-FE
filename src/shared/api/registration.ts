@@ -91,6 +91,18 @@ async function post<T>(
  * interface's language. Anything else is shown as the API wrote it.
  */
 export function translateRegistrationMessage(message: string): string {
+  if (message.startsWith("A matching patient profile already exists")) {
+    return "Hồ sơ bệnh nhân phù hợp đã tồn tại. Hãy tìm và chọn hồ sơ đó thay vì tạo mới.";
+  }
+  if (message.startsWith("Enter your date of birth to securely link")) {
+    return "Đã tìm thấy hồ sơ Walk-in có cùng họ tên và số điện thoại. Nhập đúng ngày sinh để liên kết tài khoản.";
+  }
+  if (message.startsWith("Date of birth must be in the past")) {
+    return "Ngày sinh phải là một ngày trong quá khứ.";
+  }
+  if (message.startsWith("More than one patient profile matches")) {
+    return "Có nhiều hồ sơ phù hợp. Vui lòng liên hệ phòng khám để xác minh và liên kết tài khoản.";
+  }
   // Which way a phone number is wrong, as the server tells it (PhoneNumbers.problem).
   if (message.startsWith("Phone number has too few digits")) {
     return "Số điện thoại chưa đủ 10 chữ số. Vui lòng nhập số điện thoại di động Việt Nam bắt đầu bằng 03, 05, 07, 08 hoặc 09 (hoặc dạng +84 kèm 9 chữ số).";

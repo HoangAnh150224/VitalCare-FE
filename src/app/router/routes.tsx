@@ -450,10 +450,21 @@ export function AppRoutes() {
           }
         >
           <Route index element={<StaffList />} />
-          <Route path="create" element={<StaffCreate />} />
           <Route path="edit/:id" element={<StaffEdit />} />
           <Route path="show/:id" element={<StaffShow />} />
         </Route>
+        <Route
+          path="/employees/create"
+          element={
+            <CanAccess
+              resource="employees"
+              action="create"
+              fallback={<Forbidden resource="employees" />}
+            >
+              <StaffCreate />
+            </CanAccess>
+          }
+        />
         <Route
           path="/vital-signs"
           element={
