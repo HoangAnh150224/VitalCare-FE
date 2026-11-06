@@ -13,7 +13,7 @@ import {
   CategoryEdit,
   CategoryShow,
 } from "@/features/categories";
-import { Dashboard } from "@/features/dashboard";
+import { Dashboard, SystemAdminDashboard } from "@/features/dashboard";
 import { TaskList, TaskCreate, TaskEdit, TaskShow } from "@/features/tasks";
 import {
   OrganizationList,
@@ -206,9 +206,23 @@ export function AppRoutes() {
             <PortalSwitch
               portal={<PortalHome />}
               staff={
-                // BF-10 for those who watch the patients; the plain landing for everybody else.
-                <CanAccess resource="monitoring_dashboard" action="list" fallback={<Dashboard />}>
-                  <MonitoringDashboard />
+                // The system administrator gets global management totals; clinic teams
+                // keep the clinic-scoped monitoring dashboard and all other staff keep
+                // the plain landing page.
+                <CanAccess
+                  resource="row_level_policies"
+                  action="list"
+                  fallback={
+                    <CanAccess
+                      resource="monitoring_dashboard"
+                      action="list"
+                      fallback={<Dashboard />}
+                    >
+                      <MonitoringDashboard />
+                    </CanAccess>
+                  }
+                >
+                  <SystemAdminDashboard />
                 </CanAccess>
               }
             />
