@@ -31,7 +31,7 @@ import {
   CardTitle,
 } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
-import { initials } from "@/shared/lib/format";
+import { formatVietnamesePhone, initials } from "@/shared/lib/format";
 
 /**
  * The signed-in user's own account.
@@ -123,7 +123,7 @@ export const Profile = () => {
             </Avatar>
             <div className="flex min-w-0 flex-col">
               <span className="font-display truncate text-lg font-semibold">{identity?.fullName ?? "—"}</span>
-              <span className="text-muted-foreground text-sm tabular-nums">{identity?.phone ?? "—"}</span>
+              <span className="text-muted-foreground text-sm tabular-nums">{formatVietnamesePhone(identity?.phone)}</span>
               {identity?.email && <span className="text-muted-foreground truncate text-sm">{identity.email}</span>}
             </div>
           </Card>
@@ -146,7 +146,7 @@ export const Profile = () => {
               <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
                 Số điện thoại
               </span>
-              <span className="text-sm font-mono">{identity?.phone ?? "—"}</span>
+              <span className="text-sm font-mono">{formatVietnamesePhone(identity?.phone)}</span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">

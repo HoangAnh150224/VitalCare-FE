@@ -65,6 +65,20 @@ export function formatMoney(value?: number | null): string {
   return `${value.toLocaleString(LOCALE, { maximumFractionDigits: 0 })} ₫`;
 }
 
+/** Displays a stored Vietnamese E.164 number in the familiar national form. */
+export function formatVietnamesePhone(value?: string | null): string {
+  if (!value) return EMPTY;
+
+  const compact = value.replace(/[\s().-]/g, "");
+  const national = compact.startsWith("+84")
+    ? compact.slice(3)
+    : compact.startsWith("84")
+      ? compact.slice(2)
+      : null;
+
+  return national && /^\d{9}$/.test(national) ? `0${national}` : value;
+}
+
 /** A wall-clock time the API sends as `HH:mm:ss`, shown as `HH:mm`. */
 export function formatLocalTime(value?: string | null): string {
   if (!value) return EMPTY;
