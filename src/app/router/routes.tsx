@@ -1,5 +1,7 @@
 import { Authenticated, CanAccess } from "@refinedev/core";
-import { Navigate, Outlet, Route, Routes } from "react-router";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router";
+
+import { justSignedOut } from "@/app/providers/auth";
 
 import {
   BlogPostList,
@@ -159,6 +161,16 @@ import { Forbidden } from "@/shared/components/layout/forbidden";
 import { PortalSwitch, ShellLayout } from "./shell";
 
 /**
+ * Where a protected page goes once there is no session: home after "Đăng xuất", otherwise the
+ * sign-in form with the page to come back to (what `redirectOnFail` alone would do).
+ */
+function SignedOutRedirect() {
+  const { pathname, search } = useLocation();
+  if (justSignedOut()) return <Navigate to="/" replace />;
+  return <Navigate to={`/login?to=${encodeURIComponent(pathname + search)}`} replace />;
+}
+
+/**
  * Route tree rendered inside `<Refine>`. Every path here must line up with the
  * action routes declared in `app/resources/index.tsx`.
  *
@@ -189,7 +201,7 @@ export function AppRoutes() {
       </Route>
       <Route
         element={
-          <Authenticated key="authenticated-routes" redirectOnFail="/login">
+          <Authenticated key="authenticated-routes" fallback={<SignedOutRedirect />}>
             <ShellLayout>
               <Outlet />
             </ShellLayout>
