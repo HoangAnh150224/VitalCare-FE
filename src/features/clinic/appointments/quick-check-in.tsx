@@ -157,7 +157,7 @@ export const QuickCheckIn = () => {
               <span className="text-sm">
                 {lastDone.status === "cancelled" ? "Đã huỷ lượt đăng ký khám của " : "Đã tiếp nhận "}
                 <strong>{lastDone.customer.fullName}</strong> ({formatBookingCode(lastDone.bookingCode)})
-                {lastDone.status === "checked_in" && lastDone.customer.status === "patient"
+                {lastDone.status !== "cancelled" && lastDone.customer.status === "patient"
                   ? " — hồ sơ bệnh nhân đang hoạt động."
                   : "."}
               </span>
@@ -207,7 +207,7 @@ function AppointmentCard({
 }) {
   const today = clinicToday();
   const isToday = appointment.appointmentDate === today;
-  const willActivate = appointment.status === "scheduled" && appointment.customer.status === "neutral";
+  const willActivate = appointment.status === "booked" && appointment.customer.status === "neutral";
 
   return (
     <Card className="flex flex-col gap-4 p-5">
@@ -248,7 +248,7 @@ function AppointmentCard({
         <DetailRow label="Lý do">{appointment.reason ?? "—"}</DetailRow>
       </DetailList>
 
-      {appointment.status === "scheduled" && !isToday && (
+      {appointment.status === "booked" && !isToday && (
         <p className="text-warning text-sm">
           Lượt đăng ký này vào ngày {formatLocalDate(appointment.appointmentDate)}, chỉ tiếp nhận được
           vào đúng ngày hẹn.

@@ -90,13 +90,14 @@ export const AppointmentShow = () => {
   });
   const related = encounters?.data ?? [];
   const open =
-    record?.status === "scheduled" ||
+    record?.status === "booked" ||
     record?.status === "checked_in" ||
+    record?.status === "ready_for_examination" ||
     record?.status === "in_exam";
 
   const status = record?.status;
   const willActivate =
-    record?.status === "scheduled" && record.customer.status === "neutral";
+    record?.status === "booked" && record.customer.status === "neutral";
 
   return (
     <ShowView>
@@ -144,6 +145,7 @@ export const AppointmentShow = () => {
               </div>
               {/* The visit follows the check-in: open its encounter from here. */}
               {(record?.status === "checked_in" ||
+                record?.status === "ready_for_examination" ||
                 record?.status === "in_exam") &&
                 canRecordEncounter?.can && (
                   <Button asChild variant="outline">
