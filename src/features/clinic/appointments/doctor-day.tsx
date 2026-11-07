@@ -1,7 +1,8 @@
 import { useCustom } from "@refinedev/core";
 
 import { API_URL } from "@/shared/api/constants";
-import { formatLocalTime } from "@/shared/lib/format";
+import { formatLocalDate, formatLocalTime } from "@/shared/lib/format";
+import { Button } from "@/shared/ui/button";
 import { WEEKDAY_LABELS } from "@/domains/clinic/types";
 import type { DoctorAvailability } from "@/domains/schedule/types";
 
@@ -72,4 +73,52 @@ export function DoctorDayHint({ doctor, date }: { doctor: DoctorAvailability | u
 
 function Hint({ children }: { children: React.ReactNode }) {
   return <p className="text-destructive text-sm md:col-span-8">{children}</p>;
+}
+
+/** A day a clinic still has places on (BR-01/02): online and walk-in visits share them. */
+type OpenDay = { date: string; remaining: number };
+
+/**
+ * The day is full (UC-01 A1, UC-03 C1): the next days with a place left from
+ * `from`, as buttons that pick them — or, with no `onPick` (a walk-in, whose
+ * day is today), as days for the desk to tell the patient.
+ */
+export function OpenDayChoices({
+  clinicId,
+  from,
+  onPick,
+}: {
+  clinicId: string;
+  from: string;
+  onPick?: (date: string) => void;
+}) {
+  const { result } = useCustom<OpenDay[]>({
+    url: `${API_URL}/clinics/${clinicId}/open-days`,
+    method: "get",
+    config: { query: { from, days: 5 } },
+  });
+  const days = Array.isArray(result?.data) ? result.data : [];
+  return (
+    <div className="space-y-2 md:col-span-8" role="alert">
+      <p className="text-destructive text-sm">
+        Ngày này phòng khám không có bác sĩ khám hoặc đã hết lượt.
+        {days.length > 0 ? " Các ngày còn lượt:" : " Vui lòng chọn ngày khác."}
+      </p>
+      {days.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {days.map((day) =>
+            onPick ? (
+              <Button key={day.date} type="button" variant="outline" size="sm" onClick={() => onPick(day.date)}>
+                {formatLocalDate(day.date)} · còn {day.remaining} lượt
+              </Button>
+            ) : (
+              <span key={day.date} className="rounded-md border px-2 py-1 text-sm">
+                {formatLocalDate(day.date)} · còn {day.remaining} lượt
+              </span>
+            )
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
