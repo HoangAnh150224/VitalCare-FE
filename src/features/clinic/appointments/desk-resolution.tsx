@@ -120,7 +120,11 @@ export function DeskResolution({
               : status === "no_show"
                 ? "Lượt này đã ghi nhận không đến."
                 : `Lượt này đã qua ngày hẹn (${formatLocalDate(appointmentDate)}).`}{" "}
-            {appointment.paidAt ? "Phí khám đã trả sẽ được chuyển sang lượt mới." : ""}
+            {appointment.paidAt && status !== "cancelled"
+              ? "Phí khám đã trả sẽ được chuyển sang lượt mới."
+              : appointment.paidAt
+                ? "Phí khám của lượt đã huỷ chờ hoàn tiền, lượt mới thu phí như bình thường."
+                : ""}
           </span>
           <Button size="sm" onClick={convert} disabled={busy}>
             <RefreshCwIcon />
