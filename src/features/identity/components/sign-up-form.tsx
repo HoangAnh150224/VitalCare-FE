@@ -17,8 +17,10 @@ import {
 import { InputPassword } from "@/shared/components/form/input-password";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/shared/ui/input-otp";
 import {
+  checkRegistrationCode,
   requestRegistrationCode,
   translateRegistrationMessage as translate,
+  type ProfileMatch,
 } from "@/shared/api/registration";
 import { cn } from "@/shared/lib/utils";
 
@@ -36,9 +38,19 @@ const isAllZeroPhone = (phone: string) => {
   return /^0{9}$/.test(significant);
 };
 
+/** The API's answer to a number that already has an account (UC-04 D2). */
+const PHONE_TAKEN = "Số điện thoại đã được sử dụng";
+
+/** "Nguyễn V*** A – 1985": how a matching profile is shown (BR-14). */
+const matchLabel = (match: ProfileMatch) =>
+  match.birthYear ? `${match.maskedName} – ${match.birthYear}` : match.maskedName;
+
 /**
- * Self-registration verifies the phone by SMS before the API creates the
- * account and its customer record.
+ * Self-registration (UC-04) verifies the phone by SMS before the API creates
+ * the account and its customer record. Once the code is right, the profiles
+ * the clinic already has with that number (walk-ins) are offered masked: the
+ * person picks their own, or "not me" for a new one; the others join the
+ * account as relatives.
  *
  * A new account is a customer that is not yet a patient: it can register for
  * an examination, and becomes a patient when it checks in at the clinic.
@@ -50,11 +62,14 @@ export const SignUpForm = () => {
   const navigate = useNavigate();
   const { mutate: register, isPending: isRegistering } = useRegister({ mutationOptions: { networkMode: "always" } });
 
-  const [step, setStep] = useState<"details" | "otp">("details");
+  const [step, setStep] = useState<"details" | "otp" | "profile">("details");
   const [phone, setPhone] = useState("");
   const [fullName, setFullName] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
   const [password, setPassword] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [matches, setMatches] = useState<ProfileMatch[]>([]);
+  /** The match picked as the person's own; "none" for "not me". */
+  const [claim, setClaim] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [codeSentTo, setCodeSentTo] = useState<string | null>(null);
@@ -136,7 +151,7 @@ export const SignUpForm = () => {
     void sendCode();
   };
 
-  const handleVerifyAndRegister = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleVerify = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setFieldErrors({});
@@ -147,8 +162,38 @@ export const SignUpForm = () => {
       return;
     }
 
+    setChecking(true);
+    const result = await checkRegistrationCode({ phone, otp });
+    setChecking(false);
+    if (!result.ok) {
+      setError(translate(result.error.message));
+      setFieldErrors(result.error.fieldErrors ?? {});
+      if (result.error.fieldErrors?.otp) setOtp("");
+      return;
+    }
+    // No profile with this number yet: nothing to choose, the account gets a new one.
+    if (result.value.length === 0) {
+      createAccount(null);
+      return;
+    }
+    setMatches(result.value);
+    setClaim("");
+    setStep("profile");
+  };
+
+  const handleClaim = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    if (!claim) {
+      setError("Vui lòng chọn hồ sơ của bạn, hoặc chọn \"Không phải tôi\".");
+      return;
+    }
+    createAccount(claim === "none" ? null : Number(claim));
+  };
+
+  const createAccount = (claimProfileId: number | null) => {
     register(
-      { phone, fullName, password, otp, dateOfBirth: dateOfBirth || undefined },
+      { phone, fullName, password, otp, claimProfileId },
       {
         onSuccess: (data) => {
           if (data.success) {
@@ -159,7 +204,11 @@ export const SignUpForm = () => {
           const failure = data.error as (Error & { fieldErrors?: Record<string, string> }) | undefined;
           setError(failure?.message ? translate(failure.message) : null);
           setFieldErrors(failure?.fieldErrors ?? {});
-          if (failure?.fieldErrors?.otp) setOtp("");
+          // The code is spent or wrong: back to it, to ask for a new one.
+          if (failure?.fieldErrors?.otp) {
+            setOtp("");
+            setStep("otp");
+          }
         },
       }
     );
@@ -199,12 +248,18 @@ export const SignUpForm = () => {
         <Card className={cn("mt-8 w-full p-8 shadow-e4", "sm:w-[420px]")}>
           <CardHeader className={cn("gap-1 px-0")}>
             <CardTitle className={cn("text-2xl font-semibold")}>
-              {step === "details" ? "Đăng ký" : "Xác thực số điện thoại"}
+              {step === "details"
+                ? "Đăng ký"
+                : step === "otp"
+                  ? "Xác thực số điện thoại"
+                  : "Chọn hồ sơ của bạn"}
             </CardTitle>
             <CardDescription>
               {step === "details"
                 ? "Mã xác thực sẽ được gửi qua SMS tới số điện thoại bạn đăng ký."
-                : `Mã xác thực đã được gửi qua SMS tới ${phone}.`}
+                : step === "otp"
+                  ? `Mã xác thực đã được gửi qua SMS tới ${phone}.`
+                  : "Phòng khám đã có hồ sơ với số điện thoại này. Chọn hồ sơ của chính bạn; các hồ sơ còn lại sẽ được thêm vào tài khoản là người thân."}
             </CardDescription>
           </CardHeader>
 
@@ -244,22 +299,6 @@ export const SignUpForm = () => {
                 </div>
 
                 <div className="mt-5 flex flex-col gap-2">
-                  <Label htmlFor="dateOfBirth">Ngày sinh (nếu đã từng khám tại VitalCare)</Label>
-                  <Input
-                    id="dateOfBirth"
-                    name="dateOfBirth"
-                    type="date"
-                    autoComplete="bday"
-                    value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                  />
-                  <p className="text-muted-foreground text-xs">
-                    Họ tên, ngày sinh và số điện thoại đã xác thực giúp liên kết đúng hồ sơ Walk-in.
-                  </p>
-                  {fieldError("dateOfBirth")}
-                </div>
-
-                <div className="mt-5 flex flex-col gap-2">
                   <Label htmlFor="password">Mật khẩu</Label>
                   {/* The phone number is the sign-in identifier, so a hidden
                       username field tells password managers which account the
@@ -294,7 +333,18 @@ export const SignUpForm = () => {
                 </div>
 
                 {error && Object.keys(fieldErrors).length === 0 && (
-                  <p role="alert" className="text-destructive mt-4 text-sm">{error}</p>
+                  <p role="alert" className="text-destructive mt-4 text-sm">
+                    {error.startsWith(PHONE_TAKEN) ? (
+                      <>
+                        Số này đã đăng ký.{" "}
+                        <Link to="/forgot-password" className="text-link font-medium underline">
+                          Quên mật khẩu?
+                        </Link>
+                      </>
+                    ) : (
+                      error
+                    )}
+                  </p>
                 )}
 
                 <Button type="submit" size="lg" className="mt-7 w-full" disabled={sending}>
@@ -304,7 +354,7 @@ export const SignUpForm = () => {
             )}
 
             {step === "otp" && (
-              <form onSubmit={handleVerifyAndRegister} noValidate>
+              <form onSubmit={(e) => void handleVerify(e)} noValidate>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="otp">Mã xác thực SMS</Label>
                   <InputOTP
@@ -360,9 +410,44 @@ export const SignUpForm = () => {
                   type="submit"
                   size="lg"
                   className="mt-7 w-full"
-                  disabled={isRegistering || sending}
+                  disabled={checking || isRegistering || sending}
                 >
-                  {isRegistering ? "Đang xác thực…" : "Xác thực và đăng ký"}
+                  {checking || isRegistering ? "Đang xác thực…" : "Xác thực và đăng ký"}
+                </Button>
+              </form>
+            )}
+
+            {step === "profile" && (
+              <form onSubmit={handleClaim} noValidate>
+                <fieldset className="flex flex-col gap-2">
+                  <legend className="sr-only">Hồ sơ của bạn</legend>
+                  {[...matches.map((match) => ({ value: String(match.id), label: matchLabel(match) })),
+                    { value: "none", label: "Không phải tôi — tạo hồ sơ mới" }].map((option) => (
+                    <label
+                      key={option.value}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-md border p-3 text-sm",
+                        claim === option.value && "border-primary bg-primary/5"
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="claim"
+                        value={option.value}
+                        checked={claim === option.value}
+                        onChange={() => setClaim(option.value)}
+                      />
+                      {option.label}
+                    </label>
+                  ))}
+                </fieldset>
+
+                {error && (
+                  <p role="alert" className="text-destructive mt-4 text-sm">{error}</p>
+                )}
+
+                <Button type="submit" size="lg" className="mt-7 w-full" disabled={isRegistering}>
+                  {isRegistering ? "Đang tạo tài khoản…" : "Tạo tài khoản"}
                 </Button>
               </form>
             )}

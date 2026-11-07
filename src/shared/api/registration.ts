@@ -23,6 +23,21 @@ export async function requestRegistrationCode(
   return post(`${API_URL}/auth/register/otp`, { phone }, REGISTER_FAILED);
 }
 
+/** A profile the clinic already has with the number being registered, masked (BR-14). */
+export type ProfileMatch = { id: number; maskedName: string; birthYear: number | null };
+
+/**
+ * Whether the registration code is right, without spending it; if it is, the
+ * profiles the number already has at the clinic, for the person to pick their
+ * own (UC-04). A wrong code is a field error on `otp`.
+ */
+export async function checkRegistrationCode(body: {
+  phone: string;
+  otp: string;
+}): Promise<{ ok: true; value: ProfileMatch[] } | { ok: false; error: RegistrationError }> {
+  return post(`${API_URL}/auth/register/otp/check`, body, REGISTER_FAILED);
+}
+
 /**
  * Asks for a password-recovery code to be texted to this phone number.
  *
@@ -94,14 +109,11 @@ export function translateRegistrationMessage(message: string): string {
   if (message.startsWith("A matching patient profile already exists")) {
     return "Hồ sơ bệnh nhân phù hợp đã tồn tại. Hãy tìm và chọn hồ sơ đó thay vì tạo mới.";
   }
-  if (message.startsWith("Enter your date of birth to securely link")) {
-    return "Đã tìm thấy hồ sơ Walk-in có cùng họ tên và số điện thoại. Nhập đúng ngày sinh để liên kết tài khoản.";
+  if (message.startsWith("Pick one of the profiles shown")) {
+    return "Vui lòng chọn một trong các hồ sơ được liệt kê.";
   }
   if (message.startsWith("Date of birth must be in the past")) {
     return "Ngày sinh phải là một ngày trong quá khứ.";
-  }
-  if (message.startsWith("More than one patient profile matches")) {
-    return "Có nhiều hồ sơ phù hợp. Vui lòng liên hệ phòng khám để xác minh và liên kết tài khoản.";
   }
   // Which way a phone number is wrong, as the server tells it (PhoneNumbers.problem).
   if (message.startsWith("Phone number has too few digits")) {
@@ -171,7 +183,7 @@ export function translateRegistrationMessage(message: string): string {
     return "Đã yêu cầu quá nhiều mã từ mạng này. Vui lòng thử lại sau.";
   }
   if (message.startsWith("Too many codes")) {
-    return "Đã gửi quá nhiều mã tới số này. Vui lòng thử lại sau.";
+    return "Đã gửi quá nhiều mã tới số này. Số này tạm khóa nhận mã trong 24 giờ.";
   }
   if (message.startsWith("The code is incorrect")) {
     return "Mã xác thực không đúng hoặc đã hết hạn.";

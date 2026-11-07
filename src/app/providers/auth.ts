@@ -160,12 +160,12 @@ export const authProvider: AuthProvider = {
    * `fieldErrors` so the form can put each under its field instead of only in
    * a toast.
    */
-  async register({ phone, otp, email, fullName, dateOfBirth, password }) {
+  async register({ phone, otp, email, fullName, dateOfBirth, password, claimProfileId }) {
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, otp, email, fullName, dateOfBirth, password }),
+        body: JSON.stringify({ phone, otp, email, fullName, dateOfBirth, password, claimProfileId }),
       });
 
       if (!response.ok) {
