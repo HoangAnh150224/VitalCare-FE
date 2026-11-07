@@ -142,6 +142,13 @@ export const AppointmentShow = () => {
                     resource="appointments"
                   />
                 )}
+                {/* UC-02 step 8, UC-03 step 10: in the queue, the slip is handed over. */}
+                {record?.status === "ready_for_examination" && (
+                  <Button variant="outline" onClick={() => window.print()}>
+                    <PrinterIcon />
+                    In phiếu khám
+                  </Button>
+                )}
               </div>
               {/* The visit follows the check-in: open its encounter from here. */}
               {(record?.status === "checked_in" ||
