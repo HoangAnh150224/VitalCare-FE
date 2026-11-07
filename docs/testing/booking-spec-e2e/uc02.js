@@ -112,7 +112,8 @@ const ids = JSON.parse(fs.readFileSync("C:/Users/MSI/.claude/jobs/890c0789/tmp/u
   // B1 late, already paid online → walk-in today, fee carried
   await search(late);
   t = await body();
-  check("RULE-34 B1 đến trễ → báo đã qua ngày, phí đã trả sẽ chuyển", t.includes("đã qua ngày hẹn") && t.includes("Phí khám đã trả sẽ được chuyển"), t.slice(0, 300));
+  // J-01 may already have marked it a no-show (it sweeps every 20 s here): both read as "came late".
+  check("RULE-34 B1 đến trễ / NO_SHOW → báo, phí đã trả sẽ chuyển", (t.includes("đã qua ngày hẹn") || t.includes("đã ghi nhận không đến")) && t.includes("Phí khám đã trả sẽ được chuyển"), t.slice(0, 300));
   await page.getByRole("button", { name: "Chuyển sang khám trực tiếp" }).click();
   await page.waitForURL(/\/appointments\/show\/\d+/, { timeout: 10000 }).catch(() => {});
   const fresh = Number((page.url().match(/show\/(\d+)/) || [])[1]);

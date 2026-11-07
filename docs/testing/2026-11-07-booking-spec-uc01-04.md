@@ -9,9 +9,35 @@
   - Dùng terminal VNPay giả (`TESTTMN1`); callback VNPay được ký trong script, không gọi VNPay thật.
   - FE dev ở `http://localhost:5176`.
 - **Dữ liệu dựng thêm:** thêm ca thứ Bảy 07:00–21:00 cho bác sĩ 1 (cơ sở 1) và bác sĩ 6 (cơ sở 2), vì hôm chạy là thứ Bảy.
-- **Script:** `docs/testing/booking-spec-e2e/*.js`. Lệnh chạy là `node uc04.js`, cần BE, FE và DB như trên.
+- **Script:** `docs/testing/booking-spec-e2e/*.js`. Cần BE, FE và DB như trên. Cách chạy:
+  - `node resetdb.js` (dựng lại DB test), khởi động lại BE, rồi `node run-all.js`.
+  - Mobile: `node umob.js`, chạy trên bản Flutter web build bằng `--dart-define=API_URL=http://localhost:8080/api`, phục vụ ở cổng 5190.
+  - BE test cần thêm biến môi trường `APP_NO_SHOW_SWEEP=20s` và `APP_OTP_MAX_PER_IP_PER_HOUR=200`.
 
-## Tổng kết
+## Lần chạy 2 — trọn bộ end-to-end trên DB sạch (07/11/2026)
+
+| Phần | Check | Pass | Ghi chú |
+|---|---|---|---|
+| UC-04 Đăng ký (web) | 34 | 34 | Tự dựng dữ liệu walk-in ngay trong script |
+| UC-01 Đặt lịch (web) | 29 | 29 | |
+| UC-02 Check-in (web) | 27 | 27 | J-01 có thể chạy trước khi quầy tra cứu; script chấp nhận cả lịch đã thành NO_SHOW |
+| UC-03 Walk-in (web), gồm C1 | 20 | 20 | |
+| Bổ sung: J-01, đồng thời, phạm vi cơ sở, phiên hết hạn, mất kết nối | 18 | 18 | Bắt được DEF-03, đã sửa |
+| Mobile (Flutter web, khung điện thoại 412px) | 14 | 14 | Đăng ký có chọn hồ sơ, D2, đăng nhập, phí khám, trả online / trả tại quầy, BR-11 |
+| **Tổng** | **142** | **142** | |
+
+Các phần bổ sung đã phủ:
+- **J-01:** lịch BOOKED đã qua ngày tự thành NO_SHOW và hóa đơn chưa trả bị hủy; lịch hôm nay còn ca và lịch đã check-in không bị đụng.
+- **RULE-23 (đồng thời):**
+  - 2 lễ tân check-in cùng lúc: đúng 1 thành công.
+  - 2 lần đặt lịch cùng người cùng ngày: chỉ ra 1 lịch, không cấp trùng số thứ tự.
+  - 2 lần chuyển walk-in cùng lúc: chỉ ra 1 lượt.
+- **RULE-31 (phạm vi cơ sở):** lễ tân cơ sở 2 tra mã hoặc thao tác trên lịch cơ sở 1 đều nhận 404.
+- **RULE-33 (phiên đăng nhập):** access token hết hạn nhưng refresh token còn thì tự gia hạn; cả hai hỏng thì về trang đăng nhập; token giả nhận 401.
+- **RULE-37:** mất kết nối máy chủ thì báo lỗi tiếng Việt.
+- **RULE-24:** giới hạn OTP theo IP (10 lần/giờ) chặn đúng khi chạy nhiều test liên tiếp; môi trường test đã nới giới hạn này.
+
+## Lần chạy 1 — tổng kết
 
 | UC | Check | Pass | Fail | Ghi chú |
 |---|---|---|---|---|
@@ -27,6 +53,8 @@
 |---|---|---|---|---|---|---|
 | DEF-01 | Cao | Tạo walk-in khách mới không có CCCD thì lỗi 500. Lỗi có sẵn từ nhánh gốc. | Quầy, Walk-in, chọn Khách mới, bỏ trống CCCD, bấm Đăng ký | 500, log báo `function btrim(bytea) does not exist` | Tạo được hồ sơ và lượt khám | **Đã sửa:** ép kiểu tham số trong `CustomerRepository.findWalkInDuplicates` |
 | DEF-02 | Cao | Chuyển lịch trễ đã trả online sang walk-in thì lỗi 500 | Quầy, tra mã lịch đã qua ngày (đã trả), bấm "Chuyển sang khám trực tiếp" | 500, log báo `uq_invoice_exam_appointment` | Lượt mới READY và tiền được chuyển sang | **Đã sửa:** ghi lệnh hủy hóa đơn mới xuống DB trước khi chuyển hóa đơn đã trả (`Invoices.carryExamPaid`). Đã xác nhận lần lỗi trước rollback sạch. |
+| DEF-03 | Cao | 2 lần "Chuyển sang khám trực tiếp" đồng thời tạo ra 2 lượt walk-in | Gửi 2 request `POST /appointments/{id}/walk-in` song song | Cả 2 nhận 201 | 1 nhận 201, 1 nhận 409 | **Đã sửa:** kiểm tra "mỗi hồ sơ một lượt mở mỗi ngày" (chạy dưới khóa theo ngày của phòng khám) tính cả lượt đã check-in. Chạy lại Pass |
+| OBS-03 | Thấp | J-01 ghi log "refund needed" cho phí đã trả của lịch NO_SHOW, trong khi khoản phí này giữ lại để chuyển sang walk-in (UC-02 B1) | | Log báo cần hoàn tiền | Log báo giữ phí | **Đã sửa** |
 | OBS-01 | Thấp | Ô SĐT ở form walk-in không nhận khoảng trắng ("0389 001 003"), dù BE chuẩn hóa được (BR-08) | Nhập SĐT có khoảng trắng | Báo sai định dạng | Nhận và tự chuẩn hóa | Chưa sửa (hành vi có sẵn) |
 | OBS-02 | Trung bình (quy trình) | `mvn test` có test khởi động Spring context bằng datasource mặc định, tức DB dev `vitalcare`. Lần chạy đầu đã áp migration 056 lên DB dev. | `mvn test` không có cấu hình test riêng | Migration chạy lên DB dev | Test dùng DB riêng | Đã rollback 056 trên DB dev, xác nhận không có dòng dữ liệu lạ. Nên thêm `src/test/resources/application.properties` trỏ DB test. |
 
@@ -200,9 +228,9 @@
 
 ## Chưa phủ (cần làm tiếp)
 
-- **Mobile (Flutter):** chưa test E2E. Đã qua `flutter analyze` và `flutter test`.
-- **RULE-23:** chưa test thao tác đồng thời thật.
-- **RULE-33:** chưa test phiên đăng nhập hết hạn.
-- **RULE-37:** chưa test lúc server hoặc DB sập.
-- **RULE-31 ở quầy:** chưa test lễ tân xem lịch của cơ sở khác.
-- **J-01:** chưa chạy E2E, mới có unit test.
+Sau lần chạy 2, các mục đồng thời, phiên hết hạn, mất kết nối, phạm vi cơ sở, J-01 và mobile đã được phủ. Còn lại:
+
+- **Mobile trên thiết bị Android thật hoặc emulator:** máy chưa có AVD; mới test bản Flutter web ở khung điện thoại.
+- **Form đặt lịch trên mobile** (date picker và gợi ý ngày còn lượt): lịch được tạo qua API. Gợi ý ngày đã test trên web.
+- **Thanh toán VNPay trên mobile:** mở trình duyệt ngoài nên không test được trên bản web; luồng VNPay đã test trên web.
+- **RULE-37 khi DB sập giữa chừng:** mới test mất kết nối tới API.

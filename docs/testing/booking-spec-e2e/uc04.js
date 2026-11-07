@@ -5,6 +5,15 @@ const PHONE = "0389001001";
 const E164 = "+84389001001";
 
 (async () => {
+  // Data: two walk-in profiles sharing the number, taken down at the desk (UC-03) before anyone registers.
+  const desk = await h.token("0900000002", "Manager@123");
+  for (const [fullName, dateOfBirth, gender, reason] of [["Nguyễn Văn Thử", "1985-03-01", "male", "Sốt"], ["Trần Thị Mẹ", "1960-01-01", "female", "Đau lưng"]]) {
+    await h.api("POST", "/appointments/walk-in", { newPatient: { fullName, phone: PHONE, dateOfBirth, gender }, clinicId: "5b1f8c2e-6a3d-4f7e-9c41-2d8e0a7b3c19", reason }, desk);
+  }
+  const made = sql(`select id from customer where phone='${E164}' order by id`).map((r) => r[0]);
+  check("RULE-04 dữ liệu: 2 hồ sơ walk-in cùng SĐT (id 57, 58)", made.join() === "57,58", made);
+  if (made.join() !== "57,58") throw new Error("unexpected profile ids; reset the test DB");
+
   const b = await h.browser();
   const page = await (await b.newContext()).newPage();
   const form = async () => (await page.locator("form").first().innerText()).replace(/\s+/g, " ");
