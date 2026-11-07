@@ -174,8 +174,16 @@ export const ForgotPasswordForm = () => {
     >
       <div aria-hidden className="grid-pattern pointer-events-none absolute inset-0" />
 
+      <Link
+        to="/"
+        className="text-muted-foreground hover:text-foreground absolute top-5 left-5 z-10 rounded-md text-sm font-medium"
+      >
+        ← Trang chủ
+      </Link>
+
       <div className={cn("relative flex w-full flex-col items-center", "screen-enter screen-enter-stagger")}>
-        <div className="flex flex-col items-center gap-3 text-center">
+        {/* The brand leads home, as it does on every other page. */}
+        <Link to="/" className="flex flex-col items-center gap-3 rounded-xl text-center">
           {title.icon && (
             <div
               className={cn(
@@ -189,7 +197,7 @@ export const ForgotPasswordForm = () => {
           {title.text && (
             <h1 className="text-xl font-bold tracking-tight text-foreground">{title.text}</h1>
           )}
-        </div>
+        </Link>
 
         <Card className={cn("mt-8 w-full p-8 shadow-e4", "sm:w-[420px]")}>
           <CardHeader className={cn("gap-1 px-0")}>

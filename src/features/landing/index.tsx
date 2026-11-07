@@ -37,9 +37,10 @@ export function Landing() {
         <img src="/vitalcare-mark.png" alt="" className="size-9 rounded-lg bg-white p-1" />
         VitalCare
       </Link>
+      {/* One even gap between every item, links and buttons alike. */}
       <nav className="flex items-center gap-2">
         {/* The public pages, for anybody: where to go, what it costs, what to do in an emergency. */}
-        <div className="mr-2 hidden items-center gap-1 lg:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           {[
             { to: "/locations", label: "Cơ sở" },
             { to: "/services", label: "Dịch vụ & giá" },

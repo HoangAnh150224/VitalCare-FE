@@ -227,7 +227,9 @@ export const authProvider: AuthProvider = {
     // that has signed out, and hand the next account somebody else's channel.
     disconnect();
     clearSession();
-    return { success: true, redirectTo: "/login" };
+    // Home, where every visit starts: leaving on purpose is not a request to sign in again.
+    // An expired session still goes to /login (check, onError) so the user can carry on.
+    return { success: true, redirectTo: "/" };
   },
 
   /**
