@@ -9,7 +9,6 @@ import {
   Cpu,
   ShieldCheck,
   Smartphone,
-  Sparkles,
   Users,
 } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
@@ -144,36 +143,6 @@ export function Platform() {
             khám — cho mình và cho người thân.
           </p>
         </article>
-      </div>
-    </section>
-  );
-}
-
-export function AiAssist() {
-  return (
-    <section className="landing-band">
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-24 sm:px-8 lg:grid-cols-2">
-        <div>
-          <h2 className="landing-display landing-section-title">AI tóm tắt, bác sĩ quyết định</h2>
-          <p className="landing-muted mt-5 leading-7">
-            Trợ lý AI đọc chuỗi chỉ số dài và tóm lại những gì đáng chú ý: xu hướng, những lần ra khỏi ngưỡng, thiết bị gửi
-            thiếu dữ liệu. Nó giúp bác sĩ đọc nhanh hơn.
-          </p>
-          <p className="landing-muted mt-4 leading-7">
-            AI không chẩn đoán, không đề xuất điều trị và không tự gửi gì cho bệnh nhân.
-          </p>
-        </div>
-        <figure className="landing-ai-card">
-          <figcaption className="landing-muted flex items-center gap-2 text-sm">
-            <Sparkles className="size-4 text-[var(--landing-teal)]" /> Tóm tắt 8 giờ · Trần Thị Lan · dữ liệu mô phỏng
-          </figcaption>
-          <ul className="landing-ink mt-5 space-y-3 text-[15px] leading-6">
-            <li>SpO₂ ổn định quanh 96–97% đến khoảng 07:40, sau đó giảm dần, thấp nhất 91% lúc 09:00.</li>
-            <li>Nhịp tim tăng nhẹ cùng thời điểm, từ khoảng 76 lên 88 bpm.</li>
-            <li>Nhiệt độ da không đổi, 34,1–34,3°C. Thiết bị gửi đủ dữ liệu.</li>
-          </ul>
-          <p className="landing-note mt-6 text-sm leading-6">Bản tóm tắt để tham khảo. Đánh giá và quyết định thuộc về bác sĩ.</p>
-        </figure>
       </div>
     </section>
   );

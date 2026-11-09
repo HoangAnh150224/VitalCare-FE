@@ -29,6 +29,7 @@ import {
 } from "@/domains/first-aid/types";
 import { PublicPageHeader } from "./layout";
 import { EmergencyDialog } from "./emergency";
+import { EmptyState } from "./empty-state";
 
 const EmergencyButton = ({ className }: { className?: string }) => (
   <EmergencyDialog
@@ -116,12 +117,10 @@ export function PublicFirstAid() {
             <Skeleton key={key} className="h-20 rounded-xl" />
           ))}
         {error && (
-          <p className="text-destructive">{(error as Error).message}</p>
+          <EmptyState tone="error" message={(error as Error).message} />
         )}
         {articles?.length === 0 && (
-          <p className="text-muted-foreground py-6 text-center">
-            Không có hướng dẫn nào khớp. Thử từ khoá khác.
-          </p>
+          <EmptyState message="Không có hướng dẫn nào khớp. Thử từ khoá khác." />
         )}
         <ul className="flex flex-col gap-3">
           {articles?.map((article) => (
@@ -198,7 +197,7 @@ export function PublicFirstAidShow() {
         </Link>
       </Button>
       {isLoading && <Skeleton className="h-96 rounded-2xl" />}
-      {error && <p className="text-destructive">{(error as Error).message}</p>}
+      {error && <EmptyState tone="error" message={(error as Error).message} />}
       {article && (
         <article className="flex flex-col gap-4">
           <header>

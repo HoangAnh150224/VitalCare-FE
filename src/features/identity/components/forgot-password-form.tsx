@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { ArrowLeftIcon } from "lucide-react";
 
 import { useRefineOptions } from "@refinedev/core";
 import { Button } from "@/shared/ui/button";
@@ -169,16 +170,23 @@ export const ForgotPasswordForm = () => {
     <div
       className={cn(
         "gradient-hero relative flex min-h-svh flex-col items-center justify-center",
-        "px-6 py-10"
+        "px-6 pt-24 pb-10 sm:py-10"
       )}
     >
       <div aria-hidden className="grid-pattern pointer-events-none absolute inset-0" />
 
+      {/* A solid pill so it reads on both the dark and the mint ground. */}
       <Link
         to="/"
-        className="text-muted-foreground hover:text-foreground absolute top-5 left-5 z-10 rounded-md text-sm font-medium"
+        className={cn(
+          "absolute top-5 left-5 z-10 inline-flex items-center gap-2 rounded-full",
+          "border border-black/5 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-e4",
+          "transition hover:-translate-x-0.5 hover:bg-slate-50",
+          "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none"
+        )}
       >
-        ← Trang chủ
+        <ArrowLeftIcon className="size-4" />
+        Về trang chủ
       </Link>
 
       <div className={cn("relative flex w-full flex-col items-center", "screen-enter screen-enter-stagger")}>
@@ -187,15 +195,15 @@ export const ForgotPasswordForm = () => {
           {title.icon && (
             <div
               className={cn(
-                "flex size-14 items-center justify-center rounded-xl",
-                "bg-white p-1.5 shadow-e4"
+                "flex size-20 items-center justify-center rounded-2xl",
+                "bg-white p-2 shadow-e4"
               )}
             >
               {title.icon}
             </div>
           )}
           {title.text && (
-            <h1 className="text-xl font-bold tracking-tight text-foreground">{title.text}</h1>
+            <h1 className="text-auth-title text-2xl font-bold tracking-tight">{title.text}</h1>
           )}
         </Link>
 

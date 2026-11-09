@@ -29,6 +29,7 @@
   --color-link: var(--link);
   --color-placeholder: var(--placeholder);
   --color-auth-description: var(--auth-description);
+  --color-auth-title: var(--auth-title);
   --color-secondary-border: var(--secondary-border, var(--border));
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -344,6 +345,11 @@
     #eef9f6 50%,
     #f6fbf9 100%
   );
+}
+
+:root:not(.dark)[data-color-preset="navy"],
+:root:not(.dark):not([data-color-preset]) {
+  --auth-title: var(--foreground);
 }
 
 /* A subtle grid texture over the authentication background. */
