@@ -5,7 +5,6 @@ import {
   PhoneCallIcon,
   SearchIcon,
 } from "lucide-react";
-import { useDeferredValue, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 
 import { publicGet, publicRetry } from "@/shared/api/public";
@@ -30,6 +29,7 @@ import {
 import { PublicPageHeader } from "./layout";
 import { EmergencyDialog } from "./emergency";
 import { EmptyState } from "./empty-state";
+import { useSearchOnEnter } from "@/shared/hooks/use-search-on-enter";
 
 const EmergencyButton = ({ className }: { className?: string }) => (
   <EmergencyDialog
@@ -50,8 +50,7 @@ const EmergencyButton = ({ className }: { className?: string }) => (
 export function PublicFirstAid() {
   const [params, setParams] = useSearchParams();
   const category = (params.get("category") as FirstAidCategory | null) ?? null;
-  const [query, setQuery] = useState(params.get("q") ?? "");
-  const term = useDeferredValue(query.trim());
+  const { term, inputProps } = useSearchOnEnter(params.get("q") ?? "");
 
   const {
     data: articles,
@@ -85,8 +84,7 @@ export function PublicFirstAid() {
         <div className="relative">
           <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            {...inputProps}
             placeholder="Tìm hướng dẫn sơ cứu"
             aria-label="Tìm hướng dẫn sơ cứu"
             className="h-11 pl-9"

@@ -12,7 +12,7 @@ import {
   PhoneIcon,
   SearchIcon,
 } from "lucide-react";
-import { useDeferredValue, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 
 import { kyInstance } from "@/shared/api/data";
@@ -34,6 +34,7 @@ import type { InboxConversation } from "@/domains/chat/types";
 import { CHAT_KIND_LABELS, chatErrorText } from "@/domains/chat/types";
 import { displayPhone } from "@/domains/public-site/types";
 import { fetchThread, threadKey, threadRetry, useChatSend } from "./api";
+import { useSearchOnEnter } from "@/shared/hooks/use-search-on-enter";
 
 /** Where the API nudges a clinic's staff that one of its conversations moved. */
 const topicOf = (clinicId: string) => `/topic/conversations/${clinicId}`;
@@ -79,9 +80,8 @@ export function ConversationInbox() {
   const params = useParams();
   const navigate = useNavigate();
   const selected = params.id ? Number(params.id) : null;
-  const [query, setQuery] = useState("");
+  const { term, inputProps } = useSearchOnEnter();
   const [only, setOnly] = useState<"all" | "unread">("all");
-  const term = useDeferredValue(query.trim());
 
   const { result, query: listQuery } = useList<InboxConversation>({
     resource: "conversations",
@@ -129,8 +129,7 @@ export function ConversationInbox() {
             <div className="relative">
               <SearchIcon className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
               <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                {...inputProps}
                 placeholder="Tên hoặc số điện thoại"
                 aria-label="Tìm hội thoại"
                 className="pl-8"

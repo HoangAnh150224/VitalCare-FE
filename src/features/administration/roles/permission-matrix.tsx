@@ -24,6 +24,7 @@ import {
   type Permission,
 } from "@/domains/role/types";
 import { actionLabel } from "@/domains/row-level-policy/types";
+import { useSearchOnEnter } from "@/shared/hooks/use-search-on-enter";
 
 /**
  * The permissions a role grants, as a resource x action matrix.
@@ -172,7 +173,7 @@ export function PermissionMatrix({
     sorters: [{ field: "code", order: "asc" }],
   });
 
-  const [search, setSearch] = useState("");
+  const { term: search, inputProps: searchProps } = useSearchOnEnter();
   const [grantedOnly, setGrantedOnly] = useState(readOnly);
 
   const permissions = useMemo(() => result?.data ?? [], [result?.data]);
@@ -292,8 +293,7 @@ export function PermissionMatrix({
         <div className="relative w-full sm:w-72">
           <SearchIcon className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2" />
           <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            {...searchProps}
             placeholder="Lọc theo tài nguyên hoặc mã"
             className="bg-card h-9 pl-9"
             aria-label="Lọc quyền"
