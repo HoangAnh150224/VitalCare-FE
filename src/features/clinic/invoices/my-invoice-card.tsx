@@ -1,6 +1,6 @@
 import { useCustom, useCustomMutation, useNotification } from "@refinedev/core";
-import { CreditCardIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { CreditCardIcon, StoreIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 
 import { API_URL } from "@/shared/api/constants";
@@ -15,7 +15,10 @@ import { TransferBox } from "./transfer-box";
 /** What VNPay's return tells the customer, by the `?payment=` the API sends them back with. */
 const RETURN_MESSAGES: Record<string, { type: "success" | "error"; message: string }> = {
   success: { type: "success", message: "Thanh toán thành công. Cảm ơn bạn!" },
-  failed: { type: "error", message: "Thanh toán chưa thành công. Bạn có thể thử lại." },
+  failed: {
+    type: "error",
+    message: "Thanh toán chưa thành công. Bạn có thể thử lại, hoặc chọn trả tại quầy (nếu được).",
+  },
   invalid: { type: "error", message: "Không xác nhận được giao dịch. Vui lòng liên hệ quầy lễ tân." },
 };
 
@@ -46,6 +49,14 @@ export function MyInvoiceCard({ appointmentId, className }: { appointmentId: num
     },
   });
   const bills = Array.isArray(result?.data) ? result.data.filter((own) => own.invoice.status !== "cancelled") : [];
+  // BR-11: after three no-shows the account pays its examination fees online; the desk is not offered.
+  const { result: rules } = useCustom<{ onlinePaymentRequired: boolean }>({
+    url: `${API_URL}/my_appointments/payment-rules`,
+    method: "get",
+    errorNotification: false,
+    queryOptions: { retry: false },
+  });
+  const deskAllowed = !rules?.data?.onlinePaymentRequired;
   const { open } = useNotification();
   const [params, setParams] = useSearchParams();
   const outcome = params.get("payment");
@@ -71,16 +82,21 @@ export function MyInvoiceCard({ appointmentId, className }: { appointmentId: num
   return (
     <div className={cn("mx-auto flex w-full max-w-md flex-col gap-3", className)}>
       {bills.map((own) => (
-        <BillCard key={own.invoice.id} own={own} />
+        <BillCard key={own.invoice.id} own={own} deskAllowed={deskAllowed} />
       ))}
     </div>
   );
 }
 
-function BillCard({ own }: { own: OwnInvoice }) {
+function BillCard({ own, deskAllowed }: { own: OwnInvoice; deskAllowed: boolean }) {
   const { invoice, onlinePayment, transfer } = own;
   const { mutate, mutation } = useCustomMutation<{ url: string }>();
   const { open } = useNotification();
+  // UC-01 step 4: the examination fee is paid online now, or at the desk on the day (it stays unpaid
+  // and the place is held until the day's last check-in, BR-10). Services are paid as before.
+  const choosing = invoice.kind !== "service" && (onlinePayment || transfer);
+  const [choice, setChoice] = useState<"online" | "desk" | null>(null);
+  const showOnline = !choosing || choice === "online" || !deskAllowed;
 
   // Paid while on screen (the transfer landed): say so once.
   const previous = useRef(invoice.status);
@@ -130,8 +146,39 @@ function BillCard({ own }: { own: OwnInvoice }) {
           </div>
         </div>
       )}
-      {invoice.status === "unpaid" && (
+      {invoice.status === "unpaid" && choosing && deskAllowed && choice === null && (
+        <div data-print="hide" className="flex flex-col gap-2">
+          <h4 className="text-sm font-semibold">Chọn cách thanh toán</h4>
+          <div className="grid grid-cols-2 gap-2">
+            <Button onClick={() => setChoice("online")}>
+              <CreditCardIcon />
+              Thanh toán online
+            </Button>
+            <Button variant="outline" onClick={() => setChoice("desk")}>
+              <StoreIcon />
+              Trả tại quầy
+            </Button>
+          </div>
+        </div>
+      )}
+      {invoice.status === "unpaid" && choosing && choice === "desk" && deskAllowed && (
+        <div data-print="hide" className="flex flex-col gap-2 text-sm">
+          <p>
+            Bạn sẽ trả phí khám tại quầy lễ tân khi tới khám. Lượt khám được giữ đến hết giờ tiếp nhận của ngày
+            khám; quá giờ mà chưa tới sẽ ghi nhận không đến.
+          </p>
+          <Button variant="link" className="h-auto w-fit p-0" onClick={() => setChoice("online")}>
+            Đổi sang thanh toán online
+          </Button>
+        </div>
+      )}
+      {invoice.status === "unpaid" && showOnline && (
         <div data-print="hide" className="flex flex-col gap-3">
+          {choosing && !deskAllowed && (
+            <p className="text-warning text-sm">
+              Tài khoản đã 3 lần không đến khám nên cần thanh toán online trước khi tới khám.
+            </p>
+          )}
           {transfer && <TransferBox transfer={transfer} />}
           {onlinePayment ? (
             <Button onClick={pay} disabled={mutation.isPending}>
@@ -139,9 +186,17 @@ function BillCard({ own }: { own: OwnInvoice }) {
               {mutation.isPending ? "Đang chuyển đến VNPay..." : "Thanh toán qua VNPay"}
             </Button>
           ) : null}
-          <p className="text-muted-foreground text-xs">
-            {onlinePayment || transfer ? "Hoặc thanh toán tại quầy lễ tân." : "Vui lòng thanh toán tại quầy lễ tân."}
-          </p>
+          {choosing && deskAllowed ? (
+            <Button variant="link" className="h-auto w-fit p-0 text-xs" onClick={() => setChoice("desk")}>
+              Không thanh toán được? Chọn trả tại quầy
+            </Button>
+          ) : (
+            !choosing && (
+              <p className="text-muted-foreground text-xs">
+                {onlinePayment || transfer ? "Hoặc thanh toán tại quầy lễ tân." : "Vui lòng thanh toán tại quầy lễ tân."}
+              </p>
+            )
+          )}
         </div>
       )}
     </Card>

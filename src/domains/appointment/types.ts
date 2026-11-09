@@ -58,12 +58,14 @@ export function formatBookingCode(code: string | null | undefined): string {
 }
 
 /**
- * Registered, checked in at the desk (waiting for the doctor), in the
- * examination room, completed — or cancelled, or never came.
+ * Booked, checked in at the desk (fee not paid yet), ready for examination
+ * (checked in and paid, in the queue — BR-04), in the examination room,
+ * completed — or cancelled, or never came.
  */
 export type AppointmentStatus =
-  | "scheduled"
+  | "booked"
   | "checked_in"
+  | "ready_for_examination"
   | "in_exam"
   | "awaiting_results"
   | "completed"
@@ -91,8 +93,9 @@ export type MyQueue = {
 };
 
 export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
-  scheduled: "Đã đăng ký",
-  checked_in: "Đã tiếp nhận",
+  booked: "Đã đặt lịch",
+  checked_in: "Đã check-in, chờ thanh toán",
+  ready_for_examination: "Đang chờ khám",
   in_exam: "Đang khám",
   awaiting_results: "Đang làm chỉ định",
   completed: "Hoàn tất",

@@ -90,13 +90,14 @@ export const AppointmentShow = () => {
   });
   const related = encounters?.data ?? [];
   const open =
-    record?.status === "scheduled" ||
+    record?.status === "booked" ||
     record?.status === "checked_in" ||
+    record?.status === "ready_for_examination" ||
     record?.status === "in_exam";
 
   const status = record?.status;
   const willActivate =
-    record?.status === "scheduled" && record.customer.status === "neutral";
+    record?.status === "booked" && record.customer.status === "neutral";
 
   return (
     <ShowView>
@@ -141,9 +142,17 @@ export const AppointmentShow = () => {
                     resource="appointments"
                   />
                 )}
+                {/* UC-02 step 8, UC-03 step 10: in the queue, the slip is handed over. */}
+                {record?.status === "ready_for_examination" && (
+                  <Button variant="outline" onClick={() => window.print()}>
+                    <PrinterIcon />
+                    In phiếu khám
+                  </Button>
+                )}
               </div>
               {/* The visit follows the check-in: open its encounter from here. */}
               {(record?.status === "checked_in" ||
+                record?.status === "ready_for_examination" ||
                 record?.status === "in_exam") &&
                 canRecordEncounter?.can && (
                   <Button asChild variant="outline">

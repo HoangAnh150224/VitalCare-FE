@@ -31,7 +31,8 @@ import {
   CardTitle,
 } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
-import { initials } from "@/shared/lib/format";
+import { formatVietnamesePhone, initials } from "@/shared/lib/format";
+import { PASSWORD_RANGE_MESSAGE, passwordInRange } from "@/shared/lib/password";
 
 /**
  * The signed-in user's own account.
@@ -49,7 +50,9 @@ export const Profile = () => {
   const authorities = getAuthorities();
   const { open } = useNotification();
   const { mutate, mutation } = useCustomMutation<TokenPair>();
-  const { mutate: logout, isPending: isLoggingOut } = useLogout();
+  const { mutate: logout, isPending: isLoggingOut } = useLogout({
+    mutationOptions: { networkMode: "always" },
+  });
   // A customer has no use for role names and permission codes: in the portal
   // the account is a name, a number and a way to sign out (SRS 3.2.4).
   const portal = useShellVariant() === "portal";
@@ -57,10 +60,14 @@ export const Profile = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  // The server's only 409 here: the current password is wrong. Said under that field, not in a toast.
+  const [wrongCurrent, setWrongCurrent] = useState(false);
 
   const mismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
+  // Too short is plain from the placeholder and the disabled button; too long needs saying.
+  const tooLong = newPassword.length >= 8 && !passwordInRange(newPassword);
   const canSubmit =
-    currentPassword.length > 0 && newPassword.length >= 8 && !mismatch;
+    currentPassword.length > 0 && passwordInRange(newPassword) && !mismatch;
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -76,8 +83,17 @@ export const Profile = () => {
         // answers 415 before the handler is reached.
         config: { headers: { "Content-Type": "application/json" } },
         successNotification: false,
+        errorNotification: (error) =>
+          error?.statusCode === 409
+            ? false
+            : {
+                type: "error",
+                message: "Không đổi được mật khẩu",
+                description: "Xin vui lòng thử lại sau.",
+              },
       },
       {
+        onError: (error) => setWrongCurrent(error?.statusCode === 409),
         onSuccess: ({ data }) => {
           // The server ends every other session and hands back a fresh pair for
           // this one. Storing it is what keeps the person who just changed
@@ -121,7 +137,7 @@ export const Profile = () => {
             </Avatar>
             <div className="flex min-w-0 flex-col">
               <span className="font-display truncate text-lg font-semibold">{identity?.fullName ?? "—"}</span>
-              <span className="text-muted-foreground text-sm tabular-nums">{identity?.phone ?? "—"}</span>
+              <span className="text-muted-foreground text-sm tabular-nums">{formatVietnamesePhone(identity?.phone)}</span>
               {identity?.email && <span className="text-muted-foreground truncate text-sm">{identity.email}</span>}
             </div>
           </Card>
@@ -144,7 +160,7 @@ export const Profile = () => {
               <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
                 Số điện thoại
               </span>
-              <span className="text-sm font-mono">{identity?.phone ?? "—"}</span>
+              <span className="text-sm font-mono">{formatVietnamesePhone(identity?.phone)}</span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
@@ -172,22 +188,6 @@ export const Profile = () => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-                Quyền ({authorities?.permissions.length ?? 0})
-              </span>
-              <div className="flex flex-wrap gap-1">
-                {authorities?.permissions.map((permission) => (
-                  <Badge
-                    key={permission}
-                    variant="secondary"
-                    className="font-mono text-[11px]"
-                  >
-                    {permission}
-                  </Badge>
-                ))}
-              </div>
-            </div>
           </CardContent>
         </Card>
         )}
@@ -207,9 +207,18 @@ export const Profile = () => {
                   id="current-password"
                   autoComplete="current-password"
                   required
+                  aria-invalid={wrongCurrent || undefined}
                   value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  onChange={(e) => {
+                    setCurrentPassword(e.target.value);
+                    setWrongCurrent(false);
+                  }}
                 />
+                {wrongCurrent && (
+                  <p className="text-destructive text-sm">
+                    Mật khẩu hiện tại không khớp. Xin vui lòng nhập lại.
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -217,12 +226,18 @@ export const Profile = () => {
                 <InputPassword
                   id="new-password"
                   autoComplete="new-password"
-                  placeholder="Tối thiểu 8 ký tự"
+                  placeholder="Từ 8 đến 72 ký tự"
                   minLength={8}
                   required
+                  aria-invalid={tooLong || undefined}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
+                {tooLong && (
+                  <p className="text-destructive text-sm">
+                    Mật khẩu mới chưa phù hợp. {PASSWORD_RANGE_MESSAGE}
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">

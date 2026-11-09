@@ -204,7 +204,9 @@ PortalLayout.displayName = "PortalLayout";
 
 function AccountMenu() {
   const { data: user } = useGetIdentity<Identity>();
-  const { mutate: logout, isPending } = useLogout();
+  const { mutate: logout, isPending } = useLogout({
+    mutationOptions: { networkMode: "always" },
+  });
   const name = user?.fullName ?? "";
 
   return (

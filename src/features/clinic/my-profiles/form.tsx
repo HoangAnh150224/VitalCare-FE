@@ -36,6 +36,26 @@ type ProfileFormValues = {
 
 const GENDERS = Object.keys(GENDER_LABELS) as Gender[];
 const ID_TYPES = Object.keys(ID_TYPE_LABELS) as IdType[];
+const ID_DOCUMENT_FIELDS = {
+  cccd: {
+    label: "Số CCCD",
+    requiredMessage: "Vui lòng nhập số CCCD.",
+    placeholder: "Nhập số CCCD",
+    inputMode: "numeric",
+  },
+  personal_id: {
+    label: "Số định danh cá nhân",
+    requiredMessage: "Vui lòng nhập số định danh cá nhân.",
+    placeholder: "Nhập số định danh cá nhân",
+    inputMode: "numeric",
+  },
+  passport: {
+    label: "Số hộ chiếu",
+    requiredMessage: "Vui lòng nhập số hộ chiếu.",
+    placeholder: "Nhập số hộ chiếu",
+    inputMode: "text",
+  },
+} satisfies Record<IdType, { label: string; requiredMessage: string; placeholder: string; inputMode: "numeric" | "text" }>;
 
 /**
  * A patient profile, to add (a relative) or to fill in (one's own or a
@@ -72,6 +92,7 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
     },
   });
   const record = query?.data?.data;
+  const nationalIdType = form.watch("nationalIdType") || "cccd";
   // A relative's fields: on create, and on a relative's edit.
   const relative = creating || record?.self === false;
   const loading = !creating && query?.isLoading;
@@ -98,6 +119,9 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
       ) : (
         <Form {...form}>
           <form
+            // The browser's own checks speak its language (a date past `max` gets an English bubble);
+            // the rules below say it in Vietnamese, under the field.
+            noValidate
             onSubmit={form.handleSubmit((values) =>
               // Only what the API takes: an edit's loaded record carries far more.
               onFinish({
@@ -146,7 +170,7 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                       <FormItem>
                         <Label required>Số điện thoại</Label>
                         <FormControl>
-                          <Input {...field} value={field.value ?? ""} inputMode="tel" />
+                          <Input {...field} value={field.value ?? ""} inputMode="tel" placeholder="0901234567" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -195,7 +219,11 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
               <FormField
                 control={form.control}
                 name="dateOfBirth"
-                rules={{ required: "Vui lòng nhập ngày sinh" }}
+                rules={{
+                  required: "Vui lòng nhập ngày sinh",
+                  // ISO dates compare as strings; today is refused as well, as the server does.
+                  validate: (value) => value < clinicToday() || "Ngày sinh phải nằm ở quá khứ",
+                }}
                 render={({ field }) => (
                   <FormItem>
                     <Label required>Ngày sinh</Label>
@@ -236,7 +264,12 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                       label="Loại giấy tờ"
                       options={ID_TYPES.map((type) => [type, ID_TYPE_LABELS[type]])}
                       value={field.value ?? "cccd"}
-                      onChange={field.onChange}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        if (form.getFieldState("nationalId").error) {
+                          void form.trigger("nationalId");
+                        }
+                      }}
                     />
                     <FormDescription>
                       Trẻ chưa có CCCD dùng mã định danh trên giấy khai sinh; người nước ngoài dùng hộ chiếu.
@@ -248,14 +281,22 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                 control={form.control}
                 name="nationalId"
                 rules={{
-                  validate: (value) => (value ?? "").trim() !== "" || "Vui lòng nhập số CCCD hoặc mã định danh",
+                  validate: (value) =>
+                    (value ?? "").trim() !== "" ||
+                    ID_DOCUMENT_FIELDS[form.getValues("nationalIdType") || "cccd"].requiredMessage,
                   maxLength: { value: 32, message: "Tối đa 32 ký tự" },
                 }}
                 render={({ field }) => (
                   <FormItem>
-                    <Label required>Số giấy tờ</Label>
+                    <Label required>{ID_DOCUMENT_FIELDS[nationalIdType].label}</Label>
                     <FormControl>
-                      <Input {...field} value={field.value ?? ""} inputMode="numeric" className="tabular-nums" />
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        inputMode={ID_DOCUMENT_FIELDS[nationalIdType].inputMode}
+                        placeholder={ID_DOCUMENT_FIELDS[nationalIdType].placeholder}
+                        className={nationalIdType === "passport" ? undefined : "tabular-nums"}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -264,6 +305,9 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
               <FormField
                 control={form.control}
                 name="nationalIdIssuedOn"
+                rules={{
+                  validate: (value) => !value || value <= clinicToday() || "Ngày cấp không được ở tương lai",
+                }}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Ngày cấp</FormLabel>
@@ -299,7 +343,7 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                   <FormItem>
                     <FormLabel>Dân tộc</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value ?? ""} />
+                      <Input {...field} value={field.value ?? ""} placeholder="Ví dụ: Kinh" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -313,7 +357,7 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                   <FormItem>
                     <FormLabel>Quốc tịch</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value ?? ""} />
+                      <Input {...field} value={field.value ?? ""} placeholder="Ví dụ: Việt Nam" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -327,7 +371,7 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                   <FormItem>
                     <FormLabel>Tỉnh / Thành phố</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value ?? ""} />
+                      <Input {...field} value={field.value ?? ""} placeholder="Ví dụ: Hà Nội" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -341,7 +385,7 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                   <FormItem>
                     <FormLabel>Xã / Phường</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value ?? ""} />
+                      <Input {...field} value={field.value ?? ""} placeholder="Ví dụ: Phường Bến Nghé" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

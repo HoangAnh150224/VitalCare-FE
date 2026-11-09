@@ -13,6 +13,7 @@ import { cn } from "@/shared/lib/utils";
 import { formatDateTime, formatLocalDate } from "@/shared/lib/format";
 import { resultsErrorText, type PatientFeedback } from "@/domains/results/types";
 import { refusal, send } from "./send";
+import { useSearchOnEnter } from "@/shared/hooks/use-search-on-enter";
 
 export function Stars({
   value,
@@ -129,7 +130,7 @@ export function MyFeedbackCard({ appointmentId }: { appointmentId: number }) {
 /** FE-07 for the clinic: what patients said about their visits. */
 export const FeedbackList = () => {
   const [rating, setRating] = useState(0);
-  const [q, setQ] = useState("");
+  const { term: q, inputProps } = useSearchOnEnter();
   const { data, isLoading } = useQuery({
     queryKey: ["feedback", rating, q],
     queryFn: () => {
@@ -150,8 +151,7 @@ export const FeedbackList = () => {
           aria-label="Tìm theo bệnh nhân hoặc nội dung"
           placeholder="Tìm theo bệnh nhân hoặc nội dung"
           className="max-w-xs"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+          {...inputProps}
         />
         <div className="flex gap-1" role="group" aria-label="Số sao">
           {[0, 5, 4, 3, 2, 1].map((n) => (

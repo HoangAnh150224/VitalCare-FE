@@ -1,5 +1,7 @@
 import { Authenticated, CanAccess } from "@refinedev/core";
-import { Navigate, Outlet, Route, Routes } from "react-router";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router";
+
+import { justSignedOut } from "@/app/providers/auth";
 
 import {
   BlogPostList,
@@ -13,7 +15,7 @@ import {
   CategoryEdit,
   CategoryShow,
 } from "@/features/categories";
-import { Dashboard } from "@/features/dashboard";
+import { Dashboard, SystemAdminDashboard } from "@/features/dashboard";
 import { TaskList, TaskCreate, TaskEdit, TaskShow } from "@/features/tasks";
 import {
   OrganizationList,
@@ -159,6 +161,16 @@ import { Forbidden } from "@/shared/components/layout/forbidden";
 import { PortalSwitch, ShellLayout } from "./shell";
 
 /**
+ * Where a protected page goes once there is no session: home after "Đăng xuất", otherwise the
+ * sign-in form with the page to come back to (what `redirectOnFail` alone would do).
+ */
+function SignedOutRedirect() {
+  const { pathname, search } = useLocation();
+  if (justSignedOut()) return <Navigate to="/" replace />;
+  return <Navigate to={`/login?to=${encodeURIComponent(pathname + search)}`} replace />;
+}
+
+/**
  * Route tree rendered inside `<Refine>`. Every path here must line up with the
  * action routes declared in `app/resources/index.tsx`.
  *
@@ -189,7 +201,7 @@ export function AppRoutes() {
       </Route>
       <Route
         element={
-          <Authenticated key="authenticated-routes" redirectOnFail="/login">
+          <Authenticated key="authenticated-routes" fallback={<SignedOutRedirect />}>
             <ShellLayout>
               <Outlet />
             </ShellLayout>
@@ -206,9 +218,23 @@ export function AppRoutes() {
             <PortalSwitch
               portal={<PortalHome />}
               staff={
-                // BF-10 for those who watch the patients; the plain landing for everybody else.
-                <CanAccess resource="monitoring_dashboard" action="list" fallback={<Dashboard />}>
-                  <MonitoringDashboard />
+                // The system administrator gets global management totals; clinic teams
+                // keep the clinic-scoped monitoring dashboard and all other staff keep
+                // the plain landing page.
+                <CanAccess
+                  resource="row_level_policies"
+                  action="list"
+                  fallback={
+                    <CanAccess
+                      resource="monitoring_dashboard"
+                      action="list"
+                      fallback={<Dashboard />}
+                    >
+                      <MonitoringDashboard />
+                    </CanAccess>
+                  }
+                >
+                  <SystemAdminDashboard />
                 </CanAccess>
               }
             />
@@ -436,10 +462,21 @@ export function AppRoutes() {
           }
         >
           <Route index element={<StaffList />} />
-          <Route path="create" element={<StaffCreate />} />
           <Route path="edit/:id" element={<StaffEdit />} />
           <Route path="show/:id" element={<StaffShow />} />
         </Route>
+        <Route
+          path="/employees/create"
+          element={
+            <CanAccess
+              resource="employees"
+              action="create"
+              fallback={<Forbidden resource="employees" />}
+            >
+              <StaffCreate />
+            </CanAccess>
+          }
+        />
         <Route
           path="/vital-signs"
           element={

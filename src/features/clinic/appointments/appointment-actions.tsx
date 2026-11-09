@@ -84,11 +84,13 @@ export function AppointmentActions({ appointment, resource, size = "default", co
   const { data: canWrite } = useCan({ resource, action: "cancel" });
 
   const today = clinicToday();
-  const scheduled = appointment.status === "scheduled";
+  const scheduled = appointment.status === "booked";
   const writable = canWrite?.can ?? false;
   const showCheckIn = desk && scheduled && (canCheckIn?.can ?? false) && appointment.appointmentDate === today;
   const showComplete =
-    !compact && desk && writable && (appointment.status === "checked_in" || appointment.status === "in_exam");
+    !compact && desk && writable && (appointment.status === "checked_in" ||
+      appointment.status === "ready_for_examination" ||
+      appointment.status === "in_exam");
   const showChange = !compact && scheduled && writable;
   const showNoShow = showChange && desk && appointment.appointmentDate <= today;
 

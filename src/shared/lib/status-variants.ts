@@ -98,12 +98,13 @@ export const CUSTOMER_STATUS_VARIANTS: Record<CustomerStatus, BadgeVariant> = {
 };
 
 /**
- * Scheduled is the live state somebody still has to act on, so it is the
+ * Booked is the live state somebody still has to act on, so it is the
  * coloured one; cancelled is an ordinary end and stays muted.
  */
 export const APPOINTMENT_STATUS_VARIANTS: Record<AppointmentStatus, BadgeVariant> = {
-  scheduled: "info",
+  booked: "info",
   checked_in: "warning",
+  ready_for_examination: "info",
   // Solid: the one state where something is happening right now.
   in_exam: "default",
   awaiting_results: "warning",

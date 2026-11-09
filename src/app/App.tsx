@@ -1,5 +1,6 @@
 import { Refine } from "@refinedev/core";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
+import { keepPreviousData, QueryClient } from "@tanstack/react-query";
 
 import { BrowserRouter } from "react-router";
 import routerProvider, {
@@ -23,6 +24,20 @@ import { AppRoutes } from "./router/routes";
 // name resolves only where Inter happens to be installed.
 import "@fontsource-variable/inter";
 import "@/styles/index.css";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // These are Refine's defaults when it creates its own QueryClient.
+      refetchOnWindowFocus: false,
+      placeholderData: keepPreviousData,
+    },
+  },
+});
+// Auth checks must run after local logout even when the browser is offline.
+// Refine's default "online" mode pauses invalidated auth queries and leaves
+// the previous authenticated result in the route guard's cache.
+queryClient.setQueryDefaults(["auth"], { networkMode: "always" });
 
 function App() {
   return (
@@ -50,6 +65,7 @@ function App() {
                 syncWithLocation: true,
                 warnWhenUnsavedChanges: true,
                 projectId: "OjKL83-Rc63sQ-E2vtK1",
+                reactQuery: { clientConfig: queryClient },
                 // Drives the sidebar brand block and the document title. The
                 // mark is the logo without its wordmark, cut from
                 // public/vitalcare-logo.png; every place that shows it sits it

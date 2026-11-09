@@ -16,7 +16,8 @@ import { QUEUE_KEY, roomLabel } from "./use-queue-live";
  */
 export function QueueBanner({ appointment }: { appointment: Appointment }) {
   const today = appointment.appointmentDate === clinicToday();
-  const waiting = today && appointment.status === "checked_in";
+  const waiting =
+    today && (appointment.status === "checked_in" || appointment.status === "ready_for_examination");
   const called = today && appointment.status === "in_exam";
   const away = today && appointment.status === "awaiting_results";
 

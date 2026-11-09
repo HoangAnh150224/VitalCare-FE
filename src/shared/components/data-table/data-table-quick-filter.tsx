@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { BaseRecord, CrudOperators, HttpError } from "@refinedev/core";
 import type { UseTableReturnType } from "@refinedev/react-table";
 import type { ColumnFiltersState } from "@tanstack/react-table";
@@ -22,12 +22,6 @@ export type DataTableQuickFilterProps<TData extends BaseRecord> = {
    * @default "q"
    */
   searchField?: string;
-  /**
-   * Delay before the filter is pushed to the data provider, so typing does not
-   * fire one request per keystroke.
-   * @default 400
-   */
-  debounceMs?: number;
   className?: string;
 };
 
@@ -35,7 +29,6 @@ export function DataTableQuickFilter<TData extends BaseRecord>({
   table,
   placeholder = "Tìm theo ID hoặc tiêu đề...",
   searchField = "q",
-  debounceMs = 400,
   className,
 }: DataTableQuickFilterProps<TData>) {
   const { setColumnFilters, getState } = table.reactTable;
@@ -53,42 +46,29 @@ export function DataTableQuickFilter<TData extends BaseRecord>({
     activeValue != null ? String(activeValue) : ""
   );
 
-  const isFirstRun = useRef(true);
-
   // Keep in sync when the filter is removed elsewhere (a chip, "Clear all").
   useEffect(() => {
     const next = activeValue != null ? String(activeValue) : "";
     setValue((prev) => (prev === next ? prev : next));
   }, [activeValue]);
 
-  useEffect(() => {
-    // Skip the initial run: the input already mirrors the filters, and pushing
-    // an identical filter would reset the page on links pointing at page N.
-    if (isFirstRun.current) {
-      isFirstRun.current = false;
-      return;
-    }
-
-    const timeoutId = setTimeout(() => {
-      const search = value.trim();
-      const current = activeValue != null ? String(activeValue) : "";
-      if (search === current) return;
-
-      setColumnFilters((prev) => {
-        const others = (prev as unknown as FilterEntry[]).filter(
-          (entry) => entry.id !== searchField
-        );
-        return (
-          search
-            ? [...others, { id: searchField, operator: "contains", value: search }]
-            : others
-        ) as ColumnFiltersState;
-      });
-    }, debounceMs);
-
-    return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- setters are stable
-  }, [value, searchField, debounceMs]);
+  // Searches on Enter, not on every keystroke; emptying the box shows every row again at once.
+  const search = (text: string) => {
+    const next = text.trim();
+    const current = activeValue != null ? String(activeValue) : "";
+    // The same filter again would only send the table back to page 1.
+    if (next === current) return;
+    setColumnFilters((prev) => {
+      const others = (prev as unknown as FilterEntry[]).filter(
+        (entry) => entry.id !== searchField
+      );
+      return (
+        next
+          ? [...others, { id: searchField, operator: "contains", value: next }]
+          : others
+      ) as ColumnFiltersState;
+    });
+  };
 
   return (
     // No width of its own beyond `w-full`. The field's width is a decision
@@ -112,13 +92,25 @@ export function DataTableQuickFilter<TData extends BaseRecord>({
         className={cn("pl-8", value && "pr-8")}
         placeholder={placeholder}
         value={value}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => {
+          setValue(event.target.value);
+          if (!event.target.value.trim()) search("");
+        }}
+        onKeyDown={(event) => {
+          // Not while an input method is still composing a letter.
+          if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+          event.preventDefault();
+          search(value);
+        }}
       />
       {value && (
         <button
           type="button"
           aria-label="Xóa tìm kiếm"
-          onClick={() => setValue("")}
+          onClick={() => {
+            setValue("");
+            search("");
+          }}
           className={cn(
             "absolute",
             "right-2",

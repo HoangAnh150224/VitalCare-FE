@@ -50,8 +50,9 @@ export function useMyQueueLive() {
   const anyLive = (result?.data ?? []).some(
     (visit) =>
       visit.appointmentDate === today &&
-      (visit.status === "scheduled" ||
+      (visit.status === "booked" ||
         visit.status === "checked_in" ||
+        visit.status === "ready_for_examination" ||
         visit.status === "in_exam" ||
         visit.status === "awaiting_results")
   );
@@ -70,7 +71,7 @@ export function useMyQueueLive() {
   useEffect(() => {
     if (!visits) return;
     const called = visits.filter(
-      (visit) => visit.status === "in_exam" && seen.current.get(String(visit.id)) === "checked_in"
+      (visit) => visit.status === "in_exam" && seen.current.get(String(visit.id)) === "ready_for_examination"
     );
     for (const visit of visits) seen.current.set(String(visit.id), visit.status);
     if (called.length === 0) return;

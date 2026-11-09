@@ -165,6 +165,8 @@
   --link: var(--primary);
   --placeholder: var(--muted-foreground);
   --auth-description: var(--muted-foreground);
+  /* The brand name over .gradient-hero: dark in dark mode; light mode overrides it in index.css. */
+  --auth-title: #fff;
   --button-shadow: var(--elevation-1);
   --secondary-border: var(--border);
   --home-gradient: linear-gradient(180deg, var(--accent) 0%, var(--surface-subtle) 100%);

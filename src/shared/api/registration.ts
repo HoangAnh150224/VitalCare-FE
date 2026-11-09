@@ -1,6 +1,6 @@
 import { API_URL } from "@/shared/api/constants";
 
-/** What `POST /auth/password-reset/otp` answers: a code is on its way. */
+/** What an OTP request answers: a code is on its way. */
 export type OtpSent = {
   /** Seconds the code stays usable. */
   expiresIn: number;
@@ -13,6 +13,30 @@ export type RegistrationError = {
   /** Per-field messages from a 422, keyed by request field (`phone`, `otp`, ...). */
   fieldErrors?: Record<string, string>;
 };
+
+const REGISTER_FAILED = "Không thể gửi mã xác thực";
+
+/** Asks the API to text a one-time registration code to this number. */
+export async function requestRegistrationCode(
+  phone: string
+): Promise<{ ok: true; value: OtpSent } | { ok: false; error: RegistrationError }> {
+  return post(`${API_URL}/auth/register/otp`, { phone }, REGISTER_FAILED);
+}
+
+/** A profile the clinic already has with the number being registered, masked (BR-14). */
+export type ProfileMatch = { id: number; maskedName: string; birthYear: number | null };
+
+/**
+ * Whether the registration code is right, without spending it; if it is, the
+ * profiles the number already has at the clinic, for the person to pick their
+ * own (UC-04). A wrong code is a field error on `otp`.
+ */
+export async function checkRegistrationCode(body: {
+  phone: string;
+  otp: string;
+}): Promise<{ ok: true; value: ProfileMatch[] } | { ok: false; error: RegistrationError }> {
+  return post(`${API_URL}/auth/register/otp/check`, body, REGISTER_FAILED);
+}
 
 /**
  * Asks for a password-recovery code to be texted to this phone number.
@@ -82,18 +106,33 @@ async function post<T>(
  * interface's language. Anything else is shown as the API wrote it.
  */
 export function translateRegistrationMessage(message: string): string {
+  if (message.startsWith("A matching patient profile already exists")) {
+    return "Hồ sơ bệnh nhân phù hợp đã tồn tại. Hãy tìm và chọn hồ sơ đó thay vì tạo mới.";
+  }
+  if (message.startsWith("Pick one of the profiles shown")) {
+    return "Vui lòng chọn một trong các hồ sơ được liệt kê.";
+  }
+  if (message.startsWith("Date of birth must be in the past")) {
+    return "Ngày sinh phải là một ngày trong quá khứ.";
+  }
   // Which way a phone number is wrong, as the server tells it (PhoneNumbers.problem).
   if (message.startsWith("Phone number has too few digits")) {
-    return "Số điện thoại chưa đủ số. Vui lòng nhập số điện thoại gồm 10 chữ số hoặc dạng +84 kèm 9 chữ số.";
+    return "Số điện thoại chưa đủ 10 chữ số. Vui lòng nhập số điện thoại di động Việt Nam bắt đầu bằng 03, 05, 07, 08 hoặc 09 (hoặc dạng +84 kèm 9 chữ số).";
   }
   if (message.startsWith("Phone number has too many digits")) {
-    return "Số điện thoại thừa chữ số. Vui lòng nhập số điện thoại gồm 10 chữ số hoặc dạng +84 kèm 9 chữ số.";
+    return "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại di động Việt Nam gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09 (hoặc dạng +84 kèm 9 chữ số).";
+  }
+  if (message.startsWith("Phone number cannot be all zeros")) {
+    return "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại di động Việt Nam đang sử dụng.";
   }
   if (message.startsWith("Phone number may only contain digits")) {
-    return "Số điện thoại sai định dạng. Vui lòng nhập đúng định dạng, ví dụ: 0901234567 hoặc +84901234567.";
+    return "Số điện thoại chứa ký tự không hợp lệ. Chỉ nhập chữ số và ký tự phân cách như khoảng trắng, dấu chấm, gạch ngang hoặc ngoặc đơn; dấu + chỉ dùng ở đầu số.";
   }
   if (message.startsWith("Full name may only contain letters")) {
     return "Họ và tên chỉ được chứa chữ cái và khoảng trắng; không được chứa số hoặc ký tự đặc biệt.";
+  }
+  if (message.startsWith("Full name must contain at least 2 characters")) {
+    return "Họ và tên phải có ít nhất 2 ký tự.";
   }
   if (message.startsWith("Password cannot contain only spaces")) {
     return "Mật khẩu không được chỉ chứa khoảng trắng.";
@@ -102,7 +141,7 @@ export function translateRegistrationMessage(message: string): string {
     message.startsWith("Phone number must be a Vietnamese number") ||
     message.startsWith("Not a valid Vietnamese phone number")
   ) {
-    return "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam, ví dụ: 0901234567 hoặc +84901234567.";
+    return "Mã vùng hoặc đầu số không hợp lệ. Vui lòng nhập số di động Việt Nam gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09; hoặc nhập dạng +84 kèm 9 chữ số.";
   }
   if (message.startsWith("Phone number is required")) {
     return "Vui lòng nhập số điện thoại.";
@@ -144,7 +183,7 @@ export function translateRegistrationMessage(message: string): string {
     return "Đã yêu cầu quá nhiều mã từ mạng này. Vui lòng thử lại sau.";
   }
   if (message.startsWith("Too many codes")) {
-    return "Đã gửi quá nhiều mã tới số này. Vui lòng thử lại sau.";
+    return "Đã gửi quá nhiều mã tới số này. Số này tạm khóa nhận mã trong 24 giờ.";
   }
   if (message.startsWith("The code is incorrect")) {
     return "Mã xác thực không đúng hoặc đã hết hạn.";

@@ -23,7 +23,7 @@ import type { Profile } from "@/domains/profile/types";
 import { profileKind } from "@/domains/profile/types";
 import type { BookingFormValues } from "./booking";
 import { clinicToday } from "./clinic-day";
-import { useClinicDoctors } from "./doctor-day";
+import { OpenDayChoices, useClinicDoctors } from "./doctor-day";
 
 /**
  * Which day and why (and, for the front desk, with whom) — the part of a
@@ -203,12 +203,17 @@ export function BookingFields({
           </FormItem>
         )}
       />
-      {/* Only when that doctor and day cannot be had; it takes no row otherwise. */}
-            {date && clinicId && !doctorsLoading && !dayOpen && (
-        <p className="text-destructive text-sm md:col-span-8" role="alert">
-          Ngày này phòng khám không có bác sĩ khám hoặc đã hết lượt. Vui lòng
-          chọn ngày khác.
-        </p>
+      {/* Only when the day cannot be had; it takes no row otherwise. */}
+      {date && clinicId && !doctorsLoading && !dayOpen && (
+        <OpenDayChoices
+          clinicId={clinicId}
+          from={date}
+          onPick={
+            todayOnly
+              ? undefined
+              : (day) => setValue("appointmentDate", day, { shouldValidate: true })
+          }
+        />
       )}
       {forOwnAccount && (
         <p className="text-muted-foreground text-sm md:col-span-8">

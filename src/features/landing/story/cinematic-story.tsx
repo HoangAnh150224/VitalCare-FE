@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import { Button } from "@/shared/ui/button";
 
@@ -19,6 +19,17 @@ const FILM_SCREENS = 7;
 
 /** Where each scene starts on the timeline, which runs from 0 to 100. */
 const SCENE_AT = [0, 14, 30, 50, 64, 82];
+
+/**
+ * The opening shot, full bleed behind the headline: these take turns, fading one into the next.
+ * CC0 photos (rawpixel, StockSnap) except the wrist, which the page has always had.
+ */
+const BACKDROPS = [
+  { src: "/landing/wrist-monitor.webp", alt: "Thiết bị theo dõi sức khỏe đeo trên cổ tay", position: "54% 42%" },
+  { src: "/landing/hero-oximeter.webp", alt: "Máy đo SpO₂ kẹp trên ngón tay", position: "60% 50%" },
+  { src: "/landing/hero-caregiver.webp", alt: "Điều dưỡng trò chuyện với bệnh nhân lớn tuổi", position: "62% 35%" },
+  { src: "/landing/hero-doctor.webp", alt: "Bác sĩ xem hồ sơ trên máy tính bảng cùng bệnh nhân", position: "60% 35%" },
+];
 
 /** The two stage sizes everything is drawn at, then scaled to fit the screen. */
 const STAGE = {
@@ -43,7 +54,7 @@ function measure(): { layout: Layout; scale: number } {
  * scaled to the screen, so the scenes line up the same way at any size. The
  * layers render their final state; the timeline sets where each one starts.
  */
-export function CinematicStory({ header, onExplore }: { header: ReactNode; onExplore: () => void }) {
+export function CinematicStory({ onExplore }: { onExplore: () => void }) {
   const root = useRef<HTMLElement>(null);
   const [{ layout, scale }, setFit] = useState(measure);
 
@@ -105,7 +116,7 @@ export function CinematicStory({ header, onExplore }: { header: ReactNode; onExp
         tl.to(q(`.cine-caption[data-scene='${to}']`), { autoAlpha: 1, y: 0, duration: 3 }, at + 2);
       };
 
-      // --- 1. at home: the camera moves in on the device on the wrist -------
+      // --- 1. at home: the camera moves in, then the devices take over ------
       tl.to(q(".cine-photo"), { scale: 2.6, duration: 13 }, 1);
       tl.to(q(".cine-photo-wrap"), { autoAlpha: 0, duration: 4 }, 10);
       tl.to(q(".cine-scroll-hint"), { autoAlpha: 0, duration: 2 }, 0);
@@ -207,20 +218,23 @@ export function CinematicStory({ header, onExplore }: { header: ReactNode; onExp
 
   return (
     <section ref={root} className="cine relative h-svh overflow-hidden" data-layout={layout} aria-label="Hành trình của một lần đo">
-      {/* The opening shot, full bleed behind the stage. */}
+      {/* The opening shot, full bleed behind the stage; the pictures take turns (CSS, `.cine-backdrop`). */}
       <div className="cine-photo-wrap absolute inset-0">
-        <img
-          src="/landing/wrist-monitor.webp"
-          alt="Thiết bị theo dõi sức khỏe đeo trên cổ tay"
-          className="cine-photo size-full object-cover"
-          style={{ objectPosition: "54% 42%" }}
-          fetchPriority="high"
-        />
+        <div className="cine-photo absolute inset-0">
+          {BACKDROPS.map((photo, i) => (
+            <img
+              key={photo.src}
+              src={photo.src}
+              alt={photo.alt}
+              className="cine-backdrop absolute inset-0 size-full object-cover"
+              style={{ objectPosition: photo.position, animationDelay: `${i * 6 - (i ? BACKDROPS.length * 6 : 0)}s` }}
+              fetchPriority={i === 0 ? "high" : undefined}
+            />
+          ))}
+        </div>
         <div className="cine-photo-shade absolute inset-0" />
       </div>
       <div className="cine-glow pointer-events-none absolute inset-0" aria-hidden="true" />
-
-      {header}
 
       <div
         className="cine-stage absolute top-1/2 left-1/2"
@@ -233,11 +247,11 @@ export function CinematicStory({ header, onExplore }: { header: ReactNode; onExp
             ) : (
               <h2 className="landing-display cine-title text-white">{scene.title}</h2>
             )}
-            <p className="cine-body mt-5 text-[#cfe9e6]">{scene.body}</p>
+            <p className="cine-body mt-5 text-[#cfdde9]">{scene.body}</p>
             {i === 4 && (
               <>
                 <AlertSteps />
-                <p className="mt-5 max-w-[460px] text-[14px] leading-6 text-[#8fb9b5]">{ALERT_NOTE}</p>
+                <p className="mt-5 max-w-[460px] text-[14px] leading-6 text-[#8fa6b9]">{ALERT_NOTE}</p>
               </>
             )}
             {i === 5 && (
@@ -270,7 +284,7 @@ export function CinematicStory({ header, onExplore }: { header: ReactNode; onExp
               pathLength={1}
               d="M560 300 C590 300 600 260 640 260"
               fill="none"
-              stroke="#5fd4c7"
+              stroke="#5f9fd4"
               strokeWidth="2.5"
               strokeDasharray="1"
             />
@@ -289,7 +303,7 @@ export function CinematicStory({ header, onExplore }: { header: ReactNode; onExp
         ))}
       </div>
 
-      <p className="cine-scroll-hint absolute bottom-14 left-1/2 -translate-x-1/2 whitespace-nowrap text-[13px] sm:bottom-8 text-[#cfe9e6]">
+      <p className="cine-scroll-hint absolute bottom-14 left-1/2 -translate-x-1/2 whitespace-nowrap text-[13px] sm:bottom-8 text-[#cfdde9]">
         Cuộn để xem hành trình của một lần đo
       </p>
     </section>

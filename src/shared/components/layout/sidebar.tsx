@@ -5,26 +5,19 @@ import {
   useMenu,
   useLink,
   useRefineOptions,
-  useActiveAuthProvider,
-  useGetIdentity,
-  useLogout,
   usePermissions,
   type TreeMenuItem,
 } from "@refinedev/core";
 import {
   ChevronRight,
   ListIcon,
-  LogOutIcon,
   PanelLeftIcon,
-  UserRoundIcon,
 } from "lucide-react";
-import { Link } from "react-router";
 import { permissionFor } from "@/shared/lib/permissions";
 
 import {
   Sidebar as ShadcnSidebar,
   SidebarContent as ShadcnSidebarContent,
-  SidebarFooter as ShadcnSidebarFooter,
   SidebarHeader as ShadcnSidebarHeader,
   SidebarRail as ShadcnSidebarRail,
   useSidebar as useShadcnSidebar,
@@ -48,17 +41,7 @@ import {
   TooltipTrigger,
 } from "@/shared/ui/tooltip";
 import { Button } from "@/shared/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { cn } from "@/shared/lib/utils";
-
-type Identity = {
-  fullName?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string | null;
-  phone?: string;
-  avatar?: string;
-};
 
 /* --------------------------------------------------------------------------
    Shared class recipes. Every nav row — link, collapsible trigger, dropdown
@@ -182,7 +165,6 @@ export function Sidebar() {
         ))}
       </ShadcnSidebarContent>
 
-      <SidebarUser isCollapsed={isCollapsed} />
     </ShadcnSidebar>
   );
 }
@@ -489,86 +471,6 @@ function NavIcon({
       {getIcon(item)}
     </span>
   );
-}
-
-/* --------------------------------------------------------------------------
-   Footer — only rendered when an auth provider can actually identify someone.
-   -------------------------------------------------------------------------- */
-
-function SidebarUser({ isCollapsed }: { isCollapsed: boolean }) {
-  const authProvider = useActiveAuthProvider();
-  const { data: user } = useGetIdentity<Identity>();
-  const { mutate: logout, isPending: isLoggingOut } = useLogout();
-
-  if (!authProvider?.getIdentity) return null;
-
-  const name = user?.fullName ?? [user?.firstName, user?.lastName].filter(Boolean).join(" ");
-  // Email is optional now; the phone number always exists, so it stands in.
-  const contact = user?.email || user?.phone;
-  const avatar = (
-    <Avatar className="size-8 shrink-0">
-      {user?.avatar && <AvatarImage src={user.avatar} alt={name} />}
-      <AvatarFallback className="bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
-        {getInitials(name)}
-      </AvatarFallback>
-    </Avatar>
-  );
-
-  return (
-    <ShadcnSidebarFooter className="border-r border-t border-sidebar-border p-2">
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          className={cn(
-            "flex w-full items-center gap-2 rounded-lg p-1.5 text-left",
-            "transition-colors hover:bg-sidebar-accent/60",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
-            isCollapsed && "justify-center"
-          )}
-        >
-          {avatar}
-          {!isCollapsed && (
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-sm font-medium text-sidebar-foreground">
-                {name || "Tài khoản"}
-              </span>
-              {contact && (
-                <span className="truncate text-xs text-sidebar-foreground/60">
-                  {contact}
-                </span>
-              )}
-            </div>
-          )}
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent side="top" align="start" className="min-w-52">
-          {name && <DropdownMenuLabel className="truncate">{name}</DropdownMenuLabel>}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link to="/profile">
-              <UserRoundIcon className="size-4" />
-              <span>Hồ sơ cá nhân</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => logout()}
-            className="text-destructive focus:text-destructive"
-          >
-            <LogOutIcon className="size-4" />
-            <span>{isLoggingOut ? "Đang đăng xuất…" : "Đăng xuất"}</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </ShadcnSidebarFooter>
-  );
-}
-
-function getInitials(name = "") {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  const first = parts[0][0];
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (first + last).toUpperCase();
 }
 
 Sidebar.displayName = "Sidebar";

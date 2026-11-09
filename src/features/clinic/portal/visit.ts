@@ -15,8 +15,9 @@ export function formatVisitDay(isoDate: string): string {
 /** Registered, at the desk or with the doctor: a visit still to happen. */
 export function isUpcoming(appointment: Appointment, today: string): boolean {
   const open =
-    appointment.status === "scheduled" ||
+    appointment.status === "booked" ||
     appointment.status === "checked_in" ||
+    appointment.status === "ready_for_examination" ||
     appointment.status === "in_exam" ||
     appointment.status === "awaiting_results";
   return open && appointment.appointmentDate >= today;

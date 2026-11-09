@@ -1,0 +1,208 @@
+/* The public pages' loader: the rabbit slipping into the database for the data and popping back
+   out with hearts, a bar under it. One 2.4 s round, looped while the page loads. */
+.page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 30; /* under the site's bar (z-40), over the page */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  /* Dark, in the landing's blue: the rabbit's GIF has a black ground, which `screen` drops. */
+  background: radial-gradient(60% 60% at 50% 45%, #1b6eb0 0%, #0f3f6b 55%, #0b2f4a 100%);
+  /* Fades in over the page being left, so a click reads as a transition, not a cut.
+     Backwards only: once in, the opacity is the transition's to change. */
+  animation: page-loader-in 0.25s ease backwards;
+  transition:
+    opacity 0.3s ease 0.2s,
+    visibility 0s linear 0.5s;
+}
+
+.page-loader[data-done="true"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@keyframes page-loader-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* --- the scene: 160 × 210, the database's mouth centred at y = 120 --------- */
+.pl-scene {
+  position: relative;
+  width: 160px;
+  height: 210px;
+}
+
+/* Clips the rabbit at the mouth, so dropping in reads as going inside. */
+.pl-hole {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 120px;
+  overflow: hidden;
+}
+
+.pl-rabbit {
+  position: absolute;
+  bottom: -6px;
+  left: calc(50% - 48px);
+  width: 96px;
+  height: 95px;
+  mix-blend-mode: screen; /* the GIF's black ground disappears into the dark backdrop */
+  animation: pl-rabbit 2.4s cubic-bezier(0.45, 0, 0.35, 1) infinite;
+}
+
+/* Sit, hop, drop in; stay inside while the disks run; pop out with a bounce. */
+@keyframes pl-rabbit {
+  0%,
+  8% {
+    transform: translateY(0) scale(1);
+  }
+  16% {
+    transform: translateY(-22px) scale(0.96, 1.05);
+  }
+  28%,
+  58% {
+    transform: translateY(110px) scale(1);
+  }
+  68% {
+    transform: translateY(-16px) scale(0.96, 1.05);
+  }
+  76%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pl-db {
+  position: absolute;
+  top: 106px; /* the mouth's centre (y = 14 of 100) lands on the hole's floor */
+  left: 20px;
+  width: 120px;
+  height: 100px;
+  overflow: visible;
+  animation: pl-db 2.4s ease-in-out infinite;
+}
+
+/* A little shake while the rabbit rummages inside. */
+@keyframes pl-db {
+  0%,
+  30%,
+  56%,
+  100% {
+    transform: translateX(0);
+  }
+  36%,
+  48% {
+    transform: translateX(-2px);
+  }
+  42%,
+  52% {
+    transform: translateX(2px);
+  }
+}
+
+.pl-db-body {
+  fill: rgb(124 196 255 / 0.12);
+  stroke: #9fd2ff;
+  stroke-width: 3;
+}
+
+.pl-db-mouth {
+  fill: rgb(6 30 55 / 0.6);
+  stroke: #cfe8ff;
+  stroke-width: 3;
+}
+
+/* The disks light up one after another while the rabbit is inside. */
+.pl-db-disk {
+  stroke: #9fd2ff;
+  stroke-width: 3;
+  opacity: 0.35;
+  animation: pl-disk 2.4s linear infinite;
+  animation-delay: calc(var(--d) * 0.18s);
+}
+
+@keyframes pl-disk {
+  0%,
+  30%,
+  44%,
+  100% {
+    opacity: 0.35;
+    stroke: #9fd2ff;
+  }
+  36% {
+    opacity: 1;
+    stroke: #ffffff;
+  }
+}
+
+/* Hearts burst from the mouth as the rabbit comes back out. */
+.pl-heart {
+  position: absolute;
+  bottom: 96px;
+  left: calc(50% - 11px);
+  width: 22px;
+  height: 22px;
+  opacity: 0;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.25));
+  animation: pl-heart 2.4s ease-out infinite;
+  animation-delay: calc(var(--i) * 0.05s);
+}
+
+@keyframes pl-heart {
+  0%,
+  62% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.3);
+  }
+  68% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), -110px) scale(1.15) rotate(var(--tilt));
+  }
+}
+
+/* --- the bar and the line under it --------------------------------------- */
+.page-loader-track {
+  width: min(260px, 70vw);
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.16);
+}
+
+/* Runs most of the way while waiting; fills the rest once the page is in. */
+.page-loader-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7cc4ff, #ffffff);
+  animation: page-loader-progress 1.8s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+.page-loader[data-done="true"] .page-loader-bar {
+  width: 100%;
+  animation: none;
+  transition: width 0.2s ease;
+}
+
+@keyframes page-loader-progress {
+  from {
+    width: 0;
+  }
+  to {
+    width: 85%;
+  }
+}
+
+.page-loader-text {
+  color: #dbeeff;
+  font-size: 0.875rem;
+  font-weight: 500;
+}

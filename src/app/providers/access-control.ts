@@ -43,6 +43,17 @@ export const accessControlProvider: AccessControlProvider = {
       return { can: true };
     }
 
+    // The System Administrator can create Clinic Administrators through the
+    // staff form, while the API refuses every other staff type on that path.
+    // Clinic staff creation still requires employees:write.
+    if (
+      resource === "employees" &&
+      action === "create" &&
+      permissions.includes("clinics:write")
+    ) {
+      return { can: true };
+    }
+
     // The permission code is the resource name and the action, joined — which
     // is why the backend's codes use the resource names verbatim. There is no
     // mapping table here to drift out of step with the seed data.

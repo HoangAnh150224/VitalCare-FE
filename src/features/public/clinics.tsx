@@ -18,6 +18,7 @@ import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent } from "@/shared/ui/card";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { cn } from "@/shared/lib/utils";
 import type {
   Opening,
   PublicClinic,
@@ -30,6 +31,7 @@ import {
 } from "@/domains/public-site/types";
 import { PublicPageHeader } from "./layout";
 import { usePublicClinics } from "./emergency";
+import { EmptyState } from "./empty-state";
 
 /** Where a visit is registered from: the portal for somebody signed in, the sign-up form for anybody else. */
 function useRegisterLink() {
@@ -39,31 +41,28 @@ function useRegisterLink() {
 
 /** SRS UC "View Clinic Information": every operating clinic, how to reach it, when it opens. */
 export function PublicClinics() {
-  const { data: clinics, isLoading, error } = usePublicClinics();
   return (
     <>
       <PublicPageHeader
         title="Cơ sở khám"
         description="Địa chỉ, giờ làm việc và cách liên hệ các cơ sở của VitalCare. Đăng ký khám trực tuyến, nhận số thứ tự ngay."
       />
-      <div className="mx-auto grid max-w-6xl gap-4 px-4 pb-12 sm:px-6 md:grid-cols-2">
-        {isLoading &&
-          [0, 1].map((key) => (
-            <Skeleton key={key} className="h-56 rounded-2xl" />
-          ))}
-        {error && (
-          <p className="text-destructive">{(error as Error).message}</p>
-        )}
-        {clinics?.length === 0 && (
-          <p className="text-muted-foreground">
-            Hiện chưa có cơ sở nào nhận khám.
-          </p>
-        )}
-        {clinics?.map((clinic) => (
-          <ClinicCard key={clinic.id} clinic={clinic} />
-        ))}
-      </div>
+      <ClinicGrid className="mx-auto max-w-6xl px-4 pb-12 sm:px-6" />
     </>
+  );
+}
+
+/** Every operating clinic as a card; also the landing's "Cơ sở" section. */
+export function ClinicGrid({ className }: { className?: string }) {
+  const { data: clinics, isLoading, error } = usePublicClinics();
+  return (
+    <div className={cn("grid gap-4 md:grid-cols-2", className)}>
+      {isLoading &&
+        [0, 1].map((key) => <Skeleton key={key} className="h-56 rounded-2xl" />)}
+      {error && <EmptyState tone="error" message={(error as Error).message} />}
+      {clinics?.length === 0 && <EmptyState message="Hiện chưa có cơ sở nào nhận khám." />}
+      {clinics?.map((clinic) => <ClinicCard key={clinic.id} clinic={clinic} />)}
+    </div>
   );
 }
 
@@ -174,7 +173,7 @@ export function PublicClinicShow() {
       </Button>
       {isLoading && <Skeleton className="mt-4 h-64 rounded-2xl" />}
       {error && (
-        <p className="text-destructive mt-4">{(error as Error).message}</p>
+        <EmptyState tone="error" message={(error as Error).message} />
       )}
       {clinic && (
         <>

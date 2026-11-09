@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useCustom } from "@refinedev/core";
+import { useCustom, useList } from "@refinedev/core";
 import { Scanner, type IDetectedBarcode } from "@yudiel/react-qr-scanner";
 import { CameraIcon, CameraOffIcon, CheckCircle2Icon, SearchIcon } from "lucide-react";
 import { Link } from "react-router";
@@ -23,6 +23,7 @@ import {
 } from "@/shared/lib/status-variants";
 import { AppointmentActions } from "./appointment-actions";
 import { clinicToday } from "./clinic-day";
+import { DeskResolution } from "./desk-resolution";
 
 /**
  * The front desk's check-in: scan or type the code from the slip, see who it
@@ -38,6 +39,8 @@ export const QuickCheckIn = () => {
   const [submitted, setSubmitted] = useState("");
   const [camera, setCamera] = useState(false);
   const [lastDone, setLastDone] = useState<Appointment | null>(null);
+  /** A visit picked from a search by phone, citizen id or name, when what was typed is not a code. */
+  const [picked, setPicked] = useState<Appointment | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { result, query } = useCustom<Appointment>({
@@ -59,6 +62,7 @@ export const QuickCheckIn = () => {
     const value = raw.trim();
     if (!value) return;
     setLastDone(null);
+    setPicked(null);
     setCode(value);
     if (value === submitted) {
       // Same code again — after an error, or a rescan of a card already on
@@ -80,6 +84,7 @@ export const QuickCheckIn = () => {
 
   const reset = (done: Appointment) => {
     setLastDone(done);
+    setPicked(null);
     setCode("");
     setSubmitted("");
     inputRef.current?.focus();
@@ -90,7 +95,7 @@ export const QuickCheckIn = () => {
       <ListViewHeader
         title="Tiếp nhận nhanh"
         canCreate={false}
-        description="Quét hoặc nhập mã trên phiếu khám của khách. Máy quét cầm tay dùng được ngay tại ô nhập mã."
+        description="Quét hoặc nhập mã trên phiếu khám; không có phiếu thì nhập số điện thoại, CCCD hoặc họ tên. Máy quét cầm tay dùng được ngay tại ô nhập."
       />
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start">
@@ -102,7 +107,7 @@ export const QuickCheckIn = () => {
               lookUp(code);
             }}
           >
-            <Label htmlFor="booking-code">Mã phiếu</Label>
+            <Label htmlFor="booking-code">Mã phiếu, số điện thoại hoặc CCCD</Label>
             <div className="flex gap-2">
               <Input
                 id="booking-code"
@@ -157,7 +162,7 @@ export const QuickCheckIn = () => {
               <span className="text-sm">
                 {lastDone.status === "cancelled" ? "Đã huỷ lượt đăng ký khám của " : "Đã tiếp nhận "}
                 <strong>{lastDone.customer.fullName}</strong> ({formatBookingCode(lastDone.bookingCode)})
-                {lastDone.status === "checked_in" && lastDone.customer.status === "patient"
+                {lastDone.status !== "cancelled" && lastDone.customer.status === "patient"
                   ? " — hồ sơ bệnh nhân đang hoạt động."
                   : "."}
               </span>
@@ -168,23 +173,25 @@ export const QuickCheckIn = () => {
             <p className="text-muted-foreground text-sm">Đang tra cứu…</p>
           )}
 
-          {failure && !query.isFetching && (
+          {failure && !notFound && !query.isFetching && (
             <Card className="p-5">
-              <p className="text-sm">
-                {notFound ? (
-                  <>
-                    Không tìm thấy lượt đăng ký khám với mã <span className="font-mono">{submitted}</span>. Kiểm
-                    tra lại mã trên phiếu khám.
-                  </>
-                ) : (
-                  "Không tra cứu được lúc này. Vui lòng thử lại."
-                )}
-              </p>
+              <p className="text-sm">Không tra cứu được lúc này. Vui lòng thử lại.</p>
             </Card>
           )}
 
-          {appointment && !failure && !query.isFetching && (
-            <AppointmentCard appointment={appointment} onDone={reset} />
+          {/* Not a code: the same words as a phone number, a citizen id or a name. */}
+          {notFound && !query.isFetching && !picked && <SearchMatches term={submitted} onPick={setPicked} />}
+
+          {(picked ?? (failure ? undefined : appointment)) && !query.isFetching && (
+            <AppointmentCard
+              appointment={(picked ?? appointment)!}
+              onDone={reset}
+              onChanged={(changed) => {
+                // A fix that keeps the visit (moved to today, right profile): show it as it is now.
+                if (picked) setPicked(changed);
+                else void query.refetch();
+              }}
+            />
           )}
 
           {!submitted && !lastDone && (
@@ -201,13 +208,17 @@ export const QuickCheckIn = () => {
 function AppointmentCard({
   appointment,
   onDone,
+  onChanged,
 }: {
   appointment: Appointment;
+  /** Checked in, cancelled, …: the screen clears for the next person. */
   onDone: (done: Appointment) => void;
+  /** Fixed but not yet checked in (moved to today, given to the right profile): shown again as it is now. */
+  onChanged: (changed: Appointment) => void;
 }) {
   const today = clinicToday();
   const isToday = appointment.appointmentDate === today;
-  const willActivate = appointment.status === "scheduled" && appointment.customer.status === "neutral";
+  const willActivate = appointment.status === "booked" && appointment.customer.status === "neutral";
 
   return (
     <Card className="flex flex-col gap-4 p-5">
@@ -248,19 +259,74 @@ function AppointmentCard({
         <DetailRow label="Lý do">{appointment.reason ?? "—"}</DetailRow>
       </DetailList>
 
-      {appointment.status === "scheduled" && !isToday && (
-        <p className="text-warning text-sm">
-          Lượt đăng ký này vào ngày {formatLocalDate(appointment.appointmentDate)}, chỉ tiếp nhận được
-          vào đúng ngày hẹn.
-        </p>
-      )}
       {willActivate && isToday && (
         <p className="text-sm">
           Khách hàng chưa là bệnh nhân — tiếp nhận sẽ <strong>kích hoạt hồ sơ bệnh nhân</strong>.
         </p>
       )}
 
+      {/* UC-02 B1: early, late, missed, cancelled, already in, or the wrong person. */}
+      <DeskResolution appointment={appointment} onDone={onChanged} />
+
       <AppointmentActions appointment={appointment} resource="appointments" onDone={onDone} />
+    </Card>
+  );
+}
+
+/**
+ * Not a slip's code (UC-02 step 2): the visits whose patient has that phone
+ * number, citizen id or name, today's first, for the desk to pick from.
+ */
+function SearchMatches({ term, onPick }: { term: string; onPick: (appointment: Appointment) => void }) {
+  const { result, query } = useList<Appointment>({
+    resource: "appointments",
+    filters: [{ field: "q", operator: "eq", value: term }],
+    pagination: { pageSize: 10 },
+    errorNotification: false,
+  });
+  const today = clinicToday();
+  const rows = [...(result?.data ?? [])].sort(
+    (a, b) => Number(b.appointmentDate === today) - Number(a.appointmentDate === today)
+  );
+
+  if (query.isLoading) {
+    return <p className="text-muted-foreground text-sm">Đang tìm theo số điện thoại, CCCD, họ tên…</p>;
+  }
+  if (rows.length === 0) {
+    return (
+      <Card className="p-5">
+        <p className="text-sm">
+          Không tìm thấy lượt đăng ký khám nào với <span className="font-mono">{term}</span> (mã phiếu, số điện
+          thoại, CCCD hoặc họ tên). Có thể tiếp nhận như{" "}
+          <Link to="/appointments/walk-in" className="text-link underline">
+            khám trực tiếp
+          </Link>
+          .
+        </p>
+      </Card>
+    );
+  }
+  return (
+    <Card className="flex flex-col divide-y p-0">
+      {rows.map((row) => (
+        <button
+          key={row.id}
+          type="button"
+          className="hover:bg-muted/50 flex flex-wrap items-center justify-between gap-2 p-4 text-left text-sm"
+          onClick={() => onPick(row)}
+        >
+          <span>
+            <strong>{row.customer.fullName}</strong> · {row.customer.phone} ·{" "}
+            <span className="font-mono">{formatBookingCode(row.bookingCode)}</span>
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="tabular-nums">{formatLocalDate(row.appointmentDate)}</span>
+            <Badge variant={APPOINTMENT_STATUS_VARIANTS[row.status] ?? "secondary"}>
+              {APPOINTMENT_STATUS_LABELS[row.status]}
+            </Badge>
+          </span>
+        </button>
+      ))}
     </Card>
   );
 }

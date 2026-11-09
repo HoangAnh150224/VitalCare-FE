@@ -30,6 +30,15 @@ import {
  * token in the first place.
  */
 
+/**
+ * When the user last pressed "Đăng xuất". The shell's guard (`routes.tsx`) is what navigates once
+ * the session is gone, racing Refine's own redirect; it reads this to send someone who left on
+ * purpose home, and someone whose session expired to /login to carry on.
+ */
+let signedOutAt = 0;
+// ponytail: 5 s window covers the guard's re-check; a flag the guard clears would need effect timing under StrictMode.
+export const justSignedOut = () => Date.now() - signedOutAt < 5000;
+
 /** The error shape `ApiExceptionHandler` produces for every non-2xx response. */
 type ApiError = {
   status?: number;
@@ -160,12 +169,12 @@ export const authProvider: AuthProvider = {
    * `fieldErrors` so the form can put each under its field instead of only in
    * a toast.
    */
-  async register({ phone, fullName, password }) {
+  async register({ phone, otp, email, fullName, dateOfBirth, password, claimProfileId }) {
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, fullName, password }),
+        body: JSON.stringify({ phone, otp, email, fullName, dateOfBirth, password, claimProfileId }),
       });
 
       if (!response.ok) {
@@ -207,7 +216,9 @@ export const authProvider: AuthProvider = {
    * would leave the user looking at a dashboard they believe they have left,
    * which is worse than a refresh token that outlives its use by a few days.
    */
-  async logout() {
+  async logout(params?: { redirectPath?: string }) {
+    // The buttons call this bare; an expired session arrives through Refine's onError with a redirectPath.
+    if (!params?.redirectPath) signedOutAt = Date.now();
     const refreshToken = getRefreshToken();
     if (refreshToken) {
       try {
@@ -227,7 +238,9 @@ export const authProvider: AuthProvider = {
     // that has signed out, and hand the next account somebody else's channel.
     disconnect();
     clearSession();
-    return { success: true, redirectTo: "/login" };
+    // Home, where every visit starts: leaving on purpose is not a request to sign in again.
+    // An expired session still goes to /login (check, onError) so the user can carry on.
+    return { success: true, redirectTo: params?.redirectPath ?? "/" };
   },
 
   /**
