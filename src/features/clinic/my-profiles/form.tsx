@@ -132,13 +132,13 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                 gender: values.gender,
                 nationalIdType: values.nationalIdType || "cccd",
                 nationalId: values.nationalId.trim(),
-                province: values.province ?? "",
-                ward: values.ward ?? "",
+                province: (values.province ?? "").trim(),
+                ward: (values.ward ?? "").trim(),
                 nationalIdIssuedOn: values.nationalIdIssuedOn || null,
                 ethnicity: values.ethnicity ?? "",
                 nationality: values.nationality ?? "",
                 occupation: values.occupation ?? "",
-                address: values.address ?? "",
+                address: (values.address ?? "").trim(),
               } as unknown as ProfileFormValues)
             )}
             className="flex min-w-0 flex-col gap-5"
@@ -366,10 +366,13 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
               <FormField
                 control={form.control}
                 name="province"
-                rules={{ maxLength: { value: 128, message: "Tối đa 128 ký tự" } }}
+                rules={{
+                  validate: (value) => (value ?? "").trim() !== "" || "Vui lòng nhập Tỉnh/Thành phố.",
+                  maxLength: { value: 128, message: "Tối đa 128 ký tự" },
+                }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tỉnh / Thành phố</FormLabel>
+                    <Label required>Tỉnh / Thành phố</Label>
                     <FormControl>
                       <Input {...field} value={field.value ?? ""} placeholder="Ví dụ: Hà Nội" />
                     </FormControl>
@@ -380,10 +383,13 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
               <FormField
                 control={form.control}
                 name="ward"
-                rules={{ maxLength: { value: 128, message: "Tối đa 128 ký tự" } }}
+                rules={{
+                  validate: (value) => (value ?? "").trim() !== "" || "Vui lòng nhập Xã/Phường.",
+                  maxLength: { value: 128, message: "Tối đa 128 ký tự" },
+                }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Xã / Phường</FormLabel>
+                    <Label required>Xã / Phường</Label>
                     <FormControl>
                       <Input {...field} value={field.value ?? ""} placeholder="Ví dụ: Phường Bến Nghé" />
                     </FormControl>
@@ -394,10 +400,13 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
               <FormField
                 control={form.control}
                 name="address"
-                rules={{ maxLength: { value: 500, message: "Tối đa 500 ký tự" } }}
+                rules={{
+                  validate: (value) => (value ?? "").trim() !== "" || "Vui lòng nhập địa chỉ cụ thể (số nhà, đường, thôn/tổ dân phố).",
+                  maxLength: { value: 500, message: "Tối đa 500 ký tự" },
+                }}
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>Địa chỉ cụ thể</FormLabel>
+                    <Label required>Địa chỉ cụ thể</Label>
                     <FormControl>
                       <Input {...field} value={field.value ?? ""} placeholder="Số nhà, đường, thôn / xóm" />
                     </FormControl>
