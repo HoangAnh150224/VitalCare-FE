@@ -32,6 +32,7 @@ import {
 import { RolePicker, type RoleRef } from "./role-picker";
 import { PlacementPicker, type PlacementRef } from "./placement-picker";
 import { STATUS_OPTIONS, type UserStatus } from "@/domains/user/types";
+import { PASSWORD_RANGE_MESSAGE, passwordInRange } from "@/shared/lib/password";
 
 /**
  * The create payload, which is `UserRequest` on the backend rather than the
@@ -200,7 +201,8 @@ export const UserCreate = () => {
                 name="password"
                 rules={{
                   required: "Vui lòng nhập mật khẩu",
-                  minLength: { value: 8, message: "Tối thiểu 8 ký tự" },
+                  validate: (value: string) =>
+                    passwordInRange(value ?? "") || `Mật khẩu chưa phù hợp. ${PASSWORD_RANGE_MESSAGE}`,
                 }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
@@ -210,7 +212,7 @@ export const UserCreate = () => {
                         {...field}
                         value={field.value ?? ""}
                         autoComplete="new-password"
-                        placeholder="Tối thiểu 8 ký tự"
+                        placeholder="Từ 8 đến 72 ký tự"
                       />
                     </FormControl>
                     <FormDescription>

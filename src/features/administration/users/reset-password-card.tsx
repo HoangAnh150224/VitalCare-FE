@@ -7,6 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
 import { InputPassword } from "@/shared/components/form/input-password";
 import { DetailPanel } from "@/shared/components/views/record-detail";
+import { PASSWORD_RANGE_MESSAGE, passwordInRange } from "@/shared/lib/password";
 
 /**
  * Setting a user's password on their behalf.
@@ -21,6 +22,7 @@ import { DetailPanel } from "@/shared/components/views/record-detail";
  */
 export function ResetPasswordCard({ userId }: { userId: number | string }) {
   const [password, setPassword] = useState("");
+  const tooLong = password.length >= 8 && !passwordInRange(password);
   const { open } = useNotification();
   const { mutate, mutation } = useCustomMutation();
 
@@ -77,18 +79,24 @@ export function ResetPasswordCard({ userId }: { userId: number | string }) {
           <InputPassword
             id="new-password"
             autoComplete="new-password"
-            placeholder="Tối thiểu 8 ký tự"
+            placeholder="Từ 8 đến 72 ký tự"
             minLength={8}
             required
+            aria-invalid={tooLong || undefined}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          {tooLong && (
+            <p className="text-destructive text-sm">
+              Mật khẩu mới chưa phù hợp. {PASSWORD_RANGE_MESSAGE}
+            </p>
+          )}
         </div>
         <Button
           type="submit"
           variant="secondary"
           className="w-full"
-          disabled={mutation.isPending || password.length < 8}
+          disabled={mutation.isPending || !passwordInRange(password)}
         >
           {mutation.isPending ? "Đang cập nhật..." : "Đặt mật khẩu"}
         </Button>

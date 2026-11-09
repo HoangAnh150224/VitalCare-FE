@@ -32,6 +32,7 @@ import {
 } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/utils";
 import { formatVietnamesePhone, initials } from "@/shared/lib/format";
+import { PASSWORD_RANGE_MESSAGE, passwordInRange } from "@/shared/lib/password";
 
 /**
  * The signed-in user's own account.
@@ -59,10 +60,14 @@ export const Profile = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  // The server's only 409 here: the current password is wrong. Said under that field, not in a toast.
+  const [wrongCurrent, setWrongCurrent] = useState(false);
 
   const mismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
+  // Too short is plain from the placeholder and the disabled button; too long needs saying.
+  const tooLong = newPassword.length >= 8 && !passwordInRange(newPassword);
   const canSubmit =
-    currentPassword.length > 0 && newPassword.length >= 8 && !mismatch;
+    currentPassword.length > 0 && passwordInRange(newPassword) && !mismatch;
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -78,8 +83,17 @@ export const Profile = () => {
         // answers 415 before the handler is reached.
         config: { headers: { "Content-Type": "application/json" } },
         successNotification: false,
+        errorNotification: (error) =>
+          error?.statusCode === 409
+            ? false
+            : {
+                type: "error",
+                message: "Không đổi được mật khẩu",
+                description: "Xin vui lòng thử lại sau.",
+              },
       },
       {
+        onError: (error) => setWrongCurrent(error?.statusCode === 409),
         onSuccess: ({ data }) => {
           // The server ends every other session and hands back a fresh pair for
           // this one. Storing it is what keeps the person who just changed
@@ -193,9 +207,18 @@ export const Profile = () => {
                   id="current-password"
                   autoComplete="current-password"
                   required
+                  aria-invalid={wrongCurrent || undefined}
                   value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  onChange={(e) => {
+                    setCurrentPassword(e.target.value);
+                    setWrongCurrent(false);
+                  }}
                 />
+                {wrongCurrent && (
+                  <p className="text-destructive text-sm">
+                    Mật khẩu hiện tại không khớp. Xin vui lòng nhập lại.
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -203,12 +226,18 @@ export const Profile = () => {
                 <InputPassword
                   id="new-password"
                   autoComplete="new-password"
-                  placeholder="Tối thiểu 8 ký tự"
+                  placeholder="Từ 8 đến 72 ký tự"
                   minLength={8}
                   required
+                  aria-invalid={tooLong || undefined}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                 />
+                {tooLong && (
+                  <p className="text-destructive text-sm">
+                    Mật khẩu mới chưa phù hợp. {PASSWORD_RANGE_MESSAGE}
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">
