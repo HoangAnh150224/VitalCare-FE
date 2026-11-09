@@ -119,6 +119,9 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
       ) : (
         <Form {...form}>
           <form
+            // The browser's own checks speak its language (a date past `max` gets an English bubble);
+            // the rules below say it in Vietnamese, under the field.
+            noValidate
             onSubmit={form.handleSubmit((values) =>
               // Only what the API takes: an edit's loaded record carries far more.
               onFinish({
@@ -216,7 +219,11 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
               <FormField
                 control={form.control}
                 name="dateOfBirth"
-                rules={{ required: "Vui lòng nhập ngày sinh" }}
+                rules={{
+                  required: "Vui lòng nhập ngày sinh",
+                  // ISO dates compare as strings; today is refused as well, as the server does.
+                  validate: (value) => value < clinicToday() || "Ngày sinh phải nằm ở quá khứ",
+                }}
                 render={({ field }) => (
                   <FormItem>
                     <Label required>Ngày sinh</Label>
@@ -298,6 +305,9 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
               <FormField
                 control={form.control}
                 name="nationalIdIssuedOn"
+                rules={{
+                  validate: (value) => !value || value <= clinicToday() || "Ngày cấp không được ở tương lai",
+                }}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Ngày cấp</FormLabel>

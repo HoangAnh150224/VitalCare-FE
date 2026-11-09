@@ -27,6 +27,7 @@ import {
 } from "@/shared/components/form/form-section";
 import type { Customer } from "@/domains/customer/types";
 import { GENDER_OPTIONS } from "@/domains/customer/types";
+import { clinicToday } from "../appointments/clinic-day";
 
 /** What `PATCH /customers/{id}` accepts — the profile, nothing else. */
 type CustomerFormValues = Pick<
@@ -67,7 +68,7 @@ export const CustomerEdit = () => {
     <EditView>
       <EditViewHeader />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="min-w-0">
+        <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="min-w-0">
           <SectionedFormPanel>
             <FormSection
               title="Hồ sơ"
@@ -76,11 +77,15 @@ export const CustomerEdit = () => {
               <FormField
                 control={form.control}
                 name="dateOfBirth"
+                rules={{
+                  // Optional here; when given, before today, as the server requires.
+                  validate: (value) => !value || value < clinicToday() || "Ngày sinh phải nằm ở quá khứ",
+                }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
                     <FormLabel>Ngày sinh</FormLabel>
                     <FormControl>
-                      <Input {...field} type="date" value={field.value ?? ""} />
+                      <Input {...field} type="date" max={clinicToday()} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
