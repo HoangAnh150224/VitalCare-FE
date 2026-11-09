@@ -14,6 +14,7 @@ type Reading = {
   heartRate: number | null;
   spo2: number | null;
   skinTemperature: number | null;
+  bodyTemperature: number | null;
   source: SyncSource;
   validationStatus: "VALID" | "INVALID";
   validationError: string | null;
@@ -58,6 +59,9 @@ export function RecentReadings({ deviceId }: { deviceId: number }) {
                 <th className="px-4 py-2 text-right font-medium">
                   Nhiệt độ da
                 </th>
+                <th className="px-4 py-2 text-right font-medium">
+                  Nhiệt độ cơ thể
+                </th>
                 <th className="px-4 py-2 text-left font-medium">Nguồn</th>
                 <th className="px-4 py-2 text-left font-medium">Bệnh nhân</th>
               </tr>
@@ -85,6 +89,9 @@ export function RecentReadings({ deviceId }: { deviceId: number }) {
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums">
                     {value(r.skinTemperature, " °C", 2)}
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {value(r.bodyTemperature, " °C", 2)}
                   </td>
                   <td className="px-4 py-2">
                     {SYNC_SOURCE_LABELS[r.source] ?? r.source}

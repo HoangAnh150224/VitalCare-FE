@@ -50,6 +50,9 @@ export const VitalSignOverview = () => {
                 <th className="px-4 py-2.5 text-right font-medium">
                   Nhiệt độ da
                 </th>
+                <th className="px-4 py-2.5 text-right font-medium">
+                  Nhiệt độ cơ thể
+                </th>
                 <th className="px-4 py-2.5 text-left font-medium">
                   Đo gần nhất
                 </th>
@@ -59,7 +62,7 @@ export const VitalSignOverview = () => {
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="text-muted-foreground px-4 py-8 text-center"
                   >
                     Đang tải…
@@ -68,7 +71,7 @@ export const VitalSignOverview = () => {
               ) : rows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="text-muted-foreground px-4 py-8 text-center"
                   >
                     Chưa có bệnh nhân nào đang đeo thiết bị.
@@ -111,6 +114,9 @@ export const VitalSignOverview = () => {
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums">
                       {fmt(r.latest.skinTemperature, 1, "°C")}
+                    </td>
+                    <td className="px-4 py-2.5 text-right tabular-nums">
+                      {fmt(r.latest.bodyTemperature, 1, "°C")}
                     </td>
                     <td className="px-4 py-2.5 tabular-nums">
                       {r.latest.lastMeasuredAt ? (
