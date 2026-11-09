@@ -22,20 +22,20 @@ export function DataFlow() {
   return (
     <div className="cine-flow absolute inset-0" aria-hidden="true">
       <svg viewBox="0 0 940 640" className="absolute inset-0 size-full overflow-visible">
-        <path d={FLOW_ROUTE} fill="none" stroke="#5f9fd4" strokeOpacity="0.12" strokeWidth="14" strokeLinecap="round" />
+        <path d={FLOW_ROUTE} fill="none" stroke="#5fd4c7" strokeOpacity="0.12" strokeWidth="14" strokeLinecap="round" />
         <path
           id="cine-flow-route"
           className="cine-route"
           d={FLOW_ROUTE}
           pathLength={1}
           fill="none"
-          stroke="#5f9fd4"
+          stroke="#5fd4c7"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeDasharray="1"
         />
         {Array.from({ length: PARTICLE_COUNT }, (_, i) => (
-          <circle key={i} className="cine-particle" r={i % 3 === 0 ? 6 : 4} cx="0" cy="0" fill="#bfdcf3" opacity="0" />
+          <circle key={i} className="cine-particle" r={i % 3 === 0 ? 6 : 4} cx="0" cy="0" fill="#bff3ec" opacity="0" />
         ))}
       </svg>
 
@@ -46,10 +46,10 @@ export function DataFlow() {
           style={{ left: x, top: y - 44 }}
         >
           <span className="cine-node-dot cine-glass flex size-[88px] items-center justify-center rounded-full">
-            <Icon className="size-9 text-[#bfdcf3]" strokeWidth={1.6} />
+            <Icon className="size-9 text-[#bff3ec]" strokeWidth={1.6} />
           </span>
           <span className="mt-3 text-[15px] font-semibold text-white">{name}</span>
-          <span className="mt-1 rounded-full bg-[#1a6aa3] px-3 py-1 text-xs font-medium text-[#a9cfee]">
+          <span className="mt-1 rounded-full bg-[#0f5054] px-3 py-1 text-xs font-medium text-[#a9eee5]">
             {stage}
           </span>
         </div>

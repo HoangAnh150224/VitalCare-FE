@@ -9,8 +9,8 @@
   align-items: center;
   justify-content: center;
   gap: 1.25rem;
-  /* Dark, in the landing's blue: the rabbit's GIF has a black ground, which `screen` drops. */
-  background: radial-gradient(60% 60% at 50% 45%, #1b6eb0 0%, #0f3f6b 55%, #0b2f4a 100%);
+  /* Dark, in the landing's teal: the rabbit's GIF has a black ground, which `screen` drops. */
+  background: radial-gradient(60% 60% at 50% 45%, #0f4d50 0%, #0b3b3e 55%, #06282a 100%);
   /* Fades in over the page being left, so a click reads as a transition, not a cut.
      Backwards only: once in, the opacity is the transition's to change. */
   animation: page-loader-in 0.25s ease backwards;
@@ -107,20 +107,20 @@
 }
 
 .pl-db-body {
-  fill: rgb(124 196 255 / 0.12);
-  stroke: #9fd2ff;
+  fill: rgb(95 212 199 / 0.12);
+  stroke: #8fe3d9;
   stroke-width: 3;
 }
 
 .pl-db-mouth {
-  fill: rgb(6 30 55 / 0.6);
-  stroke: #cfe8ff;
+  fill: rgb(6 40 42 / 0.6);
+  stroke: #cfe9e6;
   stroke-width: 3;
 }
 
 /* The disks light up one after another while the rabbit is inside. */
 .pl-db-disk {
-  stroke: #9fd2ff;
+  stroke: #8fe3d9;
   stroke-width: 3;
   opacity: 0.35;
   animation: pl-disk 2.4s linear infinite;
@@ -133,7 +133,7 @@
   44%,
   100% {
     opacity: 0.35;
-    stroke: #9fd2ff;
+    stroke: #8fe3d9;
   }
   36% {
     opacity: 1;
@@ -182,7 +182,7 @@
 .page-loader-bar {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #7cc4ff, #ffffff);
+  background: linear-gradient(90deg, #5fd4c7, #ffffff);
   animation: page-loader-progress 1.8s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
 }
 
@@ -202,7 +202,7 @@
 }
 
 .page-loader-text {
-  color: #dbeeff;
+  color: #d9f6f2;
   font-size: 0.875rem;
   font-weight: 500;
 }

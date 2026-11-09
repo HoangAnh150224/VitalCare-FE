@@ -16,12 +16,12 @@ const NAV = [
   { id: "so-cuu", to: "/first-aid", label: "Sơ cứu" },
 ];
 
-// The bar's ink and hover tint: the film's medical blue, deepened for text.
-const quiet = "text-[#0b2f4a] hover:bg-[#e8f2f8] hover:text-[#0a5a8c]";
-const current = "bg-[#e8f2f8] text-[#0a5a8c]";
+// The bar's ink and hover tint: the landing's teal, deepened for text.
+const quiet = "text-[#0f3d3f] hover:bg-[#e3f4f1] hover:text-[#0b5f63]";
+const current = "bg-[#e3f4f1] text-[#0b5f63]";
 // The site's call to action, a little depth from left to right.
 const primary =
-  "bg-gradient-to-r from-[#0a599a] to-[#0a6eb4] text-white shadow-sm hover:from-[#084c84] hover:to-[#085c98]";
+  "bg-gradient-to-r from-[#0b5f63] to-[#008c91] text-white shadow-sm hover:from-[#094f52] hover:to-[#007c80]";
 
 /**
  * The one header of the public site, the landing and the clinic, price and first-aid pages alike:
@@ -89,13 +89,13 @@ export function SiteNavbar({ onSection }: { onSection?: (id: string) => void }) 
 
   return (
     <header className="fixed inset-x-0 top-3 z-40 px-3 sm:px-6">
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 rounded-2xl border border-[#d6e6ef] bg-white/90 px-3 py-2 shadow-lg shadow-[#12568c]/20 backdrop-blur-md sm:px-5">
+      <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 rounded-2xl border border-[#d3e8e4] bg-white/90 px-3 py-2 shadow-lg shadow-[#06282a]/20 backdrop-blur-md sm:px-5">
         <Link
           to="/"
-          className="ml-2 flex flex-col items-center gap-0.5 rounded-md sm:ml-6 text-sm leading-none font-extrabold tracking-tight text-[#0b2f4a]"
+          className="ml-2 flex flex-col items-center gap-0.5 rounded-md sm:ml-6 text-sm leading-none font-extrabold tracking-tight text-[#0f3d3f]"
           style={{ fontFamily: '"Be Vietnam Pro", var(--font-sans)' }}
         >
-          <img src="/vitalcare-mark.png" alt="" className="size-12 rounded-xl border border-[#d6e6ef] bg-white p-1" />
+          <img src="/vitalcare-mark.png" alt="" className="size-12 rounded-xl border border-[#d3e8e4] bg-white p-1" />
           VitalCare
         </Link>
         {/* One even gap between every item, links and buttons alike. */}

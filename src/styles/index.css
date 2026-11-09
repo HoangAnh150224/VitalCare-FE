@@ -336,38 +336,38 @@
   background-image: var(--home-gradient);
 }
 
-/* Light mode: sign-in, sign-up and recovery wear the landing's medical blue whatever color preset
+/* Light mode: sign-in, sign-up and recovery wear the landing's teal and mint whatever color preset
    the visitor picked, so the way in looks the same as the site it is entered from (landing.css).
    The dark sky above is for dark mode only. */
 :root:not(.dark) .gradient-hero {
-  --foreground: #0f293f;
-  --card-foreground: #0f293f;
-  --popover-foreground: #0f293f;
-  --muted-foreground: #4f606d;
-  --auth-title: #0f293f;
-  --auth-description: #4f606d;
-  --primary: #0a6eb4;
-  --primary-hover: #0b4f86;
+  --foreground: #164e50;
+  --card-foreground: #164e50;
+  --popover-foreground: #164e50;
+  --muted-foreground: #597677;
+  --auth-title: #0f3d3f;
+  --auth-description: #597677;
+  --primary: #008c91;
+  --primary-hover: #007c80;
   --primary-foreground: #ffffff;
-  --ring: #0a6eb4;
-  --link: #0a6eb4;
-  --border: #d6e6ef;
-  --input: #c9dbe8;
-  --button-shadow: 0 4px 10px rgb(10 110 180 / 22%);
+  --ring: #008ba8;
+  --link: #007c80;
+  --border: #e0ece9;
+  --input: #ccdadc;
+  --button-shadow: 0 4px 8px rgb(0 140 145 / 25%);
 
   color: var(--foreground);
-  background-color: #f3f7fa;
-  background-image: linear-gradient(180deg, #d9eaf6 0%, #eaf3fa 50%, #f3f7fa 100%);
+  background-color: #f6fbf9;
+  background-image: linear-gradient(180deg, #dff3ef 0%, #eef9f6 50%, #f6fbf9 100%);
 }
 
-/* Dark mode keeps its night sky, in the same blue rather than the preset's hue. */
+/* Dark mode keeps its night sky, in the same teal rather than the preset's hue. */
 .dark .gradient-hero {
-  --preset-h: 245;
-  --primary: #3b9ae1;
-  --primary-hover: #5aaee8;
+  --preset-h: 199.23;
+  --primary: #2bb3b8;
+  --primary-hover: #4cc4c8;
   --primary-foreground: #ffffff;
-  --ring: #3b9ae1;
-  --link: #6cb6ee;
+  --ring: #2bb3b8;
+  --link: #5fd4c7;
 }
 
 /* Gold as a fill, for the one element on a screen that is the seal. */

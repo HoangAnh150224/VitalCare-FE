@@ -1,22 +1,22 @@
-/* The public landing page, in one medical blue: brighter for the film at the
-   top, a pale wash for the sections below it; one red kept for the pulse and
-   for alerts. The --landing-teal names stay for history; the colour is blue. */
+/* The public landing page. The app's teal, deepened for the film at the top
+   and back to mist for the sections below it; one red kept for the pulse
+   and for alerts. */
 .landing {
-  --landing-ink: #0f293f;
-  --landing-teal: #0a6eb4;
-  --landing-teal-deep: #0b4f86;
-  --landing-mist: #f3f7fa;
-  --landing-mint: #dfeaf3;
+  --landing-ink: #0f3d3f;
+  --landing-teal: #008c91;
+  --landing-teal-deep: #0b5f63;
+  --landing-mist: #f3faf8;
+  --landing-mint: #dff3ef;
   --landing-paper: #ffffff;
-  --landing-muted: #4f606d;
+  --landing-muted: #4f6b6d;
   --landing-pulse: #d6455d;
-  --cine-night: #12568c;
-  --cine-deep: #1b6eb0;
+  --cine-night: #06282a;
+  --cine-deep: #0b3b3e;
 
   background-color: var(--landing-mist);
   color: var(--landing-ink);
 
-  /* The app's own buttons, links and focus rings take the landing's blue here. */
+  /* The app's own buttons, links and focus rings take the landing's teal here. */
   --primary: var(--landing-teal);
   --primary-foreground: #ffffff;
   --ring: var(--landing-teal);
@@ -40,7 +40,7 @@
 
 .landing a:focus-visible,
 .landing button:focus-visible {
-  outline: 2px solid #5f9fd4;
+  outline: 2px solid #5fd4c7;
   outline-offset: 3px;
 }
 
@@ -52,7 +52,7 @@
 /* --- the film ------------------------------------------------------------- */
 .cine {
   background:
-    radial-gradient(70% 60% at 75% 45%, #2b8ad0 0%, transparent 70%),
+    radial-gradient(70% 60% at 75% 45%, #0f4d50 0%, transparent 70%),
     linear-gradient(160deg, var(--cine-deep), var(--cine-night) 70%);
   color: #fff;
 }
@@ -65,38 +65,17 @@
   will-change: transform;
 }
 
-/* The opening pictures, soft and one at a time: each holds about 6 s, then fades into the next. */
-.cine-backdrop {
-  filter: blur(1.5px) saturate(1.05);
-  opacity: 0;
-  animation: cine-backdrop 24s linear infinite;
-}
-
-@keyframes cine-backdrop {
-  0%,
-  21% {
-    opacity: 1;
-  }
-  25%,
-  96% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
 /* Darkens the photo where the headline sits, and towards the stage below. */
 .cine-photo-shade {
   background:
-    linear-gradient(90deg, rgb(18 86 140 / 0.85) 0%, rgb(18 86 140 / 0.55) 42%, rgb(18 86 140 / 0.15) 75%),
-    linear-gradient(0deg, rgb(18 86 140 / 0.6), transparent 40%);
+    linear-gradient(90deg, rgb(6 40 42 / 0.92) 0%, rgb(6 40 42 / 0.6) 42%, rgb(6 40 42 / 0.15) 75%),
+    linear-gradient(0deg, rgb(6 40 42 / 0.7), transparent 40%);
 }
 
 .cine-glow {
   background:
-    radial-gradient(40% 40% at 70% 50%, rgb(46 128 196 / 0.12), transparent 70%),
-    linear-gradient(rgb(143 189 227 / 0.04) 1px, transparent 1px) 0 0 / 100% 64px;
+    radial-gradient(40% 40% at 70% 50%, rgb(46 196 182 / 0.12), transparent 70%),
+    linear-gradient(rgb(143 227 217 / 0.04) 1px, transparent 1px) 0 0 / 100% 64px;
 }
 
 .cine-stage {
@@ -193,8 +172,8 @@
 }
 
 .cine-glass {
-  background: rgb(16 78 132 / 0.72);
-  border: 1px solid rgb(170 211 245 / 0.35);
+  background: rgb(13 68 71 / 0.78);
+  border: 1px solid rgb(143 227 217 / 0.28);
   box-shadow: 0 20px 40px -24px rgb(0 0 0 / 0.6);
 }
 
@@ -204,11 +183,11 @@
 }
 
 .cine-particle {
-  filter: drop-shadow(0 0 6px rgb(95 159 212 / 0.9));
+  filter: drop-shadow(0 0 6px rgb(95 212 199 / 0.9));
 }
 
 .cine-progress-dot {
-  color: rgb(207 221 233 / 0.45);
+  color: rgb(207 233 230 / 0.45);
   transition: color 0.3s;
 }
 
@@ -223,12 +202,12 @@
 }
 
 .cine-progress-dot[data-active] {
-  color: #d9e9f6;
+  color: #d9f6f2;
 }
 
 .cine-progress-dot[data-active] .cine-progress-mark {
   width: 22px;
-  background: #5f9fd4;
+  background: #5fd4c7;
 }
 
 /* The opening words arrive once on load; everything after is scroll. */
@@ -258,7 +237,7 @@
 }
 
 .landing-flow-track {
-  background: rgb(0 80 145 / 0.15);
+  background: rgb(0 140 145 / 0.15);
 }
 
 .landing-flow-line {
@@ -293,9 +272,22 @@
   scale: 1.04;
 }
 
+.landing-ai-card {
+  background: var(--landing-paper);
+  border-radius: 20px;
+  padding: 1.75rem;
+  box-shadow: 0 24px 48px -32px rgb(11 95 99 / 0.45);
+}
+
+.landing-note {
+  border-left: 3px solid var(--landing-teal);
+  padding-left: 0.875rem;
+  color: var(--landing-ink);
+}
+
 .landing-cta {
   background:
-    radial-gradient(60% 80% at 85% 20%, rgb(46 128 196 / 0.25), transparent 70%),
+    radial-gradient(60% 80% at 85% 20%, rgb(46 196 182 / 0.25), transparent 70%),
     var(--landing-teal-deep);
   border-radius: 28px;
 }
