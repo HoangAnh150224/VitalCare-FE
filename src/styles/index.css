@@ -247,6 +247,9 @@
     *::after {
       transition-duration: 0.01ms !important;
       animation-duration: 0.01ms !important;
+      /* Once, then still: a looping animation (spinner, skeleton, the page loader) cut to 0.01ms
+         would otherwise flicker through its frames every repaint. */
+      animation-iteration-count: 1 !important;
       scroll-behavior: auto !important;
     }
   }
