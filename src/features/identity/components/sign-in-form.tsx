@@ -88,13 +88,6 @@ export const SignInForm = () => {
         "px-6 pt-24 pb-10 sm:py-10"
       )}
     >
-      {/* Texture, and nothing else — it must never intercept a click meant for
-          the form sitting on top of it. */}
-      <div
-        aria-hidden
-        className="grid-pattern pointer-events-none absolute inset-0"
-      />
-
       {/* A solid pill so it reads on both the dark and the mint ground. */}
       <Link
         to="/"

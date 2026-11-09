@@ -336,6 +336,18 @@
   background-image: var(--home-gradient);
 }
 
+/* Light mode, every preset: a pale wash of the preset's hue, as light as the pages inside the app.
+   The dark sky above is for dark mode only. */
+:root:not(.dark) .gradient-hero {
+  background-color: oklch(0.985 0.008 var(--preset-h));
+  background-image: linear-gradient(
+    180deg,
+    oklch(0.93 0.045 var(--preset-h)) 0%,
+    oklch(0.965 0.022 var(--preset-h)) 50%,
+    oklch(0.985 0.008 var(--preset-h)) 100%
+  );
+}
+
 :root:not(.dark)[data-color-preset="navy"] .gradient-hero,
 :root:not(.dark):not([data-color-preset]) .gradient-hero {
   background-color: #f6fbf9;
@@ -347,24 +359,8 @@
   );
 }
 
-:root:not(.dark)[data-color-preset="navy"],
-:root:not(.dark):not([data-color-preset]) {
+:root:not(.dark) {
   --auth-title: var(--foreground);
-}
-
-/* A subtle grid texture over the authentication background. */
-@utility grid-pattern {
-  background-image:
-    linear-gradient(oklch(1 0 0 / 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, oklch(1 0 0 / 0.04) 1px, transparent 1px);
-  background-size: 56px 56px;
-}
-
-:root:not(.dark)[data-color-preset="navy"] .grid-pattern,
-:root:not(.dark):not([data-color-preset]) .grid-pattern {
-  background-image:
-    linear-gradient(rgb(0 140 145 / 6%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(0 140 145 / 6%) 1px, transparent 1px);
 }
 
 /* Gold as a fill, for the one element on a screen that is the seal. */
