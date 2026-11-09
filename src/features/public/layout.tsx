@@ -21,7 +21,7 @@ export function PublicLayout({ children }: { children?: ReactNode }) {
       <SiteNavbar />
 
       {/* Room for the pinned bar. */}
-      <main className="flex-1 pt-20">
+      <main className="flex-1 pt-28">
         {/* Keyed by the page, so each one arrives afresh: the loader, then heading and list lifting in. */}
         <PageArrival key={pathname}>{children ?? <Outlet />}</PageArrival>
       </main>

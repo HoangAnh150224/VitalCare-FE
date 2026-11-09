@@ -29,7 +29,7 @@ function PublicSection({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className={band ? "landing-band scroll-mt-24" : "scroll-mt-24"}>
+    <section id={id} className={band ? "landing-band scroll-mt-28" : "scroll-mt-28"}>
       <div className="mx-auto max-w-6xl px-4 py-24 sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-2xl">
