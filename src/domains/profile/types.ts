@@ -60,3 +60,11 @@ export type IdType = keyof typeof ID_TYPE_LABELS;
 /** Street, ward, province as one line, leaving out whatever is not filled in. */
 export const fullAddress = (profile: { address: string | null; ward: string | null; province: string | null }) =>
   [profile.address, profile.ward, profile.province].filter(Boolean).join(", ") || null;
+
+/** Relatives an account may hold besides the owner (the API refuses a third). */
+export const MAX_RELATIVES = 2;
+export const RELATIVES_FULL_MESSAGE = "Chỉ được tối đa 2 hồ sơ của người thân.";
+
+/** Whether the account already holds as many relatives as it may. */
+export const relativesFull = (profiles: readonly Pick<Profile, "self">[]) =>
+  profiles.filter((profile) => !profile.self).length >= MAX_RELATIVES;

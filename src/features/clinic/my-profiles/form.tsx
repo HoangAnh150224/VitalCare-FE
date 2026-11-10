@@ -13,7 +13,7 @@ import { cn } from "@/shared/lib/utils";
 import { initials } from "@/shared/lib/format";
 import { GENDER_LABELS, type Gender } from "@/domains/customer/types";
 import type { IdType, Profile, Relationship } from "@/domains/profile/types";
-import { ID_TYPE_LABELS, RELATIONSHIP_OPTIONS } from "@/domains/profile/types";
+import { ID_TYPE_LABELS, RELATIONSHIP_OPTIONS, RELATIVES_FULL_MESSAGE } from "@/domains/profile/types";
 import { birthDateProblem, clinicToday, oldestBirthDate } from "../appointments/clinic-day";
 import { IconChip, type Tone } from "../portal/parts";
 
@@ -120,7 +120,14 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
       redirect: "list",
       // A refused field is said under that field, in Vietnamese (below), not again in a toast.
       errorNotification: (error) =>
-        error?.statusCode === 422 ? false : { type: "error", message: "Không lưu được hồ sơ. Vui lòng thử lại." },
+        error?.statusCode === 422
+          ? false
+          : {
+              type: "error",
+              message: /at most \d+ relatives/.test(error?.message ?? "")
+                ? RELATIVES_FULL_MESSAGE
+                : "Không lưu được hồ sơ. Vui lòng thử lại.",
+            },
       onMutationError: (error) => {
         for (const [name, raw] of Object.entries(error?.errors ?? {})) {
           const message = Array.isArray(raw) ? raw[0] : typeof raw === "string" ? raw : raw && typeof raw === "object" ? raw.message : undefined;
