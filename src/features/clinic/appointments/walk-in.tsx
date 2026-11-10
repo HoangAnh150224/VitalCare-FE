@@ -43,7 +43,7 @@ import type { Appointment } from "@/domains/appointment/types";
 import type { Customer } from "@/domains/customer/types";
 import { BookingFields } from "./booking-fields";
 import { EMPTY_BOOKING, type BookingFormValues } from "./booking";
-import { clinicToday } from "./clinic-day";
+import { birthDateProblem, clinicToday, oldestBirthDate } from "./clinic-day";
 
 type WalkInValues = BookingFormValues & {
   fullName: string;
@@ -260,12 +260,12 @@ export const WalkInRegistration = () => {
                   <FormField
                     control={form.control}
                     name="dateOfBirth"
-                    rules={{ required: "Nhập ngày sinh" }}
+                    rules={{ required: "Nhập ngày sinh", validate: (value) => birthDateProblem(value) }}
                     render={({ field }) => (
                       <FormItem className="md:col-span-6">
                         <FormLabel>Ngày sinh</FormLabel>
                         <FormControl>
-                          <Input {...field} type="date" max={clinicToday()} />
+                          <Input {...field} type="date" min={oldestBirthDate()} max={clinicToday()} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
