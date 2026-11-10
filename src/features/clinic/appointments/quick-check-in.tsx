@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
-import { useCustom, useList } from "@refinedev/core";
+import { useCan, useCustom, useList } from "@refinedev/core";
 import { Scanner, type IDetectedBarcode } from "@yudiel/react-qr-scanner";
-import { CameraIcon, CameraOffIcon, CheckCircle2Icon, SearchIcon } from "lucide-react";
+import { BanknoteIcon, CameraIcon, CameraOffIcon, CheckCircle2Icon, SearchIcon } from "lucide-react";
 import { Link } from "react-router";
 
 import { API_URL } from "@/shared/api/constants";
@@ -13,7 +13,9 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { DetailList, DetailRow } from "@/shared/components/views/record-detail";
-import { formatLocalDate, formatLocalTime } from "@/shared/lib/format";
+import { formatLocalDate, formatLocalTime, formatMoney } from "@/shared/lib/format";
+import type { Invoice } from "@/domains/billing/types";
+import { CounterPaymentDialog } from "../invoices/counter-payment";
 import type { Appointment } from "@/domains/appointment/types";
 import { APPOINTMENT_STATUS_LABELS, formatBookingCode } from "@/domains/appointment/types";
 import { CUSTOMER_STATUS_LABELS } from "@/domains/customer/types";
@@ -166,6 +168,10 @@ export const QuickCheckIn = () => {
                   ? " — hồ sơ bệnh nhân đang hoạt động."
                   : "."}
               </span>
+              {/* Not paid yet (paying here): take the fee now, so they join the queue. */}
+              {lastDone.status === "checked_in" && !lastDone.paidAt && (
+                <CollectExamFee key={lastDone.id} appointmentId={lastDone.id} />
+              )}
             </Card>
           )}
 
@@ -241,6 +247,8 @@ function AppointmentCard({
           <Badge variant={APPOINTMENT_STATUS_VARIANTS[appointment.status] ?? "secondary"}>
             {APPOINTMENT_STATUS_LABELS[appointment.status]}
           </Badge>
+          {/* Chose to pay here: collect the examination fee once they are checked in (UC-01 step 4). */}
+          {!appointment.paidAt && appointment.deskPaymentChosenAt && <Badge variant="outline">Thu phí tại quầy</Badge>}
         </div>
       </div>
 
@@ -328,5 +336,44 @@ function SearchMatches({ term, onPick }: { term: string; onPick: (appointment: A
         </button>
       ))}
     </Card>
+  );
+}
+
+/**
+ * Right after checking in somebody who has not paid: the examination fee to
+ * take at the counter, through the same dialog as the appointment page. Paid,
+ * they join the queue (BF-02) and the button says so.
+ */
+function CollectExamFee({ appointmentId }: { appointmentId: number }) {
+  const { data: canCollect } = useCan({ resource: "invoices", action: "edit" });
+  const [paying, setPaying] = useState(false);
+  // The visit's examination bill (issued here if it has none yet).
+  const { result, query } = useCustom<Invoice>({
+    url: `${API_URL}/invoices/exam`,
+    method: "get",
+    config: { query: { appointmentId } },
+    errorNotification: false,
+    queryOptions: { enabled: canCollect?.can ?? false },
+  });
+  const invoice = customResult(result?.data, "id");
+  if (!canCollect?.can || !invoice) return null;
+  if (invoice.status === "paid") {
+    return <Badge variant="success" className="ms-auto">Đã thu phí khám · vào hàng chờ</Badge>;
+  }
+  return (
+    <>
+      <Button size="sm" className="ms-auto" onClick={() => setPaying(true)}>
+        <BanknoteIcon />
+        Thu phí khám {formatMoney(invoice.totalAmount)}
+      </Button>
+      <CounterPaymentDialog
+        invoice={invoice}
+        open={paying}
+        onClose={() => {
+          setPaying(false);
+          void query.refetch();
+        }}
+      />
+    </>
   );
 }

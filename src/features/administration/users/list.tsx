@@ -25,7 +25,7 @@ import { DeleteButton } from "@/shared/components/buttons/delete";
 import { Badge } from "@/shared/ui/badge";
 import type { Role } from "@/domains/role/types";
 import type { User } from "@/domains/user/types";
-import { STATUS_LABELS } from "@/domains/user/types";
+import { ROLE_ORIGIN_HINT, STATUS_LABELS } from "@/domains/user/types";
 import { USER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatDate } from "@/shared/lib/format";
 
@@ -198,7 +198,7 @@ export const UserList = () => {
 
   return (
     <ListView>
-      <ListViewHeader description="Các tài khoản có thể đăng nhập và vai trò của họ." />
+      <ListViewHeader description={`Các tài khoản có thể đăng nhập và vai trò của họ. ${ROLE_ORIGIN_HINT}`} />
       <DataTable
         table={table}
         toolbar={

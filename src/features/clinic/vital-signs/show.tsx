@@ -57,6 +57,13 @@ export const VitalSignShow = () => {
                   <EmptyValue />
                 )}
               </DetailRow>
+              <DetailRow label="Nhiệt độ cơ thể (ước tính)">
+                {v?.bodyTemperature != null ? (
+                  `${Number(v.bodyTemperature).toFixed(2)} °C`
+                ) : (
+                  <EmptyValue />
+                )}
+              </DetailRow>
               <DetailRow label="Hợp lệ">
                 {v ? (
                   v.validationStatus === "VALID" ? (

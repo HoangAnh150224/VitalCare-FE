@@ -1,13 +1,10 @@
 import { useCan, useList } from "@refinedev/core";
 import {
   ArrowRightIcon,
-  BellIcon,
   Building2Icon,
-  KeyRoundIcon,
   RefreshCwIcon,
   ScrollTextIcon,
   ShieldCheckIcon,
-  ShieldHalfIcon,
   UsersRoundIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -24,22 +21,12 @@ import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { Skeleton } from "@/shared/ui/skeleton";
 
-type Shortcut = {
-  label: string;
-  description: string;
-  to: string;
-  icon: LucideIcon;
-};
-
 /** System-wide landing page for the System Administrator. */
 export function SystemAdminDashboard() {
   const { data: usersAccess } = useCan({ resource: "users", action: "list" });
   const { data: clinicsAccess } = useCan({ resource: "clinics", action: "list" });
   const { data: rolesAccess } = useCan({ resource: "roles", action: "list" });
   const { data: auditAccess } = useCan({ resource: "audit_logs", action: "list" });
-  const { data: permissionsAccess } = useCan({ resource: "permissions", action: "list" });
-  const { data: scopesAccess } = useCan({ resource: "row_level_policies", action: "list" });
-  const { data: notificationsAccess } = useCan({ resource: "notifications", action: "list" });
 
   const canReadUsers = usersAccess?.can ?? false;
   const canReadClinics = clinicsAccess?.can ?? false;
@@ -115,51 +102,6 @@ export function SystemAdminDashboard() {
     },
   ].filter((metric) => metric.canRead);
 
-  const shortcuts: Shortcut[] = [
-    canReadUsers && {
-      label: "Người dùng",
-      description: "Tài khoản và trạng thái truy cập",
-      to: "/users",
-      icon: UsersRoundIcon,
-    },
-    canReadClinics && {
-      label: "Cơ sở",
-      description: "Thông tin và giờ hoạt động",
-      to: "/clinics",
-      icon: Building2Icon,
-    },
-    canReadRoles && {
-      label: "Vai trò",
-      description: "Vai trò và quyền được cấp",
-      to: "/roles",
-      icon: ShieldCheckIcon,
-    },
-    permissionsAccess?.can && {
-      label: "Quyền",
-      description: "Danh mục quyền của hệ thống",
-      to: "/permissions",
-      icon: KeyRoundIcon,
-    },
-    scopesAccess?.can && {
-      label: "Phạm vi dữ liệu",
-      description: "Dữ liệu mỗi vai trò được phép xem",
-      to: "/row-level-policies",
-      icon: ShieldHalfIcon,
-    },
-    canReadAudit && {
-      label: "Nhật ký hoạt động",
-      description: "Theo dõi thao tác quản trị",
-      to: "/audit-logs",
-      icon: ScrollTextIcon,
-    },
-    notificationsAccess?.can && {
-      label: "Thông báo",
-      description: "Tin nhắn và thông báo hệ thống",
-      to: "/notifications",
-      icon: BellIcon,
-    },
-  ].filter((shortcut): shortcut is Shortcut => Boolean(shortcut));
-
   return (
     <div className="screen-enter screen-enter-stagger flex flex-col gap-7">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -181,40 +123,14 @@ export function SystemAdminDashboard() {
         ))}
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,1fr)]">
-        {canReadAudit && (
-          <RecentActivity
-            entries={audit.result?.data ?? []}
-            isLoading={audit.query.isLoading}
-            isError={audit.query.isError}
-            retry={() => void audit.query.refetch()}
-          />
-        )}
-
-        <section aria-labelledby="admin-shortcuts-title" className="flex flex-col gap-3">
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <h2 id="admin-shortcuts-title" className="text-lg font-semibold tracking-tight">
-                Truy cập nhanh
-              </h2>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Các công cụ quản trị toàn hệ thống
-              </p>
-            </div>
-          </div>
-          {shortcuts.length > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              {shortcuts.map((shortcut) => (
-                <AdminShortcut key={shortcut.to} {...shortcut} />
-              ))}
-            </div>
-          ) : (
-            <Card className="p-5 text-sm text-muted-foreground">
-              Tài khoản này chưa có quyền mở công cụ quản trị.
-            </Card>
-          )}
-        </section>
-      </div>
+      {canReadAudit && (
+        <RecentActivity
+          entries={audit.result?.data ?? []}
+          isLoading={audit.query.isLoading}
+          isError={audit.query.isError}
+          retry={() => void audit.query.refetch()}
+        />
+      )}
     </div>
   );
 }
@@ -366,24 +282,5 @@ function RecentActivity({
         )}
       </Card>
     </section>
-  );
-}
-
-function AdminShortcut({ label, description, to, icon: Icon }: Shortcut) {
-  return (
-    <Link to={to} className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-      <Card className="h-full flex-row items-center gap-3 p-4 transition-colors group-hover:bg-accent/40 group-focus-visible:ring-2 group-focus-visible:ring-ring">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-primary [&_svg]:size-5">
-          <Icon aria-hidden />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium">{label}</span>
-          <span className="text-muted-foreground mt-1 block truncate text-xs">
-            {description}
-          </span>
-        </span>
-        <ArrowRightIcon aria-hidden className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-      </Card>
-    </Link>
   );
 }

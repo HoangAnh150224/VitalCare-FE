@@ -124,7 +124,7 @@ export function Platform() {
           </div>
           <h3 className="landing-display mt-6 text-2xl">VitalCare Web</h3>
           <p className="landing-muted mt-2 leading-7">
-            Cho bác sĩ, điều dưỡng, lễ tân, quản trị phòng khám và quản trị hệ thống: tiếp nhận, khám, hồ sơ, thiết bị,
+            Cho bác sĩ, lễ tân, quản trị phòng khám và quản trị hệ thống: tiếp nhận, khám, hồ sơ, thiết bị,
             theo dõi và cảnh báo — mỗi vai trò thấy đúng phần việc của mình.
           </p>
         </article>

@@ -54,6 +54,7 @@ function membershipErrorText(body: unknown): string {
   if (/at least one role/.test(text)) return "Chọn ít nhất một vai trò.";
   if (/Your own roles/.test(text)) return "Không tự đổi vai trò của chính mình; nhờ quản trị khác.";
   if (/Only the system administrator/.test(text)) return "Chỉ quản trị hệ thống mới cấp hoặc gỡ vai trò Quản trị phòng khám.";
+  if (/Only the clinic administrator/.test(text)) return "Vai trò Bác sĩ và Lễ tân do quản trị phòng khám cấp.";
   if (/last active administrator|no active administrator/.test(text)) return "Không thể gỡ quản trị viên cuối cùng.";
   return "Không lưu được. Thử lại sau.";
 }
@@ -216,6 +217,8 @@ export function ClinicRolesPanel({ employeeId }: { employeeId: number }) {
   const { data: canRead } = useCan({ resource: "clinic_roles", action: "list" });
   const { data: canWrite } = useCan({ resource: "clinic_roles", action: "edit" });
   const { data: canMove } = useCan({ resource: "staff_memberships", action: "transfer" });
+  // Clinic roles other than Quản trị phòng khám are given by whoever runs the clinic's staff.
+  const { data: canStaff } = useCan({ resource: "employees", action: "edit" });
   const { open: notify } = useNotification();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<string[] | null>(null);
@@ -263,7 +266,7 @@ export function ClinicRolesPanel({ employeeId }: { employeeId: number }) {
             </TableHeader>
             <TableBody>
               {(catalogue ?? []).map((role) => {
-                const locked = !canWrite?.can || (role.adminOnly && !canMove?.can);
+                const locked = !canWrite?.can || (role.adminOnly ? !canMove?.can : !canStaff?.can);
                 return (
                   <TableRow key={role.code}>
                     <TableCell>

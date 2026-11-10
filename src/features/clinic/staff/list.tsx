@@ -115,7 +115,7 @@ export const StaffList = () => {
 
   return (
     <ListView>
-      <ListViewHeader description="Bác sĩ, điều dưỡng và lễ tân. Bác sĩ, điều dưỡng theo dõi bệnh nhân được gán; lễ tân chỉ thấy dữ liệu phòng khám của mình." />
+      <ListViewHeader description="Bác sĩ và lễ tân. Bác sĩ theo dõi bệnh nhân được gán; lễ tân chỉ thấy dữ liệu phòng khám của mình." />
       <DataTable
         table={table}
         toolbar={

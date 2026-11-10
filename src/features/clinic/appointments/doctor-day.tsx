@@ -79,46 +79,62 @@ function Hint({ children }: { children: React.ReactNode }) {
 type OpenDay = { date: string; remaining: number };
 
 /**
- * The day is full (UC-01 A1, UC-03 C1): the next days with a place left from
- * `from`, as buttons that pick them — or, with no `onPick` (a walk-in, whose
- * day is today), as days for the desk to tell the patient.
+ * Whether a clinic's day can be booked, counted as the API counts it when the
+ * visit is registered (every doctor's turns, less the clinic's visits), and the
+ * next days that can: `open-days` from that day, which leads with it when open.
  */
-export function OpenDayChoices({
-  clinicId,
-  from,
-  onPick,
-}: {
-  clinicId: string;
-  from: string;
-  onPick?: (date: string) => void;
-}) {
-  const { result } = useCustom<OpenDay[]>({
+export function useClinicDay(clinicId: string | undefined, date: string | undefined) {
+  const { result, query } = useCustom<OpenDay[]>({
     url: `${API_URL}/clinics/${clinicId}/open-days`,
     method: "get",
-    config: { query: { from, days: 5 } },
+    config: { query: { from: date, days: 6 } },
+    queryOptions: { enabled: Boolean(clinicId && date), refetchInterval: 30_000 },
   });
   const days = Array.isArray(result?.data) ? result.data : [];
+  return {
+    open: days[0]?.date === date,
+    others: days.filter((day) => day.date !== date).slice(0, 5),
+    isLoading: query.isLoading,
+  };
+}
+
+/** Why a clinic's day cannot be booked, in the words the API would refuse it with. */
+export function closedDayReason(doctors: DoctorAvailability[], date: string, today: string): string {
+  if (!doctors.some((doctor) => doctor.day?.working)) {
+    return "Ngày này phòng khám không có bác sĩ khám. Vui lòng chọn ngày khác.";
+  }
+  if (date === today) {
+    return "Hôm nay phòng khám đã hết lượt hoặc hết giờ nhận đăng ký. Vui lòng chọn ngày khác.";
+  }
+  return "Ngày này phòng khám đã hết lượt khám. Vui lòng chọn ngày khác.";
+}
+
+/**
+ * The next days with a place left (UC-01 A1, UC-03 C1), shown under a day that
+ * cannot be had: buttons that pick them, or - with no `onPick` (a walk-in,
+ * whose day is today) - days for the desk to tell the patient. The reason is
+ * the date field's own message, so it is not said again here.
+ */
+export function OpenDayChoices({ days, onPick }: { days: OpenDay[]; onPick?: (date: string) => void }) {
+  if (days.length === 0) {
+    return null;
+  }
   return (
-    <div className="space-y-2 md:col-span-8" role="alert">
-      <p className="text-destructive text-sm">
-        Ngày này phòng khám không có bác sĩ khám hoặc đã hết lượt.
-        {days.length > 0 ? " Các ngày còn lượt:" : " Vui lòng chọn ngày khác."}
-      </p>
-      {days.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {days.map((day) =>
-            onPick ? (
-              <Button key={day.date} type="button" variant="outline" size="sm" onClick={() => onPick(day.date)}>
-                {formatLocalDate(day.date)} · còn {day.remaining} lượt
-              </Button>
-            ) : (
-              <span key={day.date} className="rounded-md border px-2 py-1 text-sm">
-                {formatLocalDate(day.date)} · còn {day.remaining} lượt
-              </span>
-            )
-          )}
-        </div>
-      )}
+    <div className="space-y-2 md:col-span-8">
+      <p className="text-muted-foreground text-sm">Các ngày còn lượt:</p>
+      <div className="flex flex-wrap gap-2">
+        {days.map((day) =>
+          onPick ? (
+            <Button key={day.date} type="button" variant="outline" size="sm" onClick={() => onPick(day.date)}>
+              {formatLocalDate(day.date)} · còn {day.remaining} lượt
+            </Button>
+          ) : (
+            <span key={day.date} className="rounded-md border px-2 py-1 text-sm">
+              {formatLocalDate(day.date)} · còn {day.remaining} lượt
+            </span>
+          )
+        )}
+      </div>
     </div>
   );
 }

@@ -7,6 +7,8 @@ export type VitalReading = {
   heartRate: number | null;
   spo2: number | null;
   skinTemperature: number | null;
+  /** Estimated from the skin temperature, mouth-equivalent. */
+  bodyTemperature: number | null;
   source: "REST" | "MQTT" | "SIMULATOR";
   validationStatus: "VALID" | "INVALID";
   validationError: string | null;
@@ -34,6 +36,8 @@ export type VitalLatest = {
   spo2At: string | null;
   skinTemperature: number | null;
   skinTemperatureAt: string | null;
+  bodyTemperature: number | null;
+  bodyTemperatureAt: string | null;
   lastMeasuredAt: string | null;
   readings24h: number;
 };
@@ -63,6 +67,10 @@ export type VitalTrendPoint = {
   skinTemperatureMin: number | null;
   skinTemperatureAvg: number | null;
   skinTemperatureMax: number | null;
+  bodyTemperatureAvg: number | null;
+  /** Not sent by every server; the chart falls back to the average. */
+  bodyTemperatureMin?: number | null;
+  bodyTemperatureMax?: number | null;
 };
 
 export type VitalTrend = {

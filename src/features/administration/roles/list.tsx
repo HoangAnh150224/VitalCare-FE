@@ -20,22 +20,12 @@ import {
 } from "@/shared/components/views/list-view";
 import { EditButton } from "@/shared/components/buttons/edit";
 import { ShowButton } from "@/shared/components/buttons/show";
-import { DeleteButton } from "@/shared/components/buttons/delete";
 import { Badge } from "@/shared/ui/badge";
 import type { Role } from "@/domains/role/types";
 
 const ADVANCED_FILTER_FIELDS: AdvancedFilterField[] = [
   { field: "code", label: "Mã", type: "text", placeholder: "Bất kỳ" },
   { field: "name", label: "Tên", type: "text", placeholder: "Bất kỳ" },
-  {
-    field: "systemRole",
-    label: "Vai trò hệ thống",
-    type: "select",
-    options: [
-      { label: "Có", value: "true" },
-      { label: "Không", value: "false" },
-    ],
-  },
 ];
 
 export const RoleList = () => {
@@ -56,16 +46,7 @@ export const RoleList = () => {
         enableResizing: true,
         header: "Tên",
         enableSorting: true,
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{row.original.name}</span>
-            {row.original.systemRole && (
-              <Badge variant="secondary" className="text-[10px]">
-                Hệ thống
-              </Badge>
-            )}
-          </div>
-        ),
+        cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       }),
       columnHelper.accessor("description", {
         id: "description",
@@ -96,17 +77,10 @@ export const RoleList = () => {
           <div className="flex gap-1">
             <EditButton recordItemId={row.original.id} iconOnly size="icon-sm" />
             <ShowButton recordItemId={row.original.id} iconOnly size="icon-sm" />
-            {/*
-              A system role cannot be deleted — the API answers 409 — so the
-              button is not offered rather than offered and then refused.
-            */}
-            {!row.original.systemRole && (
-              <DeleteButton recordItemId={row.original.id} iconOnly size="icon-sm" />
-            )}
           </div>
         ),
         enableSorting: false,
-        ...actionsColumnWidth(3),
+        ...actionsColumnWidth(2),
       }),
     ];
   }, []);
@@ -139,7 +113,7 @@ export const RoleList = () => {
 
   return (
     <ListView>
-      <ListViewHeader description="Mỗi vai trò được phép làm gì và truy cập được những dòng dữ liệu nào." />
+      <ListViewHeader description="Hệ thống có 7 vai trò cố định, không thêm hay xoá: Khách, Bệnh nhân, Người chăm sóc, Bác sĩ, Nhân viên y tế (lễ tân), Quản trị phòng khám và Quản trị hệ thống. Người chăm sóc là Khách hoặc Bệnh nhân được bệnh nhân chia sẻ dữ liệu nên không có dòng riêng. Ở đây chỉ chỉnh quyền của từng vai trò." />
       <DataTable
         table={table}
         toolbar={

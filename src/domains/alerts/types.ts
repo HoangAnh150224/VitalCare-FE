@@ -1,6 +1,6 @@
 /** FE-05: alert rules and alerts as `/alert_rules` and `/alerts` return them. */
 
-export type Metric = "HEART_RATE" | "SPO2" | "SKIN_TEMPERATURE";
+export type Metric = "HEART_RATE" | "SPO2" | "SKIN_TEMPERATURE" | "BODY_TEMPERATURE";
 export type Operator = "BELOW" | "ABOVE";
 export type Severity = "WARNING" | "CRITICAL";
 export type AlertStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "DISMISSED";
@@ -97,12 +97,14 @@ export const METRIC_LABELS: Record<Metric, string> = {
   HEART_RATE: "Nhịp tim",
   SPO2: "SpO₂",
   SKIN_TEMPERATURE: "Nhiệt độ da",
+  BODY_TEMPERATURE: "Nhiệt độ cơ thể",
 };
 
 export const METRIC_UNITS: Record<Metric, string> = {
   HEART_RATE: " bpm",
   SPO2: "%",
   SKIN_TEMPERATURE: " °C",
+  BODY_TEMPERATURE: " °C",
 };
 
 export const OPERATOR_LABELS: Record<Operator, string> = {

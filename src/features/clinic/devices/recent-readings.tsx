@@ -1,4 +1,4 @@
-import { useCan, useCustom } from "@refinedev/core";
+import { useCustom, usePermissions } from "@refinedev/core";
 import { Link } from "react-router";
 
 import { API_URL } from "@/shared/api/constants";
@@ -14,6 +14,7 @@ type Reading = {
   heartRate: number | null;
   spo2: number | null;
   skinTemperature: number | null;
+  bodyTemperature: number | null;
   source: SyncSource;
   validationStatus: "VALID" | "INVALID";
   validationError: string | null;
@@ -33,7 +34,9 @@ const value = (v: number | null, unit: string, digits = 0) =>
 
 /** What the device has sent lately (FE-03): to see readings arrive from the band, the app or MQTT. */
 export function RecentReadings({ deviceId }: { deviceId: number }) {
-  const { data: access } = useCan({ resource: "vital_signs", action: "list" });
+  // The read grant itself, not the Vital signs menu entry: a clinic administrator has the one without the other.
+  const { data: permissions } = usePermissions<string[]>({});
+  const access = { can: Boolean(permissions?.includes("vital_signs:read")) };
   const { result } = useCustom<Reading[]>({
     url: `${API_URL}/devices/${deviceId}/readings`,
     method: "get",
@@ -57,6 +60,9 @@ export function RecentReadings({ deviceId }: { deviceId: number }) {
                 <th className="px-4 py-2 text-right font-medium">SpO₂</th>
                 <th className="px-4 py-2 text-right font-medium">
                   Nhiệt độ da
+                </th>
+                <th className="px-4 py-2 text-right font-medium">
+                  Nhiệt độ cơ thể
                 </th>
                 <th className="px-4 py-2 text-left font-medium">Nguồn</th>
                 <th className="px-4 py-2 text-left font-medium">Bệnh nhân</th>
@@ -85,6 +91,9 @@ export function RecentReadings({ deviceId }: { deviceId: number }) {
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums">
                     {value(r.skinTemperature, " °C", 2)}
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {value(r.bodyTemperature, " °C", 2)}
                   </td>
                   <td className="px-4 py-2">
                     {SYNC_SOURCE_LABELS[r.source] ?? r.source}

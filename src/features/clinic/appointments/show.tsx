@@ -195,7 +195,10 @@ export const AppointmentShow = () => {
                         Đã trả · {formatDateTime(record.paidAt)}
                       </span>
                     ) : (
-                      <span className="text-warning-text">Chưa thanh toán</span>
+                      <span className="text-warning-text">
+                        Chưa thanh toán
+                        {record.deskPaymentChosenAt ? " · Khách chọn trả tại quầy" : ""}
+                      </span>
                     )}
                   </MetaItem>
                 )}

@@ -7,7 +7,6 @@ import {
   useUserFriendlyName,
 } from "@refinedev/core";
 import type { PropsWithChildren } from "react";
-import { Breadcrumb } from "@/shared/components/layout/breadcrumb";
 import { Button } from "@/shared/ui/button";
 import { RefreshButton } from "@/shared/components/buttons/refresh";
 import { ArrowLeftIcon } from "lucide-react";
@@ -72,7 +71,6 @@ export const EditViewHeader = ({
 
   return (
     <div className={cn("flex flex-col", "gap-4", wrapperClassName)}>
-      <Breadcrumb />
       <div
         className={cn(
           "flex",

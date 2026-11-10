@@ -14,10 +14,10 @@ const MIN_MS = 1800;
 /** Where each heart flies to, and in which colour. */
 const HEARTS = [
   { dx: -50, color: "#f472a8" },
-  { dx: 42, color: "#7cc4ff" },
+  { dx: 42, color: "#5fd4c7" },
   { dx: -20, color: "#ffd1e3" },
   { dx: 60, color: "#f472a8" },
-  { dx: -64, color: "#7cc4ff" },
+  { dx: -64, color: "#5fd4c7" },
   { dx: 16, color: "#ff9ec4" },
 ];
 

@@ -130,7 +130,7 @@ export const ViewAsPick = () => {
           onView={(id) => navigate(`/view-as/front-desk/${id}`)}
         />
         <RoleCard
-          title="Bác sĩ / Điều dưỡng"
+          title="Bác sĩ"
           description="Màn “Bệnh nhân của tôi”. Mỗi người chỉ thấy bệnh nhân mình phụ trách."
           icon={<HeartPulseIcon className="size-4" />}
           allLabel="Xem tất cả bệnh nhân"

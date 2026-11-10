@@ -1,7 +1,11 @@
 import type { AccessControlProvider } from "@refinedev/core";
 
 import { getAuthorities } from "@/shared/api/session";
-import { ACTION_TO_PERMISSION, permissionFor } from "@/shared/lib/permissions";
+import {
+  ACTION_TO_PERMISSION,
+  hiddenMenus,
+  permissionFor,
+} from "@/shared/lib/permissions";
 
 /**
  * Decides what the UI offers, from the permissions fetched at sign-in.
@@ -41,6 +45,12 @@ export const accessControlProvider: AccessControlProvider = {
     // when its children are visible.
     if (!resource) {
       return { can: true };
+    }
+
+    // Screens outside the role's work (a clinic administrator's daily staff screens, a doctor's
+    // catalogue management) are not opened, though the grants behind them stay.
+    if (action === "list" && hiddenMenus(getAuthorities()?.roles).has(resource)) {
+      return { can: false, reason: "Chức năng này không thuộc phạm vi công việc của vai trò này." };
     }
 
     // The System Administrator can create Clinic Administrators through the
