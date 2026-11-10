@@ -34,6 +34,36 @@ type ProfileFormValues = {
   address: string;
 };
 
+/** A Vietnamese number as the API takes it on a profile: 0 or +84, nine more digits, spaces allowed. */
+const PHONE = /^\s*(?:\+?84|0)(?:\s*\d){9}\s*$/;
+
+/** The API's refusals on a profile, in Vietnamese, for the field they are about. */
+const PROFILE_ERRORS: Record<string, string> = {
+  "Phone number is not valid": "Vui lòng nhập số điện thoại phù hợp.",
+  "A valid phone number is required": "Vui lòng nhập số điện thoại phù hợp.",
+  "A name is required": "Vui lòng nhập họ và tên",
+  "Name must be at most 255 characters": "Họ và tên tối đa 255 ký tự",
+  "Say whose profile this is": "Vui lòng chọn quan hệ",
+  "Relationship must be child, parent, spouse, sibling or other": "Vui lòng chọn quan hệ",
+  "Date of birth is required": "Vui lòng nhập ngày sinh",
+  "Date of birth must be in the past": "Ngày sinh phải nằm ở quá khứ",
+  "Gender is required": "Vui lòng chọn giới tính",
+  "Gender must be male, female or other": "Vui lòng chọn giới tính",
+  "A citizen id or personal identification number is required": "Vui lòng nhập số giấy tờ định danh",
+  "Id type must be cccd, personal_id or passport": "Vui lòng chọn loại giấy tờ",
+  "National id must be at most 32 characters": "Số giấy tờ tối đa 32 ký tự",
+  "The issue date cannot be in the future": "Ngày cấp không được ở tương lai",
+  "A province or city is required": "Vui lòng chọn tỉnh/thành phố",
+  "Province must be at most 128 characters": "Tỉnh/thành phố tối đa 128 ký tự",
+  "A ward or commune is required": "Vui lòng nhập phường/xã",
+  "Ward must be at most 128 characters": "Phường/xã tối đa 128 ký tự",
+  "A street address is required": "Vui lòng nhập địa chỉ",
+  "Address must be at most 500 characters": "Địa chỉ tối đa 500 ký tự",
+  "Ethnicity must be at most 64 characters": "Dân tộc tối đa 64 ký tự",
+  "Nationality must be at most 64 characters": "Quốc tịch tối đa 64 ký tự",
+  "Occupation must be at most 128 characters": "Nghề nghiệp tối đa 128 ký tự",
+};
+
 const GENDERS = Object.keys(GENDER_LABELS) as Gender[];
 const ID_TYPES = Object.keys(ID_TYPE_LABELS) as IdType[];
 const ID_DOCUMENT_FIELDS = {
@@ -72,7 +102,24 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
     refineCore: { onFinish, query },
     ...form
   } = useForm<Profile, HttpError, ProfileFormValues>({
-    refineCoreProps: { resource: "my_profiles", redirect: "list" },
+    refineCoreProps: {
+      resource: "my_profiles",
+      redirect: "list",
+      // A refused field is said under that field, in Vietnamese (below), not again in a toast.
+      errorNotification: (error) =>
+        error?.statusCode === 422 ? false : { type: "error", message: "Không lưu được hồ sơ. Vui lòng thử lại." },
+      onMutationError: (error) => {
+        for (const [name, raw] of Object.entries(error?.errors ?? {})) {
+          const message = Array.isArray(raw) ? raw[0] : typeof raw === "string" ? raw : raw && typeof raw === "object" ? raw.message : undefined;
+          form.setError(name as keyof ProfileFormValues, {
+            type: "server",
+            message: (message && PROFILE_ERRORS[message]) || "Thông tin chưa hợp lệ.",
+          });
+        }
+      },
+    },
+    // The API's English stays off the fields: they are filled above, translated.
+    disableServerSideValidation: true,
     defaultValues: {
       fullName: "",
       phone: "",
@@ -164,7 +211,8 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                     control={form.control}
                     name="phone"
                     rules={{
-                      validate: (value) => /^[0-9+ ]{8,20}$/.test(value.trim()) || "Số điện thoại không hợp lệ",
+                      required: "Vui lòng nhập số điện thoại phù hợp.",
+                      validate: (value) => PHONE.test(value) || "Vui lòng nhập số điện thoại phù hợp.",
                     }}
                     render={({ field }) => (
                       <FormItem>
