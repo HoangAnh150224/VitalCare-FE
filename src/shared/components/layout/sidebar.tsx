@@ -13,7 +13,8 @@ import {
   ListIcon,
   PanelLeftIcon,
 } from "lucide-react";
-import { permissionFor } from "@/shared/lib/permissions";
+import { CLINIC_ADMIN_MENU, isClinicAdminOnly, permissionFor } from "@/shared/lib/permissions";
+import { getAuthorities } from "@/shared/api/session";
 
 import {
   Sidebar as ShadcnSidebar,
@@ -130,6 +131,32 @@ function useAccessibleMenuItems(items: TreeMenuItem[]): TreeMenuItem[] {
   }, [items, permissions]);
 }
 
+/**
+ * A clinic administrator's menu: the home page, then the clinic's eight and the
+ * administration's six, in the order agreed (CLINIC_ADMIN_MENU). Built from the
+ * same menu items, so routes, icons and labels stay those of the resources.
+ */
+function clinicAdminMenu(items: TreeMenuItem[]): TreeMenuItem[] {
+  const all = new Map<string, TreeMenuItem>();
+  const walk = (nodes: TreeMenuItem[]) =>
+    nodes.forEach((node) => {
+      all.set(node.name, node);
+      walk((node.children ?? []) as TreeMenuItem[]);
+    });
+  walk(items);
+  const section = (name: string, members: readonly string[]): TreeMenuItem[] => {
+    const header = all.get(name);
+    const children = members.flatMap((member) => all.get(member) ?? []);
+    return header && children.length > 0 ? [{ ...header, children }] : [];
+  };
+  const home = all.get("dashboard");
+  return [
+    ...(home ? [home] : []),
+    ...section("clinic", CLINIC_ADMIN_MENU.clinic),
+    ...section("administration", CLINIC_ADMIN_MENU.administration),
+  ];
+}
+
 /* --------------------------------------------------------------------------
    Sidebar
    -------------------------------------------------------------------------- */
@@ -137,7 +164,9 @@ function useAccessibleMenuItems(items: TreeMenuItem[]): TreeMenuItem[] {
 export function Sidebar() {
   const { open, isMobile } = useShadcnSidebar();
   const { menuItems, selectedKey } = useMenu();
-  const visibleItems = useAccessibleMenuItems(menuItems);
+  const visibleItems = useAccessibleMenuItems(
+    isClinicAdminOnly(getAuthorities()?.roles) ? clinicAdminMenu(menuItems) : menuItems
+  );
   const isCollapsed = !open && !isMobile;
 
   return (

@@ -151,3 +151,34 @@ export function isPortalAccount(
     )
   );
 }
+
+/**
+ * A clinic administrator manages the clinic; the day-to-day work (registering
+ * visits, patients, vitals and alerts, messages, follow-up) is the staff's and
+ * the doctors'. Their menu holds exactly this, in this order, under the two
+ * existing sections; anything else is not offered, and its screen is closed to
+ * a typed URL. The API still answers these resources for the screens kept here
+ * (a device's readings, the rooms' queue), so this is the menu, not the grants.
+ */
+export const CLINIC_ADMIN_MENU = {
+  clinic: ["employees", "licenses", "doctor_schedules", "devices", "alert_rules", "clinic_roles", "exam_rooms", "clinics"],
+  administration: ["medical_services", "invoices", "reports", "feedback", "first_aid_articles", "notifications"],
+} as const;
+
+/** The staff's and doctors' screens a clinic administrator does not open. */
+export const CLINIC_ADMIN_HIDDEN = new Set([
+  "appointments",
+  "customers",
+  "vital_signs",
+  "alerts",
+  "device_syncs",
+  "sync_failures",
+  "result_returns",
+  "conversations",
+  "monitoring_assignments",
+]);
+
+/** A clinic administrator and nothing else: one who is also a doctor or front desk keeps that work. */
+export function isClinicAdminOnly(roles: readonly string[] | undefined): boolean {
+  return Boolean(roles?.includes("CLINIC_ADMIN")) && !roles?.some((role) => role === "DOCTOR" || role === "MANAGER");
+}

@@ -1,4 +1,4 @@
-import { useCan, useCustom } from "@refinedev/core";
+import { useCustom, usePermissions } from "@refinedev/core";
 import { Link } from "react-router";
 
 import { API_URL } from "@/shared/api/constants";
@@ -34,7 +34,9 @@ const value = (v: number | null, unit: string, digits = 0) =>
 
 /** What the device has sent lately (FE-03): to see readings arrive from the band, the app or MQTT. */
 export function RecentReadings({ deviceId }: { deviceId: number }) {
-  const { data: access } = useCan({ resource: "vital_signs", action: "list" });
+  // The read grant itself, not the Vital signs menu entry: a clinic administrator has the one without the other.
+  const { data: permissions } = usePermissions<string[]>({});
+  const access = { can: Boolean(permissions?.includes("vital_signs:read")) };
   const { result } = useCustom<Reading[]>({
     url: `${API_URL}/devices/${deviceId}/readings`,
     method: "get",
