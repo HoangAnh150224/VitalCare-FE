@@ -23,7 +23,7 @@ import type { Profile } from "@/domains/profile/types";
 import { profileKind } from "@/domains/profile/types";
 import type { BookingFormValues } from "./booking";
 import { clinicToday } from "./clinic-day";
-import { OpenDayChoices, useClinicDoctors } from "./doctor-day";
+import { OpenDayChoices, closedDayReason, useClinicDay, useClinicDoctors } from "./doctor-day";
 
 /**
  * Which day and why (and, for the front desk, with whom) — the part of a
@@ -46,7 +46,7 @@ export function BookingFields({
   /** A walk-in: the day is today and cannot be changed. */
   todayOnly?: boolean;
 }) {
-  const { setValue, getValues } = useFormContext<BookingFormValues>();
+  const { setValue, getValues, trigger } = useFormContext<BookingFormValues>();
   const clinicId = useWatch({ control, name: "clinicId" });
   const date = useWatch({ control, name: "appointmentDate" });
 
@@ -90,10 +90,16 @@ export function BookingFields({
     clinicId,
     date
   );
-  // The customer's side picks no doctor; what they need to know is whether the day can be had at all.
-  const dayOpen = doctors.some(
-    (candidate) => candidate.day?.working && candidate.day?.bookable
-  );
+  // Whether the day can be had at all, counted as the API will count it when the visit is registered.
+  const clinicDay = useClinicDay(clinicId || undefined, date || undefined);
+  const dayKnown = Boolean(date && clinicId) && !doctorsLoading && !clinicDay.isLoading;
+  const dayClosed = dayKnown && !clinicDay.open ? closedDayReason(doctors, date, clinicToday()) : null;
+  // Said on the date field as soon as it is known, not first on pressing the button.
+  useEffect(() => {
+    if (dayKnown) {
+      void trigger("appointmentDate");
+    }
+  }, [dayKnown, dayClosed, trigger]);
 
   return (
     <>
@@ -186,7 +192,7 @@ export function BookingFields({
       <FormField
         control={control}
         name="appointmentDate"
-        rules={{ required: "Vui lòng chọn ngày" }}
+        rules={{ required: "Vui lòng chọn ngày", validate: () => dayClosed ?? true }}
         render={({ field }) => (
           <FormItem className="md:col-span-3">
             <FormLabel>Ngày khám</FormLabel>
@@ -204,10 +210,9 @@ export function BookingFields({
         )}
       />
       {/* Only when the day cannot be had; it takes no row otherwise. */}
-      {date && clinicId && !doctorsLoading && !dayOpen && (
+      {dayClosed && (
         <OpenDayChoices
-          clinicId={clinicId}
-          from={date}
+          days={clinicDay.others}
           onPick={
             todayOnly
               ? undefined
