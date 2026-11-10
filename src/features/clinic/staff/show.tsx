@@ -52,19 +52,21 @@ export const StaffShow = () => {
         </LoadingOverlay>
       </Card>
 
-      <DetailPanel title="Hồ sơ chuyên môn">
-        <DetailList>
-          <DetailRow label="Chuyên khoa">{record?.specialty ?? <EmptyValue />}</DetailRow>
-          <DetailRow label="Chức danh">{record?.professionalTitle ?? <EmptyValue />}</DetailRow>
-          <DetailRow label="Số CCHN">
-            {record?.licenseNo ? <span className="font-mono">{record.licenseNo}</span> : <EmptyValue />}
-          </DetailRow>
-          <DetailRow label="Vị trí công tác">{record?.clinicPosition ?? <EmptyValue />}</DetailRow>
-        </DetailList>
-      </DetailPanel>
+      {record && record.staffType !== "clinic_admin" && (
+        <DetailPanel title="Hồ sơ chuyên môn">
+          <DetailList>
+            <DetailRow label="Chuyên khoa">{record.specialty ?? <EmptyValue />}</DetailRow>
+            <DetailRow label="Chức danh">{record.professionalTitle ?? <EmptyValue />}</DetailRow>
+            <DetailRow label="Số CCHN">
+              {record.licenseNo ? <span className="font-mono">{record.licenseNo}</span> : <EmptyValue />}
+            </DetailRow>
+            <DetailRow label="Vị trí công tác">{record.clinicPosition ?? <EmptyValue />}</DetailRow>
+          </DetailList>
+        </DetailPanel>
+      )}
 
       {record && <MembershipPanel employee={record} />}
-      {record && <ClinicRolesPanel employeeId={record.id} />}
+      {record && record.staffType !== "clinic_admin" && <ClinicRolesPanel employeeId={record.id} />}
     </ShowView>
   );
 };
