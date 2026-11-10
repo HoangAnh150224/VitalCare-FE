@@ -61,3 +61,7 @@ export const STATUS_OPTIONS: { label: string; value: UserStatus }[] = [
   { label: "Ngừng hoạt động", value: "inactive" },
   { label: "Bị khóa", value: "locked" },
 ];
+
+/** Where each role comes from; the same words on the list. */
+export const ROLE_ORIGIN_HINT =
+  "Vai trò không chọn tay: Khách tự đăng ký, thành Bệnh nhân khi check-in; Bác sĩ, Lễ tân và Quản trị phòng khám được tạo ở màn Nhân sự.";

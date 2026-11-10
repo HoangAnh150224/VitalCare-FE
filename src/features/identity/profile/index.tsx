@@ -15,7 +15,6 @@ import {
   type Identity,
   type TokenPair,
 } from "@/shared/api/session";
-import { Breadcrumb } from "@/shared/components/layout/breadcrumb";
 import { useShellVariant } from "@/shared/components/layout/shell-variant";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
@@ -116,8 +115,6 @@ export const Profile = () => {
 
   return (
     <div className={cn("flex flex-col gap-4", "screen-enter screen-enter-stagger")}>
-      <Breadcrumb />
-
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight">{portal ? "Tài khoản" : "Tài khoản của bạn"}</h1>
         {!portal && (

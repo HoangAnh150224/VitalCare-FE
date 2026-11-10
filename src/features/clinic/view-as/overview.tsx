@@ -58,7 +58,7 @@ export const ViewAsAllPatients = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <ViewAsBanner role="Bác sĩ / Điều dưỡng" name="tất cả bệnh nhân đang theo dõi" />
+      <ViewAsBanner role="Bác sĩ" name="tất cả bệnh nhân đang theo dõi" />
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground text-sm">Người phụ trách</span>
         <Select value={employeeId} onValueChange={setEmployeeId}>

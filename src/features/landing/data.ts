@@ -58,7 +58,7 @@ export const SCENES = [
   {
     nav: "Dashboard",
     title: "Bác sĩ thấy xu hướng, không chỉ con số.",
-    body: "Bác sĩ và điều dưỡng xem bệnh nhân mình phụ trách, chỉ số hiện tại, biểu đồ tám giờ qua, thiết bị đang kết nối và lịch khám trong ngày.",
+    body: "Bác sĩ xem bệnh nhân mình phụ trách, chỉ số hiện tại, biểu đồ tám giờ qua, thiết bị đang kết nối và lịch khám trong ngày.",
   },
   {
     nav: "Cảnh báo",

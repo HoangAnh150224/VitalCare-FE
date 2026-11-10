@@ -3,7 +3,7 @@ import "@fontsource/be-vietnam-pro/latin-800.css";
 import { useIsAuthenticated } from "@refinedev/core";
 import { MenuIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router";
+import { Link, NavLink, useLocation } from "react-router";
 
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/shared/ui/sheet";
@@ -78,6 +78,8 @@ export function SiteNavbar({ onSection }: { onSection?: (id: string) => void }) 
     return () => observer.disconnect();
   }, [spying]);
 
+  const { pathname } = useLocation();
+
   const items = (inSheet: boolean) =>
     NAV.map((item) => {
       const className = cn(inSheet && "justify-start");
@@ -121,6 +123,13 @@ export function SiteNavbar({ onSection }: { onSection?: (id: string) => void }) 
       >
         <Link
           to="/"
+          onClick={(event) => {
+            // Already on the landing page: the link would go nowhere, so it goes to the top.
+            if (pathname !== "/") return;
+            event.preventDefault();
+            const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+          }}
           className={cn(
             "ml-2 flex flex-col items-center gap-0.5 rounded-md text-sm leading-none font-extrabold tracking-tight transition-colors duration-300 sm:ml-6",
             dark ? "text-white" : "text-[#0f3d3f]",

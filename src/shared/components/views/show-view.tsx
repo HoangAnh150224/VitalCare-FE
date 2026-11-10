@@ -9,7 +9,6 @@ import {
   useResourceParams,
   useUserFriendlyName,
 } from "@refinedev/core";
-import { Breadcrumb } from "@/shared/components/layout/breadcrumb";
 import { Button } from "@/shared/ui/button";
 import { RefreshButton } from "@/shared/components/buttons/refresh";
 import { cn } from "@/shared/lib/utils";
@@ -78,7 +77,6 @@ export const ShowViewHeader = ({
 
   return (
     <div className={cn("flex flex-col", "gap-4", wrapperClassName)}>
-      <Breadcrumb />
       <div
         className={cn(
           "flex",

@@ -548,7 +548,6 @@ export const resources: ResourceProps[] = [
   {
     name: "users",
     list: "/users",
-    create: "/users/create",
     edit: "/users/edit/:id",
     show: "/users/show/:id",
     meta: {
@@ -561,12 +560,11 @@ export const resources: ResourceProps[] = [
   {
     name: "roles",
     list: "/roles",
-    create: "/roles/create",
     edit: "/roles/edit/:id",
     show: "/roles/show/:id",
     meta: {
       label: "Vai trò",
-      canDelete: true,
+      canDelete: false,
       icon: <ShieldCheck className="h-4 w-4" />,
       parent: "administration",
     },
