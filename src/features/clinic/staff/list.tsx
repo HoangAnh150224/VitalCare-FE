@@ -25,15 +25,20 @@ import {
   STAFF_TYPE_OPTIONS,
 } from "@/domains/employee/types";
 import { EMPLOYEE_STATUS_VARIANTS } from "@/shared/lib/status-variants";
+import { getAuthorities } from "@/shared/api/session";
 import { useClinicOptions } from "../clinics/use-clinic-options";
 
 const FILTER_FIELDS: AdvancedFilterField[] = [
   { field: "staffType", label: "Loại", type: "select", options: STAFF_TYPE_OPTIONS },
-  { field: "status", label: "Trạng thái", type: "select", options: EMPLOYEE_STATUS_OPTIONS },
+  { field: "status", label: "Trạng thái", type: "select", options: EMPLOYEE_STATUS_OPTIONS, operators: ["eq"], hideOperator: true },
 ];
 
 /** Clinical staff — the people a patient's care team is made of. */
 export const StaffList = () => {
+  const clinicAdminsOnly = getAuthorities()?.roles.includes("ADMIN") ?? false;
+  const filterFields = clinicAdminsOnly
+    ? FILTER_FIELDS.filter((field) => field.field !== "staffType")
+    : FILTER_FIELDS;
   const clinics = useClinicOptions();
   const { several: severalClinics, nameOf: clinicName } = clinics;
   const columns = React.useMemo(() => {
@@ -48,7 +53,7 @@ export const StaffList = () => {
       columnHelper.accessor("fullName", {
         id: "fullName",
         enableResizing: true,
-        header: "Nhân viên",
+        header: clinicAdminsOnly ? "Quản trị phòng khám" : "Nhân viên",
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex flex-col">
@@ -63,12 +68,12 @@ export const StaffList = () => {
         enableSorting: true,
         cell: ({ getValue }) => <Badge variant="outline">{STAFF_TYPE_LABELS[getValue()]}</Badge>,
       }),
-      columnHelper.accessor("specialty", {
+      ...(!clinicAdminsOnly ? [columnHelper.accessor("specialty", {
         id: "specialty",
         header: "Chuyên khoa",
         enableSorting: false,
         cell: ({ getValue }) => <span className="text-sm">{getValue() ?? "—"}</span>,
-      }),
+      })] : []),
       ...(severalClinics
         ? [
             columnHelper.accessor("clinicId", {
@@ -102,7 +107,7 @@ export const StaffList = () => {
         ...actionsColumnWidth(2),
       }),
     ];
-  }, [severalClinics, clinicName]);
+  }, [severalClinics, clinicName, clinicAdminsOnly]);
 
   const table = useTable({
     columns,
@@ -110,22 +115,31 @@ export const StaffList = () => {
     columnResizeMode: "onChange",
     defaultColumn: RESIZABLE_COLUMN_DEFAULTS,
     initialState: { columnPinning: { right: ["actions"] } },
-    refineCoreProps: { syncWithLocation: true },
+    refineCoreProps: {
+      syncWithLocation: true,
+      filters: {
+        permanent: clinicAdminsOnly
+          ? [{ field: "staffType", operator: "eq", value: "clinic_admin" }]
+          : [],
+      },
+    },
   });
 
   return (
     <ListView>
-      <ListViewHeader description="Bác sĩ và lễ tân. Bác sĩ theo dõi bệnh nhân được gán; lễ tân chỉ thấy dữ liệu phòng khám của mình." />
+      <ListViewHeader description={clinicAdminsOnly
+        ? "Danh sách tài khoản quản trị phòng khám và phòng khám trực thuộc."
+        : "Bác sĩ và lễ tân. Bác sĩ theo dõi bệnh nhân được gán; lễ tân chỉ thấy dữ liệu phòng khám của mình."} />
       <DataTable
         table={table}
         toolbar={
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
-              filters={<DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo mã, họ tên hoặc số điện thoại..." />}
+              filters={<DataTableAdvancedFilter table={table} fields={filterFields} />}
             />
-            <DataTableFilterChips table={table} fields={FILTER_FIELDS} />
+            <DataTableFilterChips table={table} fields={filterFields} />
           </>
         }
       />
