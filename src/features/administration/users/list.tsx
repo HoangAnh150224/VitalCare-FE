@@ -77,13 +77,8 @@ export const UserList = () => {
         enableResizing: true,
         header: "Số điện thoại",
         enableSorting: true,
-        cell: ({ row }) => (
-          <div className="flex flex-col">
-            <span className="font-medium font-mono">{row.original.phone}</span>
-            <span className="text-muted-foreground text-xs">
-              {row.original.email ?? "—"}
-            </span>
-          </div>
+        cell: ({ getValue }) => (
+          <span className="font-medium font-mono">{getValue() || "—"}</span>
         ),
       }),
       columnHelper.accessor("fullName", {
@@ -91,6 +86,18 @@ export const UserList = () => {
         enableResizing: true,
         header: "Họ và tên",
         enableSorting: true,
+      }),
+      columnHelper.accessor("email", {
+        id: "email",
+        header: "Email",
+        enableResizing: true,
+        enableSorting: false,
+        size: 240,
+        cell: ({ getValue }) => (
+          <span className="text-sm" title={getValue() || undefined}>
+            {getValue() || "—"}
+          </span>
+        ),
       }),
       columnHelper.accessor("status", {
         id: "status",

@@ -40,7 +40,7 @@ type ClinicFormValues = {
 type TextField = {
   name: Exclude<keyof ClinicFormValues, "operatingStatus">;
   label: string;
-  required?: string;
+  required: string;
   max: number;
   placeholder?: string;
   type?: string;
@@ -51,7 +51,7 @@ const TEXT_FIELDS: TextField[] = [
   { name: "name", label: "Tên phòng khám", required: "Vui lòng nhập tên phòng khám", max: 255, placeholder: "VitalCare Clinic – Cơ sở 3" },
   { name: "contactEmail", label: "Email liên hệ", required: "Vui lòng nhập email liên hệ", max: 255, placeholder: "contact@vitalcare.vn", type: "email" },
   { name: "contactPhone", label: "Điện thoại liên hệ", required: "Vui lòng nhập điện thoại liên hệ", max: 50, placeholder: "+84 28 …" },
-  { name: "contactPerson", label: "Người liên hệ", max: 255, placeholder: "Văn phòng phòng khám" },
+  { name: "contactPerson", label: "Người liên hệ", required: "Vui lòng nhập người liên hệ", max: 255, placeholder: "Văn phòng phòng khám" },
   { name: "address", label: "Địa chỉ", required: "Vui lòng nhập địa chỉ", max: 500, placeholder: "Đường, phường/xã, tỉnh/thành phố" },
 ];
 
@@ -80,13 +80,14 @@ function ClinicForm({ submitLabel }: { submitLabel: string }) {
   return (
     <Form {...form}>
       <form
+        noValidate
         onSubmit={form.handleSubmit((values) =>
           // Only what the API takes: an edit's loaded record also carries id and counts.
           onFinish({
             name: values.name.trim(),
             contactEmail: values.contactEmail.trim(),
             contactPhone: values.contactPhone.trim(),
-            contactPerson: values.contactPerson ?? "",
+            contactPerson: values.contactPerson.trim(),
             address: values.address.trim(),
             operatingStatus: values.operatingStatus,
           })
@@ -96,6 +97,7 @@ function ClinicForm({ submitLabel }: { submitLabel: string }) {
         <SectionedFormPanel>
           <FormSection
             title="Thông tin phòng khám"
+            contentClassName="items-start"
             description="Thay đổi ảnh hưởng tới quản trị phòng khám. Truy cập dữ liệu sức khỏe bệnh nhân cần được cấp quyền riêng."
           >
             {TEXT_FIELDS.map(({ name, label, required, max, placeholder, type }) => (
@@ -104,14 +106,19 @@ function ClinicForm({ submitLabel }: { submitLabel: string }) {
                 control={form.control}
                 name={name}
                 rules={{
-                  validate: required ? (value) => (value ?? "").trim() !== "" || required : undefined,
+                  required,
+                  validate: (value) => (value ?? "").trim() !== "" || required,
+                  pattern: type === "email" ? {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: "Vui lòng nhập email hợp lệ",
+                  } : undefined,
                   maxLength: { value: max, message: `Tối đa ${max} ký tự` },
                 }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
-                    <FormLabel>{label}</FormLabel>
+                    <FormLabel>{label} <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <FormControl>
-                      <Input {...field} type={type} value={field.value ?? ""} placeholder={placeholder} />
+                      <Input {...field} aria-required="true" type={type} value={field.value ?? ""} placeholder={placeholder} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -121,13 +128,14 @@ function ClinicForm({ submitLabel }: { submitLabel: string }) {
             <FormField
               control={form.control}
               name="operatingStatus"
+              rules={{ required: "Vui lòng chọn trạng thái hoạt động" }}
               render={({ field }) => (
                 <FormItem className="md:col-span-4">
-                  <FormLabel>Trạng thái hoạt động</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value ?? "OPERATING"}>
+                  <FormLabel>Trạng thái hoạt động <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
+                      <SelectTrigger className="w-full" aria-required="true">
+                        <SelectValue placeholder="Chọn trạng thái hoạt động" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

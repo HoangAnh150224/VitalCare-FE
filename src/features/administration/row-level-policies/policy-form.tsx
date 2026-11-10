@@ -180,9 +180,10 @@ export function PolicyForm({
               <FormField
                 control={form.control}
                 name="kind"
+                rules={{ required: "Vui lòng chọn loại" }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Loại</FormLabel>
+                    <FormLabel>Loại <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value}
@@ -220,7 +221,7 @@ export function PolicyForm({
                 rules={{ required: "Vui lòng chọn tài nguyên" }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tài nguyên</FormLabel>
+                    <FormLabel>Tài nguyên <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ?? ""}
@@ -256,7 +257,7 @@ export function PolicyForm({
                 rules={{ required: "Vui lòng chọn hành động" }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Hành động</FormLabel>
+                    <FormLabel>Hành động <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <Select onValueChange={field.onChange} value={field.value ?? ""}>
                       <FormControl>
                         <SelectTrigger>
@@ -297,7 +298,7 @@ export function PolicyForm({
                 }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Vai trò</FormLabel>
+                    <FormLabel>Vai trò {kind === "SCOPE" && <span className="text-destructive" aria-hidden="true">*</span>}</FormLabel>
                     {/*
                       Role ids are numbers on the wire but `Select` compares its
                       values as strings, so the conversion happens at this
@@ -354,16 +355,18 @@ export function PolicyForm({
               name="name"
               rules={{
                 required: "Vui lòng nhập tên",
+                validate: (value) => Boolean(value?.trim()) || "Vui lòng nhập tên",
                 maxLength: { value: 160, message: "Tối đa 160 ký tự" },
               }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tên</FormLabel>
+                  <FormLabel>Tên <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       value={field.value ?? ""}
                       placeholder="Làm việc trong phòng ban của tôi"
+                      aria-required="true"
                     />
                   </FormControl>
                   <FormDescription>
@@ -379,15 +382,20 @@ export function PolicyForm({
               <FormField
                 control={form.control}
                 name="policyGroup"
-                rules={{ maxLength: { value: 64, message: "Tối đa 64 ký tự" } }}
+                rules={{
+                  required: "Vui lòng nhập nhóm",
+                  validate: (value) => Boolean(value?.trim()) || "Vui lòng nhập nhóm",
+                  maxLength: { value: 64, message: "Tối đa 64 ký tự" },
+                }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nhóm</FormLabel>
+                    <FormLabel>Nhóm <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         value={field.value ?? ""}
                         placeholder="Theo phòng ban"
+                        aria-required="true"
                       />
                     </FormControl>
                     <FormDescription>
@@ -425,15 +433,20 @@ export function PolicyForm({
             <FormField
               control={form.control}
               name="description"
-              rules={{ maxLength: { value: 500, message: "Tối đa 500 ký tự" } }}
+              rules={{
+                required: "Vui lòng nhập mô tả",
+                validate: (value) => Boolean(value?.trim()) || "Vui lòng nhập mô tả",
+                maxLength: { value: 500, message: "Tối đa 500 ký tự" },
+              }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mô tả</FormLabel>
+                  <FormLabel>Mô tả <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       value={field.value ?? ""}
                       rows={3}
+                      aria-required="true"
                       placeholder="Lý do quy tắc này tồn tại, dành cho người đọc sau"
                     />
                   </FormControl>
