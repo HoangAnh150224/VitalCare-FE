@@ -3,8 +3,7 @@ import type { AccessControlProvider } from "@refinedev/core";
 import { getAuthorities } from "@/shared/api/session";
 import {
   ACTION_TO_PERMISSION,
-  CLINIC_ADMIN_HIDDEN,
-  isClinicAdminOnly,
+  hiddenMenus,
   permissionFor,
 } from "@/shared/lib/permissions";
 
@@ -48,9 +47,10 @@ export const accessControlProvider: AccessControlProvider = {
       return { can: true };
     }
 
-    // A clinic administrator's menu is clinic management; the staff's daily screens are not opened.
-    if (action === "list" && CLINIC_ADMIN_HIDDEN.has(resource) && isClinicAdminOnly(getAuthorities()?.roles)) {
-      return { can: false, reason: "Chức năng này dành cho bác sĩ và nhân viên y tế." };
+    // Screens outside the role's work (a clinic administrator's daily staff screens, a doctor's
+    // catalogue management) are not opened, though the grants behind them stay.
+    if (action === "list" && hiddenMenus(getAuthorities()?.roles).has(resource)) {
+      return { can: false, reason: "Chức năng này không thuộc phạm vi công việc của vai trò này." };
     }
 
     // The System Administrator can create Clinic Administrators through the

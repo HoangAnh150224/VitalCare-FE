@@ -182,3 +182,18 @@ export const CLINIC_ADMIN_HIDDEN = new Set([
 export function isClinicAdminOnly(roles: readonly string[] | undefined): boolean {
   return Boolean(roles?.includes("CLINIC_ADMIN")) && !roles?.some((role) => role === "DOCTOR" || role === "MANAGER");
 }
+
+/** A doctor orders services from the catalogue (Chỉ định dịch vụ) but does not manage it. */
+const DOCTOR_HIDDEN = new Set(["medical_services"]);
+const NONE_HIDDEN = new Set<string>();
+
+/**
+ * The screens an account's roles leave out of its menu and close to a typed
+ * URL, though its grants still answer them for the screens it does use. A
+ * doctor who also administers the clinic or the system keeps the catalogue.
+ */
+export function hiddenMenus(roles: readonly string[] | undefined): ReadonlySet<string> {
+  if (isClinicAdminOnly(roles)) return CLINIC_ADMIN_HIDDEN;
+  if (roles?.includes("DOCTOR") && !roles.includes("CLINIC_ADMIN") && !roles.includes("ADMIN")) return DOCTOR_HIDDEN;
+  return NONE_HIDDEN;
+}
