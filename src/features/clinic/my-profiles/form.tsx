@@ -52,6 +52,7 @@ const PROFILE_ERRORS: Record<string, string> = {
   "A citizen id or personal identification number is required": "Vui lòng nhập số giấy tờ định danh",
   "Id type must be cccd, personal_id or passport": "Vui lòng chọn loại giấy tờ",
   "National id must be at most 32 characters": "Số giấy tờ tối đa 32 ký tự",
+  "The number does not match the chosen kind of paper": "Vui lòng nhập thông tin phù hợp với loại giấy tờ đã chọn.",
   "The issue date cannot be in the future": "Ngày cấp không được ở tương lai",
   "A province or city is required": "Vui lòng chọn tỉnh/thành phố",
   "Province must be at most 128 characters": "Tỉnh/thành phố tối đa 128 ký tự",
@@ -70,22 +71,31 @@ const ID_DOCUMENT_FIELDS = {
   cccd: {
     label: "Số CCCD",
     requiredMessage: "Vui lòng nhập số CCCD.",
-    placeholder: "Nhập số CCCD",
+    placeholder: "12 chữ số",
     inputMode: "numeric",
+    format: /^\d{12}$/,
   },
   personal_id: {
     label: "Số định danh cá nhân",
     requiredMessage: "Vui lòng nhập số định danh cá nhân.",
-    placeholder: "Nhập số định danh cá nhân",
+    placeholder: "12 chữ số",
     inputMode: "numeric",
+    format: /^\d{12}$/,
   },
   passport: {
     label: "Số hộ chiếu",
     requiredMessage: "Vui lòng nhập số hộ chiếu.",
-    placeholder: "Nhập số hộ chiếu",
+    placeholder: "6–9 chữ và số, ví dụ C1234567",
     inputMode: "text",
+    format: /^[A-Za-z0-9]{6,9}$/,
   },
-} satisfies Record<IdType, { label: string; requiredMessage: string; placeholder: string; inputMode: "numeric" | "text" }>;
+} satisfies Record<
+  IdType,
+  { label: string; requiredMessage: string; placeholder: string; inputMode: "numeric" | "text"; format: RegExp }
+>;
+
+/** What the API answers when the number does not fit the paper (it checks the same formats). */
+const ID_FORMAT_MESSAGE = "Vui lòng nhập thông tin phù hợp với loại giấy tờ đã chọn.";
 
 /**
  * A patient profile, to add (a relative) or to fill in (one's own or a
@@ -314,7 +324,8 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                       value={field.value ?? "cccd"}
                       onChange={(value) => {
                         field.onChange(value);
-                        if (form.getFieldState("nationalId").error) {
+                        // The number is judged against the paper: say at once if it no longer fits.
+                        if (form.getFieldState("nationalId").error || form.getValues("nationalId")) {
                           void form.trigger("nationalId");
                         }
                       }}
@@ -329,10 +340,12 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                 control={form.control}
                 name="nationalId"
                 rules={{
-                  validate: (value) =>
-                    (value ?? "").trim() !== "" ||
-                    ID_DOCUMENT_FIELDS[form.getValues("nationalIdType") || "cccd"].requiredMessage,
-                  maxLength: { value: 32, message: "Tối đa 32 ký tự" },
+                  validate: (value) => {
+                    const paper = ID_DOCUMENT_FIELDS[form.getValues("nationalIdType") || "cccd"];
+                    const number = (value ?? "").trim();
+                    if (number === "") return paper.requiredMessage;
+                    return paper.format.test(number) || ID_FORMAT_MESSAGE;
+                  },
                 }}
                 render={({ field }) => (
                   <FormItem>
