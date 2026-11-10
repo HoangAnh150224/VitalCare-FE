@@ -227,7 +227,7 @@ export const resources: ResourceProps[] = [
     edit: "/employees/edit/:id",
     show: "/employees/show/:id",
     meta: {
-      label: "Nhân viên y tế",
+      label: "Quản trị phòng khám",
       icon: <Stethoscope className="h-4 w-4" />,
       parent: "clinic",
     },
