@@ -169,6 +169,7 @@ export const SignInForm = () => {
                   id="password"
                   name="password"
                   autoComplete="current-password"
+                  placeholder="Nhập mật khẩu"
                   required
                   value={password}
                   aria-invalid={error?.field === "password" || undefined}

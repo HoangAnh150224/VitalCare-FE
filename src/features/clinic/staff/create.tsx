@@ -63,9 +63,12 @@ const DEFAULT_VALUES: StaffFormValues = {
  */
 export const StaffCreate = () => {
   const navigate = useNavigate();
-  const permissions = getAuthorities()?.permissions ?? [];
+  const authorities = getAuthorities();
+  const permissions = authorities?.permissions ?? [];
+  const isSystemAdmin = authorities?.roles.includes("ADMIN") ?? false;
   const canCreateClinicAdmin = permissions.includes("clinics:write");
-  const canCreateClinicStaff = permissions.includes("employees:write");
+  const canCreateClinicStaff = !isSystemAdmin && permissions.includes("employees:write");
+  const clinicAdminOnly = canCreateClinicAdmin && !canCreateClinicStaff;
   const staffTypeOptions = STAFF_TYPE_OPTIONS.filter((option) =>
     option.value === "clinic_admin" ? canCreateClinicAdmin : canCreateClinicStaff,
   );
@@ -76,7 +79,7 @@ export const StaffCreate = () => {
     refineCoreProps: { redirect: "show" },
     defaultValues: {
       ...DEFAULT_VALUES,
-      staffType: canCreateClinicAdmin && !canCreateClinicStaff ? "clinic_admin" : "doctor",
+      staffType: clinicAdminOnly ? "clinic_admin" : "doctor",
     },
   });
   const clinics = useClinicOptions();
@@ -84,15 +87,19 @@ export const StaffCreate = () => {
 
   return (
     <CreateView>
-      <CreateViewHeader />
+      <CreateViewHeader title={clinicAdminOnly ? "Tạo quản trị phòng khám" : undefined} />
       <Form {...form}>
         <form
           // An empty clinic is left to the API: the creator's own clinic, or the first one.
-          onSubmit={form.handleSubmit((values) => onFinish({ ...values, clinicId: values.clinicId || null } as never))}
+          onSubmit={form.handleSubmit((values) => onFinish({
+            ...values,
+            staffType: clinicAdminOnly ? "clinic_admin" : values.staffType,
+            clinicId: values.clinicId || null,
+          } as never))}
           className="min-w-0"
         >
           <SectionedFormPanel>
-            <FormSection title="Tài khoản đăng nhập" description="Nhân viên đăng nhập bằng số điện thoại này.">
+            <FormSection title="Tài khoản đăng nhập" description="Nhân viên đăng nhập bằng số điện thoại này." contentClassName="items-start">
               <FormField
                 control={form.control}
                 name="phone"
@@ -121,7 +128,7 @@ export const StaffCreate = () => {
                   <FormItem className="md:col-span-4">
                     <FormLabel>Họ và tên</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="BS. Nguyễn Văn A" />
+                      <Input {...field} placeholder="Nguyễn Văn A" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -148,14 +155,21 @@ export const StaffCreate = () => {
               />
             </FormSection>
 
-            <FormSection title="Hồ sơ chuyên môn" description="Loại nhân viên quyết định quyền trong hệ thống.">
+            <FormSection
+              title={clinicAdminOnly ? "Thông tin quản trị phòng khám" : "Hồ sơ chuyên môn"}
+              contentClassName="items-start"
+              description={clinicAdminOnly
+                ? "Quản trị hệ thống chỉ tạo tài khoản quản trị phòng khám."
+                : "Loại nhân viên quyết định quyền trong hệ thống."}
+            >
               <FormField
                 control={form.control}
                 name="staffType"
+                rules={{ validate: (value) => staffTypeOptions.some((option) => option.value === value) || "Bạn không có quyền tạo loại nhân viên này" }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
                     <FormLabel>Loại nhân viên</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={clinicAdminOnly}>
                       <FormControl>
                         <SelectTrigger className="w-full">
                           <SelectValue />
@@ -195,18 +209,22 @@ export const StaffCreate = () => {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormDescription>Lễ tân chỉ thấy dữ liệu của phòng khám này.</FormDescription>
+                      <FormDescription>
+                        {selectedStaffType === "clinic_admin"
+                          ? "Tài khoản sẽ quản trị phòng khám được chọn."
+                          : "Nhân viên thuộc phòng khám được chọn."}
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               )}
-              <ProfileFields control={form.control} />
+              {selectedStaffType !== "clinic_admin" && <ProfileFields control={form.control} />}
             </FormSection>
 
             <FormSectionActions>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Đang lưu..." : "Tạo nhân viên"}
+              <Button type="submit" disabled={form.formState.isSubmitting || staffTypeOptions.length === 0}>
+                {form.formState.isSubmitting ? "Đang lưu..." : clinicAdminOnly ? "Tạo quản trị phòng khám" : "Tạo nhân viên"}
               </Button>
               <Button type="button" variant="outline" onClick={() => navigate(-1)}>
                 Hủy
