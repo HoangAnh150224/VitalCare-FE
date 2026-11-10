@@ -17,7 +17,8 @@ import { PageArrival } from "./page-loader";
 export function PublicLayout({ children }: { children?: ReactNode }) {
   const { pathname } = useLocation();
   return (
-    <div className="bg-background flex min-h-svh flex-col">
+    // The landing's mist and teal for the ground, buttons, links and focus, whatever color preset the visitor picked.
+    <div className="bg-background flex min-h-svh flex-col [--background:#f3faf8] [--link:#007c80] [--primary-foreground:#fff] [--primary:#008c91] [--ring:#008ba8]">
       <SiteNavbar />
 
       {/* Room for the pinned bar. */}

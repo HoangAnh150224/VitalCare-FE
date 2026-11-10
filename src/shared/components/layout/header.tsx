@@ -6,10 +6,10 @@ import {
   useLogout,
   useRefineOptions,
 } from "@refinedev/core";
-import { useKBar } from "@refinedev/kbar";
-import { LogOutIcon, SearchIcon, UserRoundIcon } from "lucide-react";
+import { LogOutIcon, UserRoundIcon } from "lucide-react";
 import { Link } from "react-router";
 
+import { Breadcrumb } from "@/shared/components/layout/breadcrumb";
 import { NotificationBell } from "@/shared/components/layout/notification-bell";
 import { AlertWatcher } from "@/shared/components/layout/alert-watcher";
 import { ThemeCustomizer } from "@/shared/components/theme/theme-customizer";
@@ -56,7 +56,7 @@ export function Header() {
       {/*
         The bar itself is full-bleed so its bottom border runs the width of the
         viewport; its contents ride the same column as the page below, which is
-        what keeps the search field lined up with the breadcrumb and the table.
+        what keeps the breadcrumb lined up with the page title and the table.
       */}
       <div
         className={cn(
@@ -82,7 +82,10 @@ export function Header() {
             </div>
           )}
 
-          <CommandSearch />
+          {/* Where you are, in the bar rather than above every page; the ⌘K palette still opens from the keyboard. */}
+          <div className="hidden min-w-0 sm:block">
+            <Breadcrumb />
+          </div>
         </div>
 
         <div className="flex items-center gap-1">
@@ -94,38 +97,6 @@ export function Header() {
         </div>
       </div>
     </header>
-  );
-}
-
-/**
- * Opens the refine command palette (`<RefineKbar />`), the same thing ⌘K does.
- */
-function CommandSearch() {
-  const { query } = useKBar();
-
-  return (
-    <button
-      type="button"
-      onClick={() => query.toggle()}
-      className={cn(
-        "relative hidden h-9 w-56 items-center gap-2 rounded-lg lg:w-72",
-        "border border-input bg-muted/40 ps-3 pe-3 text-start text-sm",
-        "text-muted-foreground transition-colors hover:bg-muted/70",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "sm:flex"
-      )}
-    >
-      <SearchIcon className="size-4 shrink-0" />
-      <span className="flex-1 truncate">Tìm kiếm bất cứ thứ gì…</span>
-      <kbd
-        className={cn(
-          "pointer-events-none hidden shrink-0 rounded border border-border bg-muted",
-          "px-1.5 py-0.5 font-mono text-[10px] font-medium lg:inline-block"
-        )}
-      >
-        ⌘K
-      </kbd>
-    </button>
   );
 }
 

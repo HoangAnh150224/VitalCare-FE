@@ -57,6 +57,8 @@ export type AdvancedFilterField = {
    */
   operators?: CrudOperators[];
   defaultOperator?: CrudOperators;
+  /** Use the default operator without showing an operator picker. */
+  hideOperator?: boolean;
   /**
    * Required for `type: "select"`.
    */
@@ -121,7 +123,7 @@ export function DataTableAdvancedFilter<TData extends BaseRecord>({
     for (const field of fields) {
       const active = entries.find((entry) => entry.id === field.field);
       draft[field.field] = {
-        operator: active?.operator ?? defaultOperatorFor(field),
+        operator: field.hideOperator ? defaultOperatorFor(field) : active?.operator ?? defaultOperatorFor(field),
         value: active?.value != null ? String(active.value) : "",
       };
     }
@@ -232,7 +234,7 @@ export function DataTableAdvancedFilter<TData extends BaseRecord>({
                 </label>
 
                 <div className={cn("flex", "gap-2", "items-center")}>
-                  <DataTableFilterOperatorSelect
+                  {!field.hideOperator && <DataTableFilterOperatorSelect
                     value={entry.operator}
                     operators={operatorsFor(field)}
                     onValueChange={(operator) =>
@@ -240,7 +242,7 @@ export function DataTableAdvancedFilter<TData extends BaseRecord>({
                     }
                     triggerClassName={cn("w-32", "shrink-0", "text-xs")}
                     contentClassName={cn("w-48")}
-                  />
+                  />}
 
                   {field.type === "select" ? (
                     <Select

@@ -64,6 +64,18 @@ const MEASURES = [
   },
 ] as const;
 
+/** Estimated from skin temperature; the temperature tile leads with it when there is one. */
+const BODY_TEMPERATURE = {
+  key: "bodyTemperature",
+  label: "Nhiệt độ cơ thể (ước tính)",
+  unit: "°C",
+  digits: 1,
+  icon: ThermometerIcon,
+} as const;
+
+/** One chart per measure, body temperature included. */
+const CHARTS = [...MEASURES, BODY_TEMPERATURE] as const;
+
 const show = (value: number | null | undefined, digits: number) =>
   value == null
     ? null
@@ -82,7 +94,11 @@ export function VitalTiles({
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-3" data-testid="vital-tiles">
-      {MEASURES.map((m) => {
+      {MEASURES.map((measure) => {
+        const skin = measure.key === "skinTemperature";
+        const lead =
+          skin && latest?.bodyTemperature != null ? BODY_TEMPERATURE : null;
+        const m = lead ?? measure;
         const value = latest?.[m.key];
         const at = latest?.[`${m.key}At` as const];
         return (
@@ -108,6 +124,12 @@ export function VitalTiles({
             <span className="text-muted-foreground text-xs">
               {at ? `lúc ${formatDateTime(at)}` : "Chưa có số đo"}
             </span>
+            {lead && latest?.skinTemperature != null && (
+              <span className="text-muted-foreground text-xs tabular-nums">
+                {measure.label} {show(latest.skinTemperature, measure.digits)}{" "}
+                {measure.unit}
+              </span>
+            )}
           </Card>
         );
       })}
@@ -169,7 +191,7 @@ function MeasureChart({
   measure,
 }: {
   trend: VitalTrend;
-  measure: (typeof MEASURES)[number];
+  measure: (typeof CHARTS)[number];
 }) {
   const data = trend.points
     .filter((p) => p[`${measure.key}Avg` as keyof VitalTrendPoint] != null)
@@ -177,8 +199,14 @@ function MeasureChart({
       label: bucketLabel(p.at, trend.unit),
       avg: Number(p[`${measure.key}Avg` as keyof VitalTrendPoint]),
       band: [
-        Number(p[`${measure.key}Min` as keyof VitalTrendPoint]),
-        Number(p[`${measure.key}Max` as keyof VitalTrendPoint]),
+        Number(
+          p[`${measure.key}Min` as keyof VitalTrendPoint] ??
+            p[`${measure.key}Avg` as keyof VitalTrendPoint]
+        ),
+        Number(
+          p[`${measure.key}Max` as keyof VitalTrendPoint] ??
+            p[`${measure.key}Avg` as keyof VitalTrendPoint]
+        ),
       ],
       readings: p.readings,
     }));
@@ -268,16 +296,16 @@ export function VitalTrends({
   const { data: trend, isLoading } = useVitalTrend(scope, range);
   if (isLoading || !trend) {
     return (
-      <div className="grid gap-3 lg:grid-cols-3">
-        {MEASURES.map((m) => (
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {CHARTS.map((m) => (
           <Skeleton key={m.key} className="h-48" />
         ))}
       </div>
     );
   }
   return (
-    <div className="grid gap-3 lg:grid-cols-3">
-      {MEASURES.map((m) => (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {CHARTS.map((m) => (
         <MeasureChart key={m.key} trend={trend} measure={m} />
       ))}
     </div>
@@ -346,6 +374,9 @@ export function VitalHistory({
               <th className="px-4 py-2 text-right font-medium">Nhịp tim</th>
               <th className="px-4 py-2 text-right font-medium">SpO₂</th>
               <th className="px-4 py-2 text-right font-medium">Nhiệt độ da</th>
+              <th className="px-4 py-2 text-right font-medium">
+                Nhiệt độ cơ thể
+              </th>
               {staff && (
                 <th className="px-4 py-2 text-left font-medium">Thiết bị</th>
               )}
@@ -355,7 +386,7 @@ export function VitalHistory({
             {isLoading ? (
               <tr>
                 <td
-                  colSpan={staff ? 5 : 4}
+                  colSpan={staff ? 6 : 5}
                   className="text-muted-foreground px-4 py-6 text-center"
                 >
                   Đang tải…
@@ -364,7 +395,7 @@ export function VitalHistory({
             ) : rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={staff ? 5 : 4}
+                  colSpan={staff ? 6 : 5}
                   className="text-muted-foreground px-4 py-6 text-center"
                 >
                   Không có số đo trong khoảng này.
@@ -399,6 +430,9 @@ export function VitalHistory({
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums">
                     {cell(r.skinTemperature, 2, "°C")}
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {cell(r.bodyTemperature, 2, "°C")}
                   </td>
                   {staff && (
                     <td className="px-4 py-2 font-mono text-xs">

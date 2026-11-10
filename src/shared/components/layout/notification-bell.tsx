@@ -95,7 +95,7 @@ export function NotificationBell() {
             Chưa có thông báo nào.
           </p>
         ) : (
-          <ScrollArea className="max-h-96">
+          <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-96">
             <ul className="flex flex-col">
               {notifications.map((notification) => (
                 <NotificationRow

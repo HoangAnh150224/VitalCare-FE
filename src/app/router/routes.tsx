@@ -32,11 +32,9 @@ import {
 import { NotificationList, NotificationShow } from "@/features/notifications";
 import {
   UserList,
-  UserCreate,
   UserEdit,
   UserShow,
   RoleList,
-  RoleCreate,
   RoleEdit,
   RoleShow,
   PermissionList,
@@ -349,7 +347,6 @@ export function AppRoutes() {
           }
         >
           <Route index element={<UserList />} />
-          <Route path="create" element={<UserCreate />} />
           <Route path="edit/:id" element={<UserEdit />} />
           <Route path="show/:id" element={<UserShow />} />
         </Route>
@@ -366,7 +363,6 @@ export function AppRoutes() {
           }
         >
           <Route index element={<RoleList />} />
-          <Route path="create" element={<RoleCreate />} />
           <Route path="edit/:id" element={<RoleEdit />} />
           <Route path="show/:id" element={<RoleShow />} />
         </Route>

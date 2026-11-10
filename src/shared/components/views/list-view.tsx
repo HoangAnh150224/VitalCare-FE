@@ -10,7 +10,6 @@ import {
   DataTableExport,
   DataTableRefresh,
 } from "@/shared/components/data-table/data-table-actions";
-import { Breadcrumb } from "@/shared/components/layout/breadcrumb";
 import { CreateButton } from "@/shared/components/buttons/create";
 import { cn } from "@/shared/lib/utils";
 
@@ -89,7 +88,6 @@ export const ListViewHeader = ({
 
   return (
     <div className={cn("flex flex-col", "gap-3", wrapperClassName)}>
-      <Breadcrumb />
       {/*
         Title and description are one block and the actions are another, so the
         description flows under the title and stops short of the buttons rather

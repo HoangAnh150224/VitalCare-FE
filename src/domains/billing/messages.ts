@@ -65,7 +65,9 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ["That doctor does not see patients on that day", "Bác sĩ này không khám hôm nay."],
   ["That doctor has no turn left on that day", "Bác sĩ này đã hết lượt khám hôm nay."],
   // A customer's registration, placed by the clinic with one of its doctors (no doctor chosen).
-  ["No doctor has a turn left at that clinic on that day", "Ngày này phòng khám không có bác sĩ khám hoặc đã hết lượt. Vui lòng chọn ngày khác."],
+  ["No doctor has a turn left at that clinic on that day", "Ngày này phòng khám đã hết lượt khám. Vui lòng chọn ngày khác."],
+  ["No doctor sees patients at that clinic on that day", "Ngày này phòng khám không có bác sĩ khám. Vui lòng chọn ngày khác."],
+  ["Registration for that day is over", "Hôm nay phòng khám đã hết giờ nhận đăng ký. Vui lòng chọn ngày khác."],
   ["There is already a visit registered at that clinic on that day", "Bạn đã đăng ký khám tại phòng khám này trong ngày đó rồi."],
   ["Pick a clinic", "Vui lòng chọn phòng khám."],
   ["The date cannot be in the past", "Ngày khám không được ở quá khứ."],

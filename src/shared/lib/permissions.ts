@@ -151,3 +151,49 @@ export function isPortalAccount(
     )
   );
 }
+
+/**
+ * A clinic administrator manages the clinic; the day-to-day work (registering
+ * visits, patients, vitals and alerts, messages, follow-up) is the staff's and
+ * the doctors'. Their menu holds exactly this, in this order, under the two
+ * existing sections; anything else is not offered, and its screen is closed to
+ * a typed URL. The API still answers these resources for the screens kept here
+ * (a device's readings, the rooms' queue), so this is the menu, not the grants.
+ */
+export const CLINIC_ADMIN_MENU = {
+  clinic: ["employees", "licenses", "doctor_schedules", "devices", "alert_rules", "clinic_roles", "exam_rooms", "clinics"],
+  administration: ["medical_services", "invoices", "reports", "feedback", "first_aid_articles", "notifications"],
+} as const;
+
+/** The staff's and doctors' screens a clinic administrator does not open. */
+export const CLINIC_ADMIN_HIDDEN = new Set([
+  "appointments",
+  "customers",
+  "vital_signs",
+  "alerts",
+  "device_syncs",
+  "sync_failures",
+  "result_returns",
+  "conversations",
+  "monitoring_assignments",
+]);
+
+/** A clinic administrator and nothing else: one who is also a doctor or front desk keeps that work. */
+export function isClinicAdminOnly(roles: readonly string[] | undefined): boolean {
+  return Boolean(roles?.includes("CLINIC_ADMIN")) && !roles?.some((role) => role === "DOCTOR" || role === "MANAGER");
+}
+
+/** A doctor orders services from the catalogue (Chỉ định dịch vụ) but does not manage it. */
+const DOCTOR_HIDDEN = new Set(["medical_services"]);
+const NONE_HIDDEN = new Set<string>();
+
+/**
+ * The screens an account's roles leave out of its menu and close to a typed
+ * URL, though its grants still answer them for the screens it does use. A
+ * doctor who also administers the clinic or the system keeps the catalogue.
+ */
+export function hiddenMenus(roles: readonly string[] | undefined): ReadonlySet<string> {
+  if (isClinicAdminOnly(roles)) return CLINIC_ADMIN_HIDDEN;
+  if (roles?.includes("DOCTOR") && !roles.includes("CLINIC_ADMIN") && !roles.includes("ADMIN")) return DOCTOR_HIDDEN;
+  return NONE_HIDDEN;
+}

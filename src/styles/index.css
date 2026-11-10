@@ -247,6 +247,9 @@
     *::after {
       transition-duration: 0.01ms !important;
       animation-duration: 0.01ms !important;
+      /* Once, then still: a looping animation (spinner, skeleton, the page loader) cut to 0.01ms
+         would otherwise flicker through its frames every repaint. */
+      animation-iteration-count: 1 !important;
       scroll-behavior: auto !important;
     }
   }
@@ -336,31 +339,38 @@
   background-image: var(--home-gradient);
 }
 
-/* Light mode, every preset: a pale wash of the preset's hue, as light as the pages inside the app.
+/* Light mode: sign-in, sign-up and recovery wear the landing's teal and mint whatever color preset
+   the visitor picked, so the way in looks the same as the site it is entered from (landing.css).
    The dark sky above is for dark mode only. */
 :root:not(.dark) .gradient-hero {
-  background-color: oklch(0.985 0.008 var(--preset-h));
-  background-image: linear-gradient(
-    180deg,
-    oklch(0.93 0.045 var(--preset-h)) 0%,
-    oklch(0.965 0.022 var(--preset-h)) 50%,
-    oklch(0.985 0.008 var(--preset-h)) 100%
-  );
-}
+  --foreground: #164e50;
+  --card-foreground: #164e50;
+  --popover-foreground: #164e50;
+  --muted-foreground: #597677;
+  --auth-title: #0f3d3f;
+  --auth-description: #597677;
+  --primary: #008c91;
+  --primary-hover: #007c80;
+  --primary-foreground: #ffffff;
+  --ring: #008ba8;
+  --link: #007c80;
+  --border: #e0ece9;
+  --input: #ccdadc;
+  --button-shadow: 0 4px 8px rgb(0 140 145 / 25%);
 
-:root:not(.dark)[data-color-preset="navy"] .gradient-hero,
-:root:not(.dark):not([data-color-preset]) .gradient-hero {
+  color: var(--foreground);
   background-color: #f6fbf9;
-  background-image: linear-gradient(
-    180deg,
-    #dff3ef 0%,
-    #eef9f6 50%,
-    #f6fbf9 100%
-  );
+  background-image: linear-gradient(180deg, #dff3ef 0%, #eef9f6 50%, #f6fbf9 100%);
 }
 
-:root:not(.dark) {
-  --auth-title: var(--foreground);
+/* Dark mode keeps its night sky, in the same teal rather than the preset's hue. */
+.dark .gradient-hero {
+  --preset-h: 199.23;
+  --primary: #2bb3b8;
+  --primary-hover: #4cc4c8;
+  --primary-foreground: #ffffff;
+  --ring: #2bb3b8;
+  --link: #5fd4c7;
 }
 
 /* Gold as a fill, for the one element on a screen that is the seal. */

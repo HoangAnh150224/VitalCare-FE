@@ -34,28 +34,68 @@ type ProfileFormValues = {
   address: string;
 };
 
+/** A Vietnamese number as the API takes it on a profile: 0 or +84, nine more digits, spaces allowed. */
+const PHONE = /^\s*(?:\+?84|0)(?:\s*\d){9}\s*$/;
+
+/** The API's refusals on a profile, in Vietnamese, for the field they are about. */
+const PROFILE_ERRORS: Record<string, string> = {
+  "Phone number is not valid": "Vui lòng nhập số điện thoại phù hợp.",
+  "A valid phone number is required": "Vui lòng nhập số điện thoại phù hợp.",
+  "A name is required": "Vui lòng nhập họ và tên",
+  "Name must be at most 255 characters": "Họ và tên tối đa 255 ký tự",
+  "Say whose profile this is": "Vui lòng chọn quan hệ",
+  "Relationship must be child, parent, spouse, sibling or other": "Vui lòng chọn quan hệ",
+  "Date of birth is required": "Vui lòng nhập ngày sinh",
+  "Date of birth must be in the past": "Ngày sinh phải nằm ở quá khứ",
+  "Gender is required": "Vui lòng chọn giới tính",
+  "Gender must be male, female or other": "Vui lòng chọn giới tính",
+  "A citizen id or personal identification number is required": "Vui lòng nhập số giấy tờ định danh",
+  "Id type must be cccd, personal_id or passport": "Vui lòng chọn loại giấy tờ",
+  "National id must be at most 32 characters": "Số giấy tờ tối đa 32 ký tự",
+  "The number does not match the chosen kind of paper": "Vui lòng nhập thông tin phù hợp với loại giấy tờ đã chọn.",
+  "The issue date cannot be in the future": "Ngày cấp không được ở tương lai",
+  "A province or city is required": "Vui lòng chọn tỉnh/thành phố",
+  "Province must be at most 128 characters": "Tỉnh/thành phố tối đa 128 ký tự",
+  "A ward or commune is required": "Vui lòng nhập phường/xã",
+  "Ward must be at most 128 characters": "Phường/xã tối đa 128 ký tự",
+  "A street address is required": "Vui lòng nhập địa chỉ",
+  "Address must be at most 500 characters": "Địa chỉ tối đa 500 ký tự",
+  "Ethnicity must be at most 64 characters": "Dân tộc tối đa 64 ký tự",
+  "Nationality must be at most 64 characters": "Quốc tịch tối đa 64 ký tự",
+  "Occupation must be at most 128 characters": "Nghề nghiệp tối đa 128 ký tự",
+};
+
 const GENDERS = Object.keys(GENDER_LABELS) as Gender[];
 const ID_TYPES = Object.keys(ID_TYPE_LABELS) as IdType[];
 const ID_DOCUMENT_FIELDS = {
   cccd: {
     label: "Số CCCD",
     requiredMessage: "Vui lòng nhập số CCCD.",
-    placeholder: "Nhập số CCCD",
+    placeholder: "12 chữ số",
     inputMode: "numeric",
+    format: /^\d{12}$/,
   },
   personal_id: {
     label: "Số định danh cá nhân",
     requiredMessage: "Vui lòng nhập số định danh cá nhân.",
-    placeholder: "Nhập số định danh cá nhân",
+    placeholder: "12 chữ số",
     inputMode: "numeric",
+    format: /^\d{12}$/,
   },
   passport: {
     label: "Số hộ chiếu",
     requiredMessage: "Vui lòng nhập số hộ chiếu.",
-    placeholder: "Nhập số hộ chiếu",
+    placeholder: "6–9 chữ và số, ví dụ C1234567",
     inputMode: "text",
+    format: /^[A-Za-z0-9]{6,9}$/,
   },
-} satisfies Record<IdType, { label: string; requiredMessage: string; placeholder: string; inputMode: "numeric" | "text" }>;
+} satisfies Record<
+  IdType,
+  { label: string; requiredMessage: string; placeholder: string; inputMode: "numeric" | "text"; format: RegExp }
+>;
+
+/** What the API answers when the number does not fit the paper (it checks the same formats). */
+const ID_FORMAT_MESSAGE = "Vui lòng nhập thông tin phù hợp với loại giấy tờ đã chọn.";
 
 /**
  * A patient profile, to add (a relative) or to fill in (one's own or a
@@ -72,7 +112,24 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
     refineCore: { onFinish, query },
     ...form
   } = useForm<Profile, HttpError, ProfileFormValues>({
-    refineCoreProps: { resource: "my_profiles", redirect: "list" },
+    refineCoreProps: {
+      resource: "my_profiles",
+      redirect: "list",
+      // A refused field is said under that field, in Vietnamese (below), not again in a toast.
+      errorNotification: (error) =>
+        error?.statusCode === 422 ? false : { type: "error", message: "Không lưu được hồ sơ. Vui lòng thử lại." },
+      onMutationError: (error) => {
+        for (const [name, raw] of Object.entries(error?.errors ?? {})) {
+          const message = Array.isArray(raw) ? raw[0] : typeof raw === "string" ? raw : raw && typeof raw === "object" ? raw.message : undefined;
+          form.setError(name as keyof ProfileFormValues, {
+            type: "server",
+            message: (message && PROFILE_ERRORS[message]) || "Thông tin chưa hợp lệ.",
+          });
+        }
+      },
+    },
+    // The API's English stays off the fields: they are filled above, translated.
+    disableServerSideValidation: true,
     defaultValues: {
       fullName: "",
       phone: "",
@@ -132,13 +189,13 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                 gender: values.gender,
                 nationalIdType: values.nationalIdType || "cccd",
                 nationalId: values.nationalId.trim(),
-                province: values.province ?? "",
-                ward: values.ward ?? "",
+                province: (values.province ?? "").trim(),
+                ward: (values.ward ?? "").trim(),
                 nationalIdIssuedOn: values.nationalIdIssuedOn || null,
                 ethnicity: values.ethnicity ?? "",
                 nationality: values.nationality ?? "",
                 occupation: values.occupation ?? "",
-                address: values.address ?? "",
+                address: (values.address ?? "").trim(),
               } as unknown as ProfileFormValues)
             )}
             className="flex min-w-0 flex-col gap-5"
@@ -164,7 +221,8 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                     control={form.control}
                     name="phone"
                     rules={{
-                      validate: (value) => /^[0-9+ ]{8,20}$/.test(value.trim()) || "Số điện thoại không hợp lệ",
+                      required: "Vui lòng nhập số điện thoại phù hợp.",
+                      validate: (value) => PHONE.test(value) || "Vui lòng nhập số điện thoại phù hợp.",
                     }}
                     render={({ field }) => (
                       <FormItem>
@@ -266,7 +324,8 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                       value={field.value ?? "cccd"}
                       onChange={(value) => {
                         field.onChange(value);
-                        if (form.getFieldState("nationalId").error) {
+                        // The number is judged against the paper: say at once if it no longer fits.
+                        if (form.getFieldState("nationalId").error || form.getValues("nationalId")) {
                           void form.trigger("nationalId");
                         }
                       }}
@@ -281,10 +340,12 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                 control={form.control}
                 name="nationalId"
                 rules={{
-                  validate: (value) =>
-                    (value ?? "").trim() !== "" ||
-                    ID_DOCUMENT_FIELDS[form.getValues("nationalIdType") || "cccd"].requiredMessage,
-                  maxLength: { value: 32, message: "Tối đa 32 ký tự" },
+                  validate: (value) => {
+                    const paper = ID_DOCUMENT_FIELDS[form.getValues("nationalIdType") || "cccd"];
+                    const number = (value ?? "").trim();
+                    if (number === "") return paper.requiredMessage;
+                    return paper.format.test(number) || ID_FORMAT_MESSAGE;
+                  },
                 }}
                 render={({ field }) => (
                   <FormItem>
@@ -366,10 +427,13 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
               <FormField
                 control={form.control}
                 name="province"
-                rules={{ maxLength: { value: 128, message: "Tối đa 128 ký tự" } }}
+                rules={{
+                  validate: (value) => (value ?? "").trim() !== "" || "Vui lòng nhập Tỉnh/Thành phố.",
+                  maxLength: { value: 128, message: "Tối đa 128 ký tự" },
+                }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tỉnh / Thành phố</FormLabel>
+                    <Label required>Tỉnh / Thành phố</Label>
                     <FormControl>
                       <Input {...field} value={field.value ?? ""} placeholder="Ví dụ: Hà Nội" />
                     </FormControl>
@@ -380,10 +444,13 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
               <FormField
                 control={form.control}
                 name="ward"
-                rules={{ maxLength: { value: 128, message: "Tối đa 128 ký tự" } }}
+                rules={{
+                  validate: (value) => (value ?? "").trim() !== "" || "Vui lòng nhập Xã/Phường.",
+                  maxLength: { value: 128, message: "Tối đa 128 ký tự" },
+                }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Xã / Phường</FormLabel>
+                    <Label required>Xã / Phường</Label>
                     <FormControl>
                       <Input {...field} value={field.value ?? ""} placeholder="Ví dụ: Phường Bến Nghé" />
                     </FormControl>
@@ -394,10 +461,13 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
               <FormField
                 control={form.control}
                 name="address"
-                rules={{ maxLength: { value: 500, message: "Tối đa 500 ký tự" } }}
+                rules={{
+                  validate: (value) => (value ?? "").trim() !== "" || "Vui lòng nhập địa chỉ cụ thể (số nhà, đường, thôn/tổ dân phố).",
+                  maxLength: { value: 500, message: "Tối đa 500 ký tự" },
+                }}
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>Địa chỉ cụ thể</FormLabel>
+                    <Label required>Địa chỉ cụ thể</Label>
                     <FormControl>
                       <Input {...field} value={field.value ?? ""} placeholder="Số nhà, đường, thôn / xóm" />
                     </FormControl>

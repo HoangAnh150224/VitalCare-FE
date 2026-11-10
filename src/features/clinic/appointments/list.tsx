@@ -150,12 +150,18 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
         id: "status",
         header: "Trạng thái",
         enableSorting: true,
-        cell: ({ getValue }) => {
+        cell: ({ getValue, row }) => {
           const status = getValue();
+          // The fee to collect at the desk on arrival (UC-01 step 4).
+          const collect = !row.original.paidAt && row.original.deskPaymentChosenAt
+            && (status === "booked" || status === "checked_in");
           return (
-            <Badge variant={APPOINTMENT_STATUS_VARIANTS[status] ?? "secondary"}>
-              {APPOINTMENT_STATUS_LABELS[status] ?? status}
-            </Badge>
+            <div className="flex flex-wrap items-center gap-1">
+              <Badge variant={APPOINTMENT_STATUS_VARIANTS[status] ?? "secondary"}>
+                {APPOINTMENT_STATUS_LABELS[status] ?? status}
+              </Badge>
+              {collect && <Badge variant="outline">Thu tại quầy</Badge>}
+            </div>
           );
         },
       }),

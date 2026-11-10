@@ -22,7 +22,10 @@ import { PASSWORD_RANGE_MESSAGE, passwordInRange } from "@/shared/lib/password";
  */
 export function ResetPasswordCard({ userId }: { userId: number | string }) {
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const tooLong = password.length >= 8 && !passwordInRange(password);
+  // Typed twice, as on the profile page: nobody sees it again to catch a typo.
+  const mismatch = confirm.length > 0 && password !== confirm;
   const { open } = useNotification();
   const { mutate, mutation } = useCustomMutation();
 
@@ -45,6 +48,7 @@ export function ResetPasswordCard({ userId }: { userId: number | string }) {
       {
         onSuccess: () => {
           setPassword("");
+          setConfirm("");
           open?.({
             type: "success",
             message: "Đã cập nhật mật khẩu",
@@ -71,8 +75,9 @@ export function ResetPasswordCard({ userId }: { userId: number | string }) {
       */}
       <form onSubmit={submit} className="flex flex-col gap-4">
         <p className="text-muted-foreground text-sm">
-          Đặt mật khẩu mới mà không cần mật khẩu hiện tại, đồng thời đăng xuất
-          mọi phiên đang mở của tài khoản này.
+          Quản trị viên không biết mật khẩu cũ của người dùng nên không cần
+          nhập. Đặt mật khẩu mới sẽ đăng xuất mọi phiên đang mở của tài khoản
+          này.
         </p>
         <div className="flex flex-col gap-2">
           <Label htmlFor="new-password">Mật khẩu mới</Label>
@@ -92,11 +97,25 @@ export function ResetPasswordCard({ userId }: { userId: number | string }) {
             </p>
           )}
         </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="confirm-new-password">Nhập lại mật khẩu mới</Label>
+          <InputPassword
+            id="confirm-new-password"
+            autoComplete="new-password"
+            required
+            aria-invalid={mismatch || undefined}
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+          {mismatch && (
+            <p className="text-destructive text-sm">Hai mật khẩu không khớp nhau.</p>
+          )}
+        </div>
         <Button
           type="submit"
           variant="secondary"
           className="w-full"
-          disabled={mutation.isPending || !passwordInRange(password)}
+          disabled={mutation.isPending || !passwordInRange(password) || password !== confirm}
         >
           {mutation.isPending ? "Đang cập nhật..." : "Đặt mật khẩu"}
         </Button>
