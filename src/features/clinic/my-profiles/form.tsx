@@ -42,6 +42,8 @@ const PROFILE_ERRORS: Record<string, string> = {
   "Phone number is not valid": "Vui lòng nhập số điện thoại phù hợp.",
   "A valid phone number is required": "Vui lòng nhập số điện thoại phù hợp.",
   "A name is required": "Vui lòng nhập họ và tên",
+  "A relative with this name and date of birth is already under your account":
+    "Đã có người thân với tên và ngày sinh như trên. Vui lòng nhập người thân khác.",
   "Name must be at most 255 characters": "Họ và tên tối đa 255 ký tự",
   "Say whose profile this is": "Vui lòng chọn quan hệ",
   "Relationship must be child, parent, spouse, sibling or other": "Vui lòng chọn quan hệ",
