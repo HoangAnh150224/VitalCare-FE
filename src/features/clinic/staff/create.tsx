@@ -112,9 +112,9 @@ export const StaffCreate = () => {
                 }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
-                    <FormLabel>Số điện thoại</FormLabel>
+                    <FormLabel>Số điện thoại <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <FormControl>
-                      <Input {...field} type="tel" inputMode="tel" className="font-mono" placeholder="0901234567" />
+                      <Input {...field} aria-required="true" type="tel" inputMode="tel" className="font-mono" placeholder="0901234567" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -123,12 +123,12 @@ export const StaffCreate = () => {
               <FormField
                 control={form.control}
                 name="fullName"
-                rules={{ required: "Vui lòng nhập họ tên", maxLength: { value: 255, message: "Tối đa 255 ký tự" } }}
+                rules={{ required: "Vui lòng nhập họ tên", validate: (value) => Boolean(value.trim()) || "Vui lòng nhập họ tên", maxLength: { value: 255, message: "Tối đa 255 ký tự" } }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
-                    <FormLabel>Họ và tên</FormLabel>
+                    <FormLabel>Họ và tên <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Nguyễn Văn A" />
+                      <Input {...field} aria-required="true" placeholder="Nguyễn Văn A" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -139,14 +139,15 @@ export const StaffCreate = () => {
                 name="password"
                 rules={{
                   required: "Vui lòng nhập mật khẩu",
+                  validate: (value) => Boolean(value.trim()) || "Vui lòng nhập mật khẩu",
                   minLength: { value: 8, message: "Tối thiểu 8 ký tự" },
                   maxLength: { value: 72, message: "Tối đa 72 ký tự" },
                 }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
-                    <FormLabel>Mật khẩu ban đầu</FormLabel>
+                    <FormLabel>Mật khẩu ban đầu <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <FormControl>
-                      <InputPassword {...field} autoComplete="new-password" />
+                      <InputPassword {...field} aria-required="true" autoComplete="new-password" />
                     </FormControl>
                     <FormDescription>Gửi cho nhân viên và yêu cầu đổi sau lần đăng nhập đầu.</FormDescription>
                     <FormMessage />
@@ -165,13 +166,13 @@ export const StaffCreate = () => {
               <FormField
                 control={form.control}
                 name="staffType"
-                rules={{ validate: (value) => staffTypeOptions.some((option) => option.value === value) || "Bạn không có quyền tạo loại nhân viên này" }}
+                rules={{ required: "Vui lòng chọn loại nhân viên", validate: (value) => staffTypeOptions.some((option) => option.value === value) || "Bạn không có quyền tạo loại nhân viên này" }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
-                    <FormLabel>Loại nhân viên</FormLabel>
+                    <FormLabel>Loại nhân viên <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <Select onValueChange={field.onChange} value={field.value} disabled={clinicAdminOnly}>
                       <FormControl>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full" aria-required="true">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -194,10 +195,10 @@ export const StaffCreate = () => {
                   rules={{ required: "Vui lòng chọn phòng khám" }}
                   render={({ field }) => (
                     <FormItem className="md:col-span-4">
-                      <FormLabel>Phòng khám</FormLabel>
+                      <FormLabel>Phòng khám <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className="w-full" aria-required="true">
                             <SelectValue placeholder="Chọn phòng khám" />
                           </SelectTrigger>
                         </FormControl>
