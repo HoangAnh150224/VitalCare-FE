@@ -241,6 +241,8 @@ function AppointmentCard({
           <Badge variant={APPOINTMENT_STATUS_VARIANTS[appointment.status] ?? "secondary"}>
             {APPOINTMENT_STATUS_LABELS[appointment.status]}
           </Badge>
+          {/* Chose to pay here: collect the examination fee once they are checked in (UC-01 step 4). */}
+          {!appointment.paidAt && appointment.deskPaymentChosenAt && <Badge variant="outline">Thu phí tại quầy</Badge>}
         </div>
       </div>
 

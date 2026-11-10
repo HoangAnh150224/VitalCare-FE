@@ -45,6 +45,8 @@ export type Appointment = {
   cancelReason: string | null;
   /** When the examination fee was paid (BF-02); null while owed. The queue follows this. */
   paidAt: string | null;
+  /** When the patient chose to pay the fee at the desk on the day (UC-01 step 4); null: online. */
+  deskPaymentChosenAt: string | null;
   createdAt: string;
 };
 
