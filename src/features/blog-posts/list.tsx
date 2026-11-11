@@ -260,7 +260,7 @@ export const BlogPostList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo tiêu đề bài viết..." />}
               filters={
                 <DataTableAdvancedFilter
                   table={table}

@@ -27,7 +27,7 @@ export type DataTableQuickFilterProps<TData extends BaseRecord> = {
 
 export function DataTableQuickFilter<TData extends BaseRecord>({
   table,
-  placeholder = "Tìm theo ID hoặc tiêu đề...",
+  placeholder = "Nhập từ khóa tìm kiếm...",
   searchField = "q",
   className,
 }: DataTableQuickFilterProps<TData>) {

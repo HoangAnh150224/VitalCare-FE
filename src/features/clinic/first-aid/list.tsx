@@ -156,7 +156,7 @@ export const FirstAidList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo tiêu đề hoặc tóm tắt hướng dẫn sơ cứu..." />}
               filters={
                 <DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />
               }

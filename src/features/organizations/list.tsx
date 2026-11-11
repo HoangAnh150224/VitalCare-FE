@@ -164,7 +164,7 @@ export const OrganizationList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo mã hoặc tên tổ chức..." />}
               filters={<DataTableAdvancedFilter table={table} fields={ADVANCED_FILTER_FIELDS} />}
             />
             <DataTableFilterChips table={table} fields={ADVANCED_FILTER_FIELDS} />

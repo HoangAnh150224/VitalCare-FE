@@ -80,7 +80,7 @@ export function ResetPasswordCard({ userId }: { userId: number | string }) {
           này.
         </p>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="new-password">Mật khẩu mới</Label>
+          <Label htmlFor="new-password">Mật khẩu mới <span className="text-destructive" aria-hidden="true">*</span></Label>
           <InputPassword
             id="new-password"
             autoComplete="new-password"
@@ -98,7 +98,7 @@ export function ResetPasswordCard({ userId }: { userId: number | string }) {
           )}
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="confirm-new-password">Nhập lại mật khẩu mới</Label>
+          <Label htmlFor="confirm-new-password">Nhập lại mật khẩu mới <span className="text-destructive" aria-hidden="true">*</span></Label>
           <InputPassword
             id="confirm-new-password"
             placeholder="Nhập lại mật khẩu mới"

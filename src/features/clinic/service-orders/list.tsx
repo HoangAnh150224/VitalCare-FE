@@ -113,7 +113,7 @@ export const ServiceOrderList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo tên bệnh nhân hoặc tên dịch vụ..." />}
               filters={<DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />}
             />
             <DataTableFilterChips table={table} fields={FILTER_FIELDS} />

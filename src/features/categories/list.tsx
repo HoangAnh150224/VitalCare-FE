@@ -101,7 +101,7 @@ export const CategoryList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo tên danh mục..." />}
               filters={
                 <DataTableAdvancedFilter
                   table={table}

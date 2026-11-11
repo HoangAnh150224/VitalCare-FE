@@ -148,7 +148,7 @@ export const SyncFailureList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo mã thiết bị, mã bản ghi hoặc lý do lỗi..." />}
               filters={
                 <DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />
               }

@@ -28,6 +28,7 @@ import type { User } from "@/domains/user/types";
 import { ROLE_ORIGIN_HINT, STATUS_LABELS } from "@/domains/user/types";
 import { USER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatDate } from "@/shared/lib/format";
+import { LockAccountButton } from "./lock-account-button";
 
 /**
  * The fixed half of the filter panel.
@@ -39,6 +40,19 @@ import { formatDate } from "@/shared/lib/format";
  * this account may not be allowed to read.
  */
 const STATIC_FILTER_FIELDS: AdvancedFilterField[] = [
+  {
+    field: "deletionState",
+    label: "Hiển thị",
+    type: "select",
+    operators: ["eq"],
+    placeholder: "Theo trạng thái",
+    options: [
+      { label: "Đang sử dụng", value: "current" },
+      { label: "Đã xóa", value: "deleted" },
+      { label: "Tất cả", value: "all" },
+    ],
+    hint: "Mặc định ẩn tài khoản đã xóa, trừ khi lọc Ngừng hoạt động.",
+  },
   { field: "phone", label: "Số điện thoại", type: "text", placeholder: "Bất kỳ" },
   { field: "email", label: "Email", type: "text", placeholder: "Bất kỳ" },
   { field: "fullName", label: "Họ và tên", type: "text", placeholder: "Bất kỳ" },
@@ -103,12 +117,15 @@ export const UserList = () => {
         id: "status",
         header: "Trạng thái",
         enableSorting: true,
-        cell: ({ getValue }) => {
+        cell: ({ getValue, row }) => {
           const status = getValue();
           return (
+            <div className="flex flex-wrap gap-1">
             <Badge variant={USER_STATUS_VARIANTS[status] ?? "secondary"}>
               {STATUS_LABELS[status] ?? status}
             </Badge>
+            {row.original.deletedAt && <Badge variant="destructive">Đã xóa</Badge>}
+            </div>
           );
         },
       }),
@@ -143,13 +160,20 @@ export const UserList = () => {
         header: "Thao tác",
         cell: ({ row }) => (
           <div className="flex gap-1">
+            {row.original.deletedAt ? (
+              <span className="text-muted-foreground text-sm">Đã xóa {formatDate(row.original.deletedAt)}</span>
+            ) : (
+              <>
             <EditButton recordItemId={row.original.id} iconOnly size="icon-sm" />
             <ShowButton recordItemId={row.original.id} iconOnly size="icon-sm" />
+            <LockAccountButton user={row.original} />
             <DeleteButton recordItemId={row.original.id} iconOnly size="icon-sm" />
+              </>
+            )}
           </div>
         ),
         enableSorting: false,
-        ...actionsColumnWidth(3),
+        ...actionsColumnWidth(4),
       }),
     ];
   }, []);

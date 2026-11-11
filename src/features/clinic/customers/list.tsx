@@ -176,7 +176,7 @@ export const CustomerList = ({ clinicId, readOnly = false }: FrontDeskListProps 
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo tên, số điện thoại, mã hồ sơ hoặc giấy tờ định danh..." />}
               filters={<DataTableAdvancedFilter table={table} fields={filterFields} />}
             />
             <DataTableFilterChips table={table} fields={filterFields} />

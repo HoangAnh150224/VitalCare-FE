@@ -18,6 +18,7 @@ export type User = {
   createdAt: string;
   updatedAt: string | null;
   lastLoginAt: string | null;
+  deletedAt?: string | null;
 };
 
 /** The role as a user row reports it — no permission list at this depth. */

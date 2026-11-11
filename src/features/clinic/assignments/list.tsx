@@ -115,7 +115,7 @@ export const AssignmentList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo tên bệnh nhân, mã hồ sơ hoặc tên nhân viên..." />}
               filters={<DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />}
             />
             <DataTableFilterChips table={table} fields={FILTER_FIELDS} />

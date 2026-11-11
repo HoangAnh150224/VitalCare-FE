@@ -106,7 +106,7 @@ export const EncounterList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo tên bệnh nhân hoặc mã hồ sơ..." />}
               filters={<DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />}
             />
             <DataTableFilterChips table={table} fields={FILTER_FIELDS} />
