@@ -135,11 +135,12 @@ export const UserEdit = () => {
                     }}
                     render={({ field }) => (
                       <FormItem className="md:col-span-4">
-                        <FormLabel>Số điện thoại</FormLabel>
+                        <FormLabel>Số điện thoại <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             type="tel"
+                            aria-required="true"
                             placeholder="Nhập số điện thoại"
                             inputMode="tel"
                             value={field.value ?? ""}
@@ -185,9 +186,9 @@ export const UserEdit = () => {
                     rules={{ required: "Vui lòng nhập họ và tên" }}
                     render={({ field }) => (
                       <FormItem className="md:col-span-4">
-                        <FormLabel>Họ và tên</FormLabel>
+                        <FormLabel>Họ và tên <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                         <FormControl>
-                          <Input {...field} value={field.value ?? ""} placeholder="Nhập họ và tên" />
+                          <Input {...field} aria-required="true" value={field.value ?? ""} placeholder="Nhập họ và tên" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

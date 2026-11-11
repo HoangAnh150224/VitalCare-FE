@@ -285,7 +285,7 @@ export const TaskList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo tiêu đề công việc..." />}
               filters={<DataTableAdvancedFilter table={table} fields={advancedFilterFields} />}
             />
             <DataTableFilterChips table={table} fields={advancedFilterFields} />

@@ -239,7 +239,7 @@ export const DeviceList = ({
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo mã thiết bị, số sê-ri hoặc model..." />}
               filters={
                 <DataTableAdvancedFilter table={table} fields={filterFields} />
               }

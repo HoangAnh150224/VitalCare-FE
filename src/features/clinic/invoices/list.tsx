@@ -92,7 +92,7 @@ export const InvoiceList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo số hóa đơn hoặc tên bệnh nhân..." />}
               filters={<DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />}
             />
             <DataTableFilterChips table={table} fields={FILTER_FIELDS} />

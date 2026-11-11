@@ -224,7 +224,7 @@ export const DepartmentList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo mã hoặc tên phòng ban..." />}
               filters={<DataTableAdvancedFilter table={table} fields={advancedFilterFields} />}
             />
             <DataTableFilterChips table={table} fields={advancedFilterFields} />
