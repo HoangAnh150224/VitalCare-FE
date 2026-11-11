@@ -147,7 +147,7 @@ export const StaffCreate = () => {
                   <FormItem className="md:col-span-4">
                     <FormLabel>Mật khẩu ban đầu <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <FormControl>
-                      <InputPassword {...field} aria-required="true" autoComplete="new-password" />
+                      <InputPassword {...field} placeholder="Nhập mật khẩu ban đầu" aria-required="true" autoComplete="new-password" />
                     </FormControl>
                     <FormDescription>Gửi cho nhân viên và yêu cầu đổi sau lần đăng nhập đầu.</FormDescription>
                     <FormMessage />

@@ -220,7 +220,7 @@ export const RowLevelPolicyList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo tên chính sách, tài nguyên hoặc mô tả..." />}
               filters={<DataTableAdvancedFilter table={table} fields={ADVANCED_FILTER_FIELDS} />}
             />
             <DataTableFilterChips table={table} fields={ADVANCED_FILTER_FIELDS} />

@@ -45,8 +45,8 @@ import { PERMISSION_ACTION_VARIANTS } from "@/shared/lib/status-variants";
  * to the user as a filter that does nothing.
  */
 const ADVANCED_FILTER_FIELDS: AdvancedFilterField[] = [
-  { field: "code", label: "Mã", type: "text", placeholder: "Bất kỳ" },
-  { field: "name", label: "Tên", type: "text", placeholder: "Bất kỳ" },
+  { field: "code", label: "Mã", type: "text", placeholder: "Nhập mã quyền" },
+  { field: "name", label: "Tên", type: "text", placeholder: "Nhập tên quyền" },
   {
     field: "systemPermission",
     label: "Quyền hệ thống",
@@ -178,7 +178,7 @@ export const PermissionList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo mã hoặc tên quyền..." />}
               filters={<DataTableAdvancedFilter table={table} fields={ADVANCED_FILTER_FIELDS} />}
             />
             <DataTableFilterChips table={table} fields={ADVANCED_FILTER_FIELDS} />

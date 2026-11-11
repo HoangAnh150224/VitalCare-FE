@@ -212,8 +212,7 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
     <ListView>
       <ListViewHeader
         resource="appointments"
-        canCreate={readOnly ? false : undefined}
-        createLabel="Đăng ký khám"
+        canCreate={false}
         description="Các lượt đăng ký khám của phòng khám. Tiếp nhận một khách chưa kích hoạt sẽ đồng thời kích hoạt hồ sơ bệnh nhân."
         actions={
           canCheckIn?.can && !readOnly ? (
@@ -265,7 +264,10 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
                     value={to}
                     onChange={(event) => setRange([from, event.target.value || thisWeek()[1]])}
                   />
-                  <DataTableQuickFilter table={table} />
+                  <DataTableQuickFilter
+                    table={table}
+                    placeholder="Tìm theo tên, SĐT, mã hồ sơ, giấy tờ định danh hoặc mã đặt khám..."
+                  />
                 </div>
               }
             />

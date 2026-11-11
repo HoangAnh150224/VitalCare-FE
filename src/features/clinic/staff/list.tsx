@@ -30,7 +30,7 @@ import { useClinicOptions } from "../clinics/use-clinic-options";
 
 const FILTER_FIELDS: AdvancedFilterField[] = [
   { field: "staffType", label: "Loại", type: "select", options: STAFF_TYPE_OPTIONS },
-  { field: "status", label: "Trạng thái", type: "select", options: EMPLOYEE_STATUS_OPTIONS, operators: ["eq"], hideOperator: true },
+  { field: "status", label: "Trạng thái", type: "select", options: EMPLOYEE_STATUS_OPTIONS, operators: ["eq"] },
 ];
 
 /** Clinical staff — the people a patient's care team is made of. */

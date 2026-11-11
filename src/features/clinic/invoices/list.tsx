@@ -1,9 +1,6 @@
-import { useCan } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
-import { ChartColumnIcon } from "lucide-react";
 import React from "react";
-import { Link } from "react-router";
 
 import { actionsColumnWidth, DataTable, RESIZABLE_COLUMN_DEFAULTS } from "@/shared/components/data-table/data-table";
 import { DataTableQuickFilter } from "@/shared/components/data-table/data-table-quick-filter";
@@ -14,7 +11,6 @@ import {
 } from "@/shared/components/data-table/data-table-advanced-filter";
 import { ListToolbar, ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { ShowButton } from "@/shared/components/buttons/show";
-import { Button } from "@/shared/ui/button";
 import type { Invoice } from "@/domains/billing/types";
 import { INVOICE_STATUS_OPTIONS } from "@/domains/billing/types";
 import { formatDateTime, formatMoney } from "@/shared/lib/format";
@@ -26,7 +22,6 @@ const FILTER_FIELDS: AdvancedFilterField[] = [
 
 /** The clinic's bills, newest first (Report 1 FE-23). A bill is issued when a visit is concluded. */
 export const InvoiceList = () => {
-  const { data: canReport } = useCan({ resource: "invoices", action: "report" });
   const columns = React.useMemo(() => {
     const col = createColumnHelper<Invoice>();
     return [
@@ -90,16 +85,6 @@ export const InvoiceList = () => {
         resource="invoices"
         canCreate={false}
         description="Hóa đơn được lập khi bác sĩ hoàn tất lần khám, gồm phí khám và các dịch vụ đã làm."
-        actions={
-          canReport?.can && (
-            <Button asChild variant="outline">
-              <Link to="/invoices/report">
-                <ChartColumnIcon />
-                Báo cáo doanh thu
-              </Link>
-            </Button>
-          )
-        }
       />
       <DataTable
         table={table}

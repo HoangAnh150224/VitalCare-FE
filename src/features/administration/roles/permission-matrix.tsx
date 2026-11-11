@@ -359,7 +359,8 @@ export function PermissionMatrix({
         what lets collapsing the details strip on the edit screen hand its
         height straight to the rows rather than to a gap at the bottom.
       */}
-      <div className="max-h-[calc(100svh-var(--panel-reserve,26rem))] min-h-[18rem] overflow-auto">
+      {/* Contain Radix's absolute checkbox inputs inside the scrolling table. */}
+      <div className="relative max-h-[calc(100svh-var(--panel-reserve,26rem))] min-h-[18rem] overflow-auto">
         <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr>

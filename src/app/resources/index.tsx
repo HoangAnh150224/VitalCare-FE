@@ -404,6 +404,15 @@ export const resources: ResourceProps[] = [
       parent: "clinic",
     },
   },
+  {
+    name: "revenue_report",
+    list: "/invoices/report",
+    meta: {
+      label: "Báo cáo doanh thu",
+      icon: <ChartColumn className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
   // No show page: a period is a row, read in the list and changed in its form.
   {
     name: "doctor_schedules",

@@ -24,8 +24,8 @@ import { Badge } from "@/shared/ui/badge";
 import type { Role } from "@/domains/role/types";
 
 const ADVANCED_FILTER_FIELDS: AdvancedFilterField[] = [
-  { field: "code", label: "Mã", type: "text", placeholder: "Bất kỳ" },
-  { field: "name", label: "Tên", type: "text", placeholder: "Bất kỳ" },
+  { field: "code", label: "Mã", type: "text", placeholder: "Nhập mã vai trò" },
+  { field: "name", label: "Tên", type: "text", placeholder: "Nhập tên vai trò" },
 ];
 
 export const RoleList = () => {
@@ -120,7 +120,7 @@ export const RoleList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo mã, tên vai trò hoặc mô tả..." />}
               filters={<DataTableAdvancedFilter table={table} fields={ADVANCED_FILTER_FIELDS} />}
             />
             <DataTableFilterChips table={table} fields={ADVANCED_FILTER_FIELDS} />
