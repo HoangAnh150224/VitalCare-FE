@@ -230,7 +230,7 @@ export const NotificationList = () => {
           <>
             <ListToolbar
               table={table}
-              search={<DataTableQuickFilter table={table} />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo tiêu đề thông báo..." />}
               filters={
                 <DataTableAdvancedFilter
                   table={table}

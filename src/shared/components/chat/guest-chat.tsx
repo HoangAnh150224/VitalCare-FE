@@ -262,6 +262,7 @@ function GuestStartForm({
           value={name}
           onChange={(event) => setName(event.target.value)}
           maxLength={100}
+          placeholder="Nhập họ và tên của bạn"
           aria-label="Họ tên"
         />
       </Field>

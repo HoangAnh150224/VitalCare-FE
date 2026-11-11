@@ -182,8 +182,8 @@ export function WorkingHoursEditor({
   };
 
   const columns = showRooms
-    ? "md:grid-cols-[9rem_6.5rem_6.5rem_7rem_5rem_10rem_2.5rem]"
-    : "md:grid-cols-[9rem_6.5rem_6.5rem_7rem_6rem_2.5rem]";
+    ? "md:grid-cols-[minmax(10rem,1.2fr)_minmax(10rem,1fr)_minmax(10rem,1fr)_minmax(9rem,1fr)_6rem_minmax(12rem,1.4fr)_2.5rem]"
+    : "md:grid-cols-[minmax(10rem,1.2fr)_minmax(10rem,1fr)_minmax(10rem,1fr)_minmax(9rem,1fr)_6rem_2.5rem]";
 
   return (
     <DetailPanel
@@ -210,7 +210,9 @@ export function WorkingHoursEditor({
           Lặp lại hằng tuần. Số lượt khám mỗi buổi tính từ thời lượng mỗi lượt
           {showRooms ? "; phòng khám là nơi bác sĩ ngồi trong buổi đó, người đã tiếp nhận được gọi vào phòng này." : "."}
         </p>
-        <div className={`text-muted-foreground hidden gap-2 text-xs font-medium md:grid ${columns}`}>
+        <div className="overflow-x-auto pb-2">
+        <div className={`flex flex-col gap-4 ${showRooms ? "md:min-w-[72rem]" : "md:min-w-[58rem]"}`}>
+        <div className={`text-muted-foreground hidden gap-4 text-xs font-medium md:grid ${columns}`}>
           <span>Thứ</span>
           <span>Giờ bắt đầu</span>
           <span>Giờ kết thúc</span>
@@ -223,7 +225,7 @@ export function WorkingHoursEditor({
         {rows.map((row) => (
           <div
             key={row.key}
-            className={`grid grid-cols-2 gap-2 md:items-center ${columns}`}
+            className={`grid grid-cols-2 gap-4 md:items-center ${columns}`}
           >
             <Select
               disabled={!editable}
@@ -293,6 +295,8 @@ export function WorkingHoursEditor({
             )}
           </div>
         ))}
+        </div>
+        </div>
 
         {rows.length === 0 && (
           <p className="text-muted-foreground text-sm">

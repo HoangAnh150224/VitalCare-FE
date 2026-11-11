@@ -104,6 +104,7 @@ export function permissionFor(
   action: string
 ): string | null {
   if (!resource || UNGUARDED_RESOURCES.has(resource)) return null;
+  if (resource === "revenue_report") return "invoices:report";
   const suffix = ACTION_TO_PERMISSION[action];
   return suffix ? `${resource}:${suffix}` : null;
 }
@@ -162,7 +163,7 @@ export function isPortalAccount(
  */
 export const CLINIC_ADMIN_MENU = {
   clinic: ["employees", "licenses", "doctor_schedules", "devices", "alert_rules", "clinic_roles", "exam_rooms", "clinics"],
-  administration: ["medical_services", "invoices", "reports", "feedback", "first_aid_articles", "notifications"],
+  administration: ["medical_services", "invoices", "revenue_report", "reports", "feedback", "first_aid_articles", "notifications"],
 } as const;
 
 /** The staff's and doctors' screens a clinic administrator does not open. */

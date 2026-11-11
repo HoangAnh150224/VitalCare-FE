@@ -105,7 +105,7 @@ export const WalkInRegistration = () => {
                   fullName: values.fullName.trim(),
                   phone: values.phone,
                   dateOfBirth: values.dateOfBirth,
-                  nationalId: values.nationalId.trim() || null,
+                  nationalId: values.nationalId.trim(),
                   gender: values.gender,
                 }
               : null,
@@ -220,13 +220,14 @@ export const WalkInRegistration = () => {
                     name="fullName"
                     rules={{
                       required: "Nhập họ tên",
+                      validate: (value) => value.trim() !== "" || "Nhập họ tên",
                       maxLength: { value: 255, message: "Tối đa 255 ký tự" },
                     }}
                     render={({ field }) => (
                       <FormItem className="md:col-span-6">
                         <FormLabel>Họ và tên</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} placeholder="Nhập họ và tên bệnh nhân" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -274,12 +275,21 @@ export const WalkInRegistration = () => {
                   <FormField
                     control={form.control}
                     name="nationalId"
-                    rules={{ maxLength: { value: 32, message: "Tối đa 32 ký tự" } }}
+                    rules={{
+                      required: "Nhập số giấy tờ định danh",
+                      validate: (value) =>
+                        value.trim() !== "" || "Nhập số giấy tờ định danh",
+                      maxLength: { value: 32, message: "Tối đa 32 ký tự" },
+                    }}
                     render={({ field }) => (
                       <FormItem className="md:col-span-6">
-                        <FormLabel>Số giấy tờ định danh (nếu có)</FormLabel>
+                        <FormLabel>Số giấy tờ định danh</FormLabel>
                         <FormControl>
-                          <Input {...field} maxLength={32} />
+                          <Input
+                            {...field}
+                            maxLength={32}
+                            placeholder="Nhập số CCCD hoặc hộ chiếu"
+                          />
                         </FormControl>
                         <FormDescription>Dùng cùng họ tên, ngày sinh và số liên hệ để phát hiện hồ sơ trùng.</FormDescription>
                         <FormMessage />

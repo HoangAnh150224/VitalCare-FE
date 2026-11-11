@@ -140,6 +140,7 @@ export const UserEdit = () => {
                           <Input
                             {...field}
                             type="tel"
+                            placeholder="Nhập số điện thoại"
                             inputMode="tel"
                             value={field.value ?? ""}
                             className="font-mono"
@@ -169,6 +170,7 @@ export const UserEdit = () => {
                           <Input
                             {...field}
                             type="email"
+                            placeholder="Nhập địa chỉ email (không bắt buộc)"
                             value={field.value ?? ""}
                           />
                         </FormControl>
@@ -185,7 +187,7 @@ export const UserEdit = () => {
                       <FormItem className="md:col-span-4">
                         <FormLabel>Họ và tên</FormLabel>
                         <FormControl>
-                          <Input {...field} value={field.value ?? ""} />
+                          <Input {...field} value={field.value ?? ""} placeholder="Nhập họ và tên" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

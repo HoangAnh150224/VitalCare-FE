@@ -101,6 +101,7 @@ export function ResetPasswordCard({ userId }: { userId: number | string }) {
           <Label htmlFor="confirm-new-password">Nhập lại mật khẩu mới</Label>
           <InputPassword
             id="confirm-new-password"
+            placeholder="Nhập lại mật khẩu mới"
             autoComplete="new-password"
             required
             aria-invalid={mismatch || undefined}
