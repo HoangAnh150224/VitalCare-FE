@@ -21,6 +21,8 @@ import {
 import type { Employee } from "@/domains/employee/types";
 import { EMPLOYEE_STATUS_OPTIONS } from "@/domains/employee/types";
 import { ProfileFields } from "./profile-fields";
+import { StaffCreate } from "./create";
+import { getAuthorities } from "@/shared/api/session";
 
 /**
  * Editing a member of staff's record, and recording that they have left.
@@ -29,7 +31,11 @@ import { ProfileFields } from "./profile-fields";
  * says what it does before it is saved: every care team they are on ends, and
  * their account stops signing in.
  */
-export const StaffEdit = () => {
+export const StaffEdit = () => getAuthorities()?.roles.includes("ADMIN")
+  ? <StaffCreate editing />
+  : <StaffProfileEdit />;
+
+const StaffProfileEdit = () => {
   const navigate = useNavigate();
   const {
     refineCore: { onFinish, query },

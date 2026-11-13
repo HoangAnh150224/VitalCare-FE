@@ -1,4 +1,5 @@
 import { useTable } from "@refinedev/react-table";
+import { ExcelTableExport } from "@/shared/components/data-table/excel-export";
 import { createColumnHelper } from "@tanstack/react-table";
 import { TriangleAlert } from "lucide-react";
 import React from "react";
@@ -220,6 +221,15 @@ export const RowLevelPolicyList = () => {
           <>
             <ListToolbar
               table={table}
+              exportAction={<ExcelTableExport table={table} resource="row_level_policies" title="Phạm vi dữ liệu" columns={[
+                { label: "Chính sách", width: 34, value: (r: RowLevelPolicy) => r.name },
+                { label: "Loại", width: 18, value: (r: RowLevelPolicy) => KIND_LABELS[r.kind] },
+                { label: "Vai trò", width: 32, value: (r: RowLevelPolicy) => r.role?.name ?? "Tất cả vai trò" },
+                { label: "Tài nguyên", width: 28, value: (r: RowLevelPolicy) => r.resource },
+                { label: "Hành động", width: 18, value: (r: RowLevelPolicy) => actionLabel(r.action) },
+                { label: "Trạng thái", width: 20, value: (r: RowLevelPolicy) => r.enabled ? "Đang bật" : "Đã tắt" },
+                { label: "Mô tả", width: 60, value: (r: RowLevelPolicy) => r.description ?? "—" },
+              ]} />}
               search={<DataTableQuickFilter table={table} placeholder="Tìm theo tên chính sách, tài nguyên hoặc mô tả..." />}
               filters={<DataTableAdvancedFilter table={table} fields={ADVANCED_FILTER_FIELDS} />}
             />

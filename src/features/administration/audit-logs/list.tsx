@@ -23,6 +23,7 @@ import { Badge } from "@/shared/ui/badge";
 import { formatDateTime } from "@/shared/lib/format";
 import { humanizeResource } from "@/domains/permission/types";
 import { AUDIT_ACTION_LABELS, type AuditEntry } from "./types";
+import { AuditExport } from "./export";
 
 const FILTER_FIELDS: AdvancedFilterField[] = [
   {
@@ -149,6 +150,7 @@ export const AuditLogList = () => {
           <>
             <ListToolbar
               table={table}
+              exportAction={<AuditExport table={table} />}
               search={<DataTableQuickFilter table={table} placeholder="Tìm theo người thực hiện, loại dữ liệu hoặc hành động..." />}
               filters={
                 <DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />

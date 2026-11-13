@@ -28,6 +28,7 @@ import {
 } from "@/shared/hooks/use-notifications";
 import { cn } from "@/shared/lib/utils";
 import { formatDateTime } from "@/shared/lib/format";
+import { ExcelTableExport } from "@/shared/components/data-table/excel-export";
 
 /**
  * Everything this account has been told, as a table.
@@ -230,6 +231,14 @@ export const NotificationList = () => {
           <>
             <ListToolbar
               table={table}
+              exportAction={<ExcelTableExport table={table} resource="notifications" title="Danh sách thông báo" columns={[
+                { label: "Mức độ", width: 18, value: (r: Notification) => LEVEL_LABEL[r.level] },
+                { label: "Tiêu đề", width: 42, value: (r: Notification) => r.title },
+                { label: "Nội dung", width: 70, value: (r: Notification) => r.body ?? "—" },
+                { label: "Trạng thái", width: 20, value: (r: Notification) => r.read ? "Đã đọc" : "Chưa đọc" },
+                { label: "Nhận lúc", width: 28, value: (r: Notification) => formatDateTime(r.createdAt) },
+                { label: "Đọc lúc", width: 28, value: (r: Notification) => formatDateTime(r.readAt) },
+              ]} />}
               search={<DataTableQuickFilter table={table} placeholder="Tìm theo tiêu đề thông báo..." />}
               filters={
                 <DataTableAdvancedFilter

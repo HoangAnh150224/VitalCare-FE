@@ -58,7 +58,7 @@ export const accessControlProvider: AccessControlProvider = {
     // Clinic staff creation still requires employees:write.
     if (
       resource === "employees" &&
-      action === "create" &&
+      (action === "create" || (getAuthorities()?.roles.includes("ADMIN") && ["edit", "delete"].includes(action))) &&
       permissions.includes("clinics:write")
     ) {
       return { can: true };
