@@ -1,13 +1,15 @@
 import { useList } from "@refinedev/core";
 import { ChevronRightIcon, PlusIcon, TriangleAlertIcon } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router";
 
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { GENDER_LABELS } from "@/domains/customer/types";
 import type { Profile } from "@/domains/profile/types";
-import { profileKind } from "@/domains/profile/types";
+import { RELATIVES_FULL_MESSAGE, profileKind, relativesFull } from "@/domains/profile/types";
 import { initials } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 
@@ -44,6 +46,7 @@ function summary(profile: Profile): string {
 export const MyProfileList = () => {
   const { result, query } = useList<Profile>({ resource: "my_profiles", pagination: { mode: "off" } });
   const profiles = result?.data ?? [];
+  const full = relativesFull(profiles);
 
   return (
     <div className="screen-enter screen-enter-stagger flex flex-col gap-5">
@@ -56,12 +59,16 @@ export const MyProfileList = () => {
             Bạn và người thân. Mỗi lượt đăng ký khám là cho một người trong danh sách này.
           </p>
         </div>
-        <Button asChild className="h-11 rounded-full px-5">
-          <Link to="/my-profiles/create">
-            <PlusIcon />
-            Thêm người thân
-          </Link>
-        </Button>
+        {full ? (
+          <FullRelativesButton />
+        ) : (
+          <Button asChild className="h-11 rounded-full px-5">
+            <Link to="/my-profiles/create">
+              <PlusIcon />
+              Thêm người thân
+            </Link>
+          </Button>
+        )}
       </div>
 
       {query.isLoading ? (
@@ -111,3 +118,30 @@ export const MyProfileList = () => {
     </div>
   );
 };
+
+/**
+ * The account already holds two relatives: the button stays, dimmed, and says
+ * why on hover or on a tap (a touch screen has no hover).
+ */
+function FullRelativesButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <Tooltip open={open} onOpenChange={setOpen}>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          aria-disabled
+          className="h-11 cursor-not-allowed rounded-full px-5 opacity-50"
+          onClick={(event) => {
+            event.preventDefault();
+            setOpen(true);
+          }}
+        >
+          <PlusIcon />
+          Thêm người thân
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{RELATIVES_FULL_MESSAGE}</TooltipContent>
+    </Tooltip>
+  );
+}

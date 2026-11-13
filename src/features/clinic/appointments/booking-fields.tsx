@@ -20,7 +20,7 @@ import {
 } from "@/shared/ui/form";
 import type { Clinic } from "@/domains/clinic/types";
 import type { Profile } from "@/domains/profile/types";
-import { profileKind } from "@/domains/profile/types";
+import { profileKind, relativesFull } from "@/domains/profile/types";
 import type { BookingFormValues } from "./booking";
 import { clinicToday } from "./clinic-day";
 import { OpenDayChoices, closedDayReason, useClinicDay, useClinicDoctors } from "./doctor-day";
@@ -143,15 +143,17 @@ export function BookingFields({
                     rồi quay lại đăng ký.
                   </>
                 ) : (
-                  <>
-                    Khám cho người thân?{" "}
-                    <Link
-                      to="/my-profiles/create"
-                      className="text-foreground underline"
-                    >
-                      Thêm người thân
-                    </Link>
-                  </>
+                  !relativesFull(profiles) && (
+                    <>
+                      Khám cho người thân?{" "}
+                      <Link
+                        to="/my-profiles/create"
+                        className="text-foreground underline"
+                      >
+                        Thêm người thân
+                      </Link>
+                    </>
+                  )
                 )}
               </p>
               <FormMessage />

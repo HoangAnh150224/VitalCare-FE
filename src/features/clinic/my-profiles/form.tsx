@@ -13,8 +13,8 @@ import { cn } from "@/shared/lib/utils";
 import { initials } from "@/shared/lib/format";
 import { GENDER_LABELS, type Gender } from "@/domains/customer/types";
 import type { IdType, Profile, Relationship } from "@/domains/profile/types";
-import { ID_TYPE_LABELS, RELATIONSHIP_OPTIONS } from "@/domains/profile/types";
-import { clinicToday } from "../appointments/clinic-day";
+import { ID_TYPE_LABELS, RELATIONSHIP_OPTIONS, RELATIVES_FULL_MESSAGE } from "@/domains/profile/types";
+import { birthDateProblem, clinicToday, oldestBirthDate } from "../appointments/clinic-day";
 import { IconChip, type Tone } from "../portal/parts";
 
 type ProfileFormValues = {
@@ -42,11 +42,14 @@ const PROFILE_ERRORS: Record<string, string> = {
   "Phone number is not valid": "Vui lòng nhập số điện thoại phù hợp.",
   "A valid phone number is required": "Vui lòng nhập số điện thoại phù hợp.",
   "A name is required": "Vui lòng nhập họ và tên",
+  "A relative with this name and date of birth is already under your account":
+    "Đã có người thân với tên và ngày sinh như trên. Vui lòng nhập người thân khác.",
   "Name must be at most 255 characters": "Họ và tên tối đa 255 ký tự",
   "Say whose profile this is": "Vui lòng chọn quan hệ",
   "Relationship must be child, parent, spouse, sibling or other": "Vui lòng chọn quan hệ",
   "Date of birth is required": "Vui lòng nhập ngày sinh",
   "Date of birth must be in the past": "Ngày sinh phải nằm ở quá khứ",
+  "Date of birth is more than 120 years ago": "Vui lòng nhập năm sinh hợp lý.",
   "Gender is required": "Vui lòng chọn giới tính",
   "Gender must be male, female or other": "Vui lòng chọn giới tính",
   "A citizen id or personal identification number is required": "Vui lòng nhập số giấy tờ định danh",
@@ -117,7 +120,14 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
       redirect: "list",
       // A refused field is said under that field, in Vietnamese (below), not again in a toast.
       errorNotification: (error) =>
-        error?.statusCode === 422 ? false : { type: "error", message: "Không lưu được hồ sơ. Vui lòng thử lại." },
+        error?.statusCode === 422
+          ? false
+          : {
+              type: "error",
+              message: /at most \d+ relatives/.test(error?.message ?? "")
+                ? RELATIVES_FULL_MESSAGE
+                : "Không lưu được hồ sơ. Vui lòng thử lại.",
+            },
       onMutationError: (error) => {
         for (const [name, raw] of Object.entries(error?.errors ?? {})) {
           const message = Array.isArray(raw) ? raw[0] : typeof raw === "string" ? raw : raw && typeof raw === "object" ? raw.message : undefined;
@@ -279,14 +289,14 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                 name="dateOfBirth"
                 rules={{
                   required: "Vui lòng nhập ngày sinh",
-                  // ISO dates compare as strings; today is refused as well, as the server does.
-                  validate: (value) => value < clinicToday() || "Ngày sinh phải nằm ở quá khứ",
+                  // Before today and at most 120 years back, as the server checks.
+                  validate: (value) => birthDateProblem(value),
                 }}
                 render={({ field }) => (
                   <FormItem>
                     <Label required>Ngày sinh</Label>
                     <FormControl>
-                      <Input {...field} type="date" max={clinicToday()} value={field.value ?? ""} />
+                      <Input min={oldestBirthDate()} {...field} type="date" max={clinicToday()} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
