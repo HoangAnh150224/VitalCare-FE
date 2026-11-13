@@ -207,6 +207,15 @@ export const resources: ResourceProps[] = [
     },
   },
   {
+    name: "exam_rooms",
+    list: "/exam-rooms",
+    meta: {
+      label: "Điều phối phòng khám",
+      icon: <DoorOpen className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  {
     name: "customers",
     list: "/customers",
     edit: "/customers/edit/:id",
@@ -227,7 +236,7 @@ export const resources: ResourceProps[] = [
     edit: "/employees/edit/:id",
     show: "/employees/show/:id",
     meta: {
-      label: "Quản trị phòng khám",
+      label: "Quản lí phòng khám",
       icon: <Stethoscope className="h-4 w-4" />,
       parent: "clinic",
     },
@@ -345,16 +354,6 @@ export const resources: ResourceProps[] = [
     name: "licenses",
     list: "/licenses",
     meta: { label: "Giấy phép nhân viên", icon: <Award className="h-4 w-4" />, parent: "clinic" },
-  },
-  // The floor: rooms, who is in them, who waits. Rooms are added on the clinic's page.
-  {
-    name: "exam_rooms",
-    list: "/exam-rooms",
-    meta: {
-      label: "Điều phối phòng khám",
-      icon: <DoorOpen className="h-4 w-4" />,
-      parent: "clinic",
-    },
   },
   // Ordered in an encounter (on its page), carried out from here: no create.
   {

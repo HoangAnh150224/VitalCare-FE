@@ -73,6 +73,7 @@ export function MembershipPanel({ employee }: { employee: Employee }) {
   const invalidate = useInvalidate();
   const [mode, setMode] = useState<"end" | "move" | null>(null);
   const [reason, setReason] = useState("");
+  const [reasonError, setReasonError] = useState<string | null>(null);
   const [clinicId, setClinicId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const key = ["staff_memberships", employee.id];
@@ -98,6 +99,7 @@ export function MembershipPanel({ employee }: { employee: Employee }) {
       setClinicId("");
       setError(null);
       void queryClient.invalidateQueries({ queryKey: key });
+      void invalidate({ resource: "audit_logs", invalidates: ["list", "many"] });
       void invalidate({ resource: "employees", invalidates: ["detail", "list"], id: employee.id });
     },
     onError: (e) => setError(membershipErrorText(e)),
@@ -141,7 +143,7 @@ export function MembershipPanel({ employee }: { employee: Employee }) {
             ))}
           </TableBody>
         </Table>
-        {active && mode === null && (
+        {employee.status === "active" && active && mode === null && (
           <div className="flex flex-wrap gap-2">
             {canMove?.can && (
               <Button size="sm" variant="outline" onClick={() => setMode("move")}>
@@ -155,7 +157,7 @@ export function MembershipPanel({ employee }: { employee: Employee }) {
             )}
           </div>
         )}
-        {mode && (
+        {employee.status === "active" && mode && (
           <div className="flex flex-col gap-3 rounded-lg border p-3">
             {mode === "move" && (
               <div className="flex flex-col gap-1.5">
@@ -175,19 +177,23 @@ export function MembershipPanel({ employee }: { employee: Employee }) {
               </div>
             )}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="membership-reason">Lý do</Label>
+              <Label htmlFor="membership-reason">Lý do {mode === "move" && <span className="text-destructive">*</span>}</Label>
               <Input
                 id="membership-reason"
                 value={reason}
                 maxLength={500}
-                onChange={(e) => setReason(e.target.value)}
+                aria-required={mode === "move"}
+                aria-invalid={Boolean(reasonError)}
+                aria-describedby={reasonError ? "membership-reason-error" : undefined}
+                onChange={(e) => { setReason(e.target.value); setReasonError(null); }}
                 placeholder={mode === "move" ? "Điều chuyển công tác" : "Nghỉ việc"}
               />
+              {reasonError && <p id="membership-reason-error" role="alert" className="text-destructive text-sm">{reasonError}</p>}
             </div>
             <p className="text-muted-foreground text-xs">
               {mode === "move"
                 ? "Nhân viên rời các nhóm chăm sóc ở cơ sở hiện tại và ca làm việc bỏ gán phòng; cơ sở mới tự xếp lại."
-                : "Nhân viên rời mọi nhóm chăm sóc và không đăng nhập được nữa."}
+                : "Hồ sơ chuyển sang Đã nghỉ và vẫn hiển thị trong danh sách. Quản trị viên đã nghỉ không thể chỉnh sửa. Nhân viên rời mọi nhóm chăm sóc và không đăng nhập được nữa."}
             </p>
             {error && (
               <p role="alert" className="text-destructive text-sm">
@@ -198,11 +204,18 @@ export function MembershipPanel({ employee }: { employee: Employee }) {
               <Button
                 size="sm"
                 disabled={act.isPending || (mode === "move" && !clinicId)}
-                onClick={() => act.mutate()}
+                onClick={() => {
+                  if (mode === "move" && !reason.trim()) {
+                    setReasonError("Vui lòng nhập lý do chuyển cơ sở.");
+                    return;
+                  }
+                  setReasonError(null);
+                  act.mutate();
+                }}
               >
                 {mode === "move" ? "Xác nhận chuyển" : "Xác nhận kết thúc"}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => (setMode(null), setError(null))}>
+              <Button size="sm" variant="ghost" onClick={() => { setMode(null); setError(null); setReasonError(null); }}>
                 Huỷ
               </Button>
             </div>

@@ -10,9 +10,9 @@
  *   sidebarTone  -> `data-sidebar-tone`    dark | light
  *   density      -> `data-density`         compact | comfortable | spacious
  *
- * The same values are written to localStorage and replayed by the inline
+ * Settings are written to localStorage. Except mode, they are replayed by the inline
  * bootstrap script in `index.html`, which runs before first paint so the shell
- * never flashes the wrong theme.
+ * never flashes the wrong theme. Each page load starts in light mode.
  *
  * Keep the storage keys and the preset key list in sync with that script.
  */
@@ -43,7 +43,7 @@ export const STORAGE_KEYS = {
 } as const;
 
 export const DEFAULTS = {
-  mode: "system" as ThemeMode,
+  mode: "light" as ThemeMode,
   colorPreset: "navy" as ColorPreset,
   radius: "md" as Radius,
   sidebarTone: "dark" as SidebarTone,

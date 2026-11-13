@@ -24,7 +24,7 @@ export function ProfileFields<T extends FieldValues>({ control }: { control: Con
             <FormItem className={item.span}>
               <FormLabel>{item.label}</FormLabel>
               <FormControl>
-                <Input {...field} value={field.value ?? ""} />
+                <Input {...field} value={field.value ?? ""} placeholder={`Nhập ${item.label.toLocaleLowerCase("vi-VN")}`} />
               </FormControl>
               <FormMessage />
             </FormItem>

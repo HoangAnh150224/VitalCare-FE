@@ -117,7 +117,7 @@ export const StaffCreate = ({ editing = false }: { editing?: boolean }) => {
                   <FormItem className="md:col-span-4">
                     <FormLabel>Số điện thoại <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <FormControl>
-                      <Input {...field} aria-required="true" type="tel" inputMode="tel" className="font-mono" placeholder="0901234567" />
+                      <Input {...field} value={field.value?.replace(/^\+84(?=\d{9}$)/, "0") ?? ""} aria-required="true" type="tel" inputMode="tel" className="font-mono" placeholder="0901234567" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

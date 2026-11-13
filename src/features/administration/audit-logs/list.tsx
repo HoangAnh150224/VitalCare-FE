@@ -39,7 +39,7 @@ const FILTER_FIELDS: AdvancedFilterField[] = [
     field: "entityType",
     label: "Loại dữ liệu",
     type: "select",
-    options: ["users", "medical_records", "device_assignments", "invoices"].map(
+    options: ["users", "employees", "medical_records", "device_assignments", "invoices"].map(
       (value) => ({ value, label: humanizeResource(value) })
     ),
   },
@@ -151,7 +151,7 @@ export const AuditLogList = () => {
             <ListToolbar
               table={table}
               exportAction={<AuditExport table={table} />}
-              search={<DataTableQuickFilter table={table} placeholder="Tìm theo người thực hiện, loại dữ liệu hoặc hành động..." />}
+              search={<DataTableQuickFilter table={table} placeholder="Tìm theo ID người dùng, người thực hiện, loại dữ liệu hoặc hành động..." />}
               filters={
                 <DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />
               }

@@ -1,4 +1,5 @@
 import type { HttpError } from "@refinedev/core";
+import { useShow } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { useNavigate } from "react-router";
 import { useWatch } from "react-hook-form";
@@ -31,9 +32,18 @@ import { getAuthorities } from "@/shared/api/session";
  * says what it does before it is saved: every care team they are on ends, and
  * their account stops signing in.
  */
-export const StaffEdit = () => getAuthorities()?.roles.includes("ADMIN")
-  ? <StaffCreate editing />
-  : <StaffProfileEdit />;
+export const StaffEdit = () => {
+  const { result: employee, query } = useShow<Employee>({ resource: "employees", errorNotification: false });
+  const navigate = useNavigate();
+  if (query.isLoading) return <p>Đang tải hồ sơ...</p>;
+  if (query.isError || !employee || (employee.staffType === "clinic_admin" && employee.status === "inactive")) {
+    return <div className="space-y-4">
+      <p role="alert">{employee?.status === "inactive" ? "Quản trị viên đã nghỉ việc." : "Không tải được hồ sơ. Vui lòng thử lại sau."}</p>
+      <Button variant="outline" onClick={() => navigate("/employees")}>Quay lại danh sách</Button>
+    </div>;
+  }
+  return getAuthorities()?.roles.includes("ADMIN") ? <StaffCreate editing /> : <StaffProfileEdit />;
+};
 
 const StaffProfileEdit = () => {
   const navigate = useNavigate();

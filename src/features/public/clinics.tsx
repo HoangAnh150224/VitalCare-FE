@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Link, useParams } from "react-router";
 
-import { publicGet, publicRetry } from "@/shared/api/public";
+import { PublicError, publicGet, publicRetry } from "@/shared/api/public";
 import { openGuestChat } from "@/shared/components/chat/guest-chat";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -151,6 +151,7 @@ function OpeningHours({ hours }: { hours: Opening[] }) {
 /** One clinic with its doctors and the days each sees patients. */
 export function PublicClinicShow() {
   const { id } = useParams();
+  const validId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id ?? "");
   const registerLink = useRegisterLink();
   const {
     data: clinic,
@@ -158,10 +159,12 @@ export function PublicClinicShow() {
     error,
   } = useQuery({
     queryKey: ["public", "clinics", id],
-    retry: publicRetry,
+    retry: (failures, error) =>
+      !(error instanceof PublicError && error.status === 400) && publicRetry(failures, error),
     queryFn: () => publicGet<PublicClinicDetail>(`clinics/${id}`),
-    enabled: Boolean(id),
+    enabled: validId,
   });
+  const notFound = !validId || (error instanceof PublicError && [400, 404].includes(error.status ?? 0));
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6 pb-12 sm:px-6">
@@ -172,10 +175,12 @@ export function PublicClinicShow() {
         </Link>
       </Button>
       {isLoading && <Skeleton className="mt-4 h-64 rounded-2xl" />}
-      {error && (
-        <EmptyState tone="error" message={(error as Error).message} />
+      {(notFound || error) && (
+        <EmptyState tone="error" message={notFound
+          ? "Không tìm thấy cơ sở. Vui lòng thử lại sau."
+          : "Không tải được thông tin cơ sở. Vui lòng thử lại sau."} />
       )}
-      {clinic && (
+      {validId && !error && clinic && (
         <>
           <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
             <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">

@@ -20,6 +20,8 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   update: "Cập nhật",
   role_change: "Đổi vai trò",
   status_change: "Đổi trạng thái",
+  membership_end: "Kết thúc thành viên",
+  transfer: "Chuyển cơ sở",
   password_reset: "Đặt lại mật khẩu",
   delete: "Xoá",
   assign: "Cấp / gán",
