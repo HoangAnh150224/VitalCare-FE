@@ -27,6 +27,7 @@ import {
 } from "@/domains/permission/types";
 import { actionLabel } from "@/domains/row-level-policy/types";
 import { PERMISSION_ACTION_VARIANTS } from "@/shared/lib/status-variants";
+import { PermissionExport } from "./export";
 
 /**
  * The permission catalogue, read-only.
@@ -178,6 +179,7 @@ export const PermissionList = () => {
           <>
             <ListToolbar
               table={table}
+              exportAction={<PermissionExport table={table} />}
               search={<DataTableQuickFilter table={table} placeholder="Tìm theo mã hoặc tên quyền..." />}
               filters={<DataTableAdvancedFilter table={table} fields={ADVANCED_FILTER_FIELDS} />}
             />

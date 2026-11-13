@@ -14,6 +14,7 @@ export type Employee = {
   /** The clinic they work at; a receptionist sees only this clinic's data. */
   clinicId: string | null;
   createdAt: string;
+  deletedAt?: string | null;
 };
 
 /**
@@ -42,11 +43,11 @@ export const STAFF_TYPE_OPTIONS: { label: string; value: StaffType }[] = [
 ];
 
 export const EMPLOYEE_STATUS_LABELS: Record<EmployeeStatus, string> = {
-  active: "Đang làm việc",
+  active: "Đang hoạt động",
   inactive: "Đã nghỉ",
 };
 
 export const EMPLOYEE_STATUS_OPTIONS: { label: string; value: EmployeeStatus }[] = [
-  { label: "Đang làm việc", value: "active" },
+  { label: "Đang hoạt động", value: "active" },
   { label: "Đã nghỉ", value: "inactive" },
 ];

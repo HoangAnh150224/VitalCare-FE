@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { kyInstance } from "@/shared/api/data";
+import { getAuthorities, getIdentity } from "@/shared/api/session";
 import { DetailPanel } from "@/shared/components/views/record-detail";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -39,7 +40,7 @@ const ACCESS_VARIANTS = { ALLOWED: "default", BY_PERMISSION: "secondary", NONE: 
 async function send(method: "post" | "put", url: string, json: unknown) {
   const response = await kyInstance(url, { method, json, throwHttpErrors: false });
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw body;
+  if (!response.ok) throw { statusCode: response.status, body };
   return body;
 }
 
@@ -56,6 +57,9 @@ function membershipErrorText(body: unknown): string {
   if (/Only the system administrator/.test(text)) return "Chỉ quản trị hệ thống mới cấp hoặc gỡ vai trò Quản trị phòng khám.";
   if (/Only the clinic administrator/.test(text)) return "Vai trò Bác sĩ và Lễ tân do quản trị phòng khám cấp.";
   if (/last active administrator|no active administrator/.test(text)) return "Không thể gỡ quản trị viên cuối cùng.";
+  if (typeof body === "object" && body !== null && "statusCode" in body && body.statusCode === 403) {
+    return "Bạn không có quyền thay đổi vai trò này. Vai trò Bác sĩ và Lễ tân cần quyền quản lý nhân viên.";
+  }
   return "Không lưu được. Thử lại sau.";
 }
 
@@ -216,9 +220,14 @@ export function MembershipPanel({ employee }: { employee: Employee }) {
 export function ClinicRolesPanel({ employeeId }: { employeeId: number }) {
   const { data: canRead } = useCan({ resource: "clinic_roles", action: "list" });
   const { data: canWrite } = useCan({ resource: "clinic_roles", action: "edit" });
-  const { data: canMove } = useCan({ resource: "staff_memberships", action: "transfer" });
+  const systemAdmin = getAuthorities()?.roles.includes("ADMIN") ?? false;
   // Clinic roles other than Quản trị phòng khám are given by whoever runs the clinic's staff.
-  const { data: canStaff } = useCan({ resource: "employees", action: "edit" });
+  const canManageStaffRoles = systemAdmin || ((getAuthorities()?.roles.includes("CLINIC_ADMIN") ?? false) && (getAuthorities()?.permissions.includes("employees:write") ?? false));
+  const { data: employee } = useQuery({
+    queryKey: ["clinic-role-employee", employeeId],
+    queryFn: () => kyInstance.get(`employees/${employeeId}`).json<Employee>(),
+  });
+  const ownAccount = employee?.userId === getIdentity()?.id;
   const { open: notify } = useNotification();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<string[] | null>(null);
@@ -250,10 +259,18 @@ export function ClinicRolesPanel({ employeeId }: { employeeId: number }) {
   const groups = Object.keys(catalogue?.[0]?.access ?? {});
   const toggle = (code: string, on: boolean) =>
     setDraft(on ? [...roles, code] : roles.filter((c) => c !== code));
+  const added = roles.filter((code) => !held?.roles.includes(code));
+  const removed = (held?.roles ?? []).filter((code) => !roles.includes(code));
+  const roleNames = (codes: string[]) => codes.map((code) => catalogue?.find((role) => role.code === code)?.name ?? code).join(", ");
 
   return (
     <DetailPanel title="Vai trò tại phòng khám">
       <div className="flex flex-col gap-3 p-4" data-testid="clinic-roles-panel">
+        {!canManageStaffRoles && (
+          <p className="text-muted-foreground text-sm">
+            Vai trò Bác sĩ và Lễ tân do quản trị phòng khám quản lý. Bạn chỉ có thể cấp hoặc gỡ vai trò Quản trị phòng khám khi có quyền.
+          </p>
+        )}
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -266,7 +283,11 @@ export function ClinicRolesPanel({ employeeId }: { employeeId: number }) {
             </TableHeader>
             <TableBody>
               {(catalogue ?? []).map((role) => {
-                const locked = !canWrite?.can || (role.adminOnly ? !canMove?.can : !canStaff?.can);
+                const reason = ownAccount ? "Không tự đổi vai trò của chính mình."
+                  : !canWrite?.can ? "Bạn không có quyền quản lý vai trò."
+                  : role.adminOnly && !systemAdmin ? "Chỉ Quản trị hệ thống được cấp/gỡ vai trò này."
+                  : !role.adminOnly && !canManageStaffRoles ? "Bạn không có quyền quản lý nhân viên." : "";
+                const locked = Boolean(reason) || !held || !employee || save.isPending;
                 return (
                   <TableRow key={role.code}>
                     <TableCell>
@@ -278,6 +299,7 @@ export function ClinicRolesPanel({ employeeId }: { employeeId: number }) {
                           onCheckedChange={(v) => toggle(role.code, v === true)}
                         />
                         <span className="font-medium">{role.name}</span>
+                        {reason && <span className="text-muted-foreground text-xs">{reason}</span>}
                       </label>
                     </TableCell>
                     {groups.map((g) => (
@@ -297,9 +319,15 @@ export function ClinicRolesPanel({ employeeId }: { employeeId: number }) {
           </p>
         )}
         {canWrite?.can && (
-          <Button className="w-fit" size="sm" disabled={!draft || save.isPending} onClick={() => save.mutate()}>
+          <>
+          {draft && <div className="rounded-md border p-3 text-sm" aria-live="polite">
+            <p>Thêm vai trò: {roleNames(added) || "Không có"}</p>
+            <p>Gỡ vai trò: {roleNames(removed) || "Không có"}</p>
+          </div>}
+          <Button className="w-fit" size="sm" disabled={ownAccount || !employee || !held || (!added.length && !removed.length) || save.isPending} onClick={() => save.mutate()}>
             Lưu vai trò
           </Button>
+          </>
         )}
       </div>
     </DetailPanel>

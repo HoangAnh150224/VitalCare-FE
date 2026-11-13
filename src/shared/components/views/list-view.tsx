@@ -151,6 +151,7 @@ export function ListToolbar<TData extends BaseRecord>({
   search,
   filters,
   actions,
+  exportAction,
   className,
 }: {
   /** Enables the standard Refresh / Columns / Export cluster. */
@@ -158,6 +159,7 @@ export function ListToolbar<TData extends BaseRecord>({
   search?: ReactNode;
   filters?: ReactNode;
   actions?: ReactNode;
+  exportAction?: ReactNode;
   className?: string;
 }) {
   const hasActions = Boolean(actions) || Boolean(table);
@@ -182,7 +184,7 @@ export function ListToolbar<TData extends BaseRecord>({
             <>
               <DataTableRefresh table={table} />
               <DataTableColumnToggle table={table} />
-              <DataTableExport table={table} />
+              {exportAction ?? <DataTableExport table={table} />}
             </>
           )}
         </div>

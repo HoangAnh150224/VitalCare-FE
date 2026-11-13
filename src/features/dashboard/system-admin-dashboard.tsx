@@ -212,9 +212,6 @@ function RecentActivity({
             Năm thao tác mới nhất được ghi nhận
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/audit-logs">Mở nhật ký</Link>
-        </Button>
       </div>
 
       <Card className="min-h-64 gap-0 overflow-hidden p-0">

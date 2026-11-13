@@ -1,4 +1,5 @@
 import type { HttpError } from "@refinedev/core";
+import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
 import { useForm } from "@refinedev/react-hook-form";
 import { useNavigate } from "react-router";
 
@@ -61,7 +62,7 @@ const DEFAULT_VALUES: StaffFormValues = {
  * record, in one step. Their role follows from the type — a doctor gets the
  * doctor role — so there is no role picker to get wrong.
  */
-export const StaffCreate = () => {
+export const StaffCreate = ({ editing = false }: { editing?: boolean }) => {
   const navigate = useNavigate();
   const authorities = getAuthorities();
   const permissions = authorities?.permissions ?? [];
@@ -84,15 +85,17 @@ export const StaffCreate = () => {
   });
   const clinics = useClinicOptions();
   const selectedStaffType = form.watch("staffType");
+  const View = editing ? EditView : CreateView;
 
   return (
-    <CreateView>
-      <CreateViewHeader title={clinicAdminOnly ? "Tạo quản trị phòng khám" : undefined} />
+    <View>
+      {editing ? <EditViewHeader title="Chỉnh sửa quản trị phòng khám" /> : <CreateViewHeader title={clinicAdminOnly ? "Tạo quản trị phòng khám" : undefined} />}
       <Form {...form}>
         <form
           // An empty clinic is left to the API: the creator's own clinic, or the first one.
           onSubmit={form.handleSubmit((values) => onFinish({
             ...values,
+            password: editing && !values.password ? undefined : values.password,
             staffType: clinicAdminOnly ? "clinic_admin" : values.staffType,
             clinicId: values.clinicId || null,
           } as never))}
@@ -138,18 +141,18 @@ export const StaffCreate = () => {
                 control={form.control}
                 name="password"
                 rules={{
-                  required: "Vui lòng nhập mật khẩu",
-                  validate: (value) => Boolean(value.trim()) || "Vui lòng nhập mật khẩu",
+                  required: editing ? false : "Vui lòng nhập mật khẩu",
+                  validate: (value) => (editing && !value) || Boolean(value?.trim()) || "Vui lòng nhập mật khẩu",
                   minLength: { value: 8, message: "Tối thiểu 8 ký tự" },
                   maxLength: { value: 72, message: "Tối đa 72 ký tự" },
                 }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
-                    <FormLabel>Mật khẩu ban đầu <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
+                    <FormLabel>{editing ? "Mật khẩu mới (không bắt buộc)" : <>Mật khẩu ban đầu <span className="text-destructive" aria-hidden="true">*</span></>}</FormLabel>
                     <FormControl>
-                      <InputPassword {...field} placeholder="Nhập mật khẩu ban đầu" aria-required="true" autoComplete="new-password" />
+                      <InputPassword {...field} value={field.value ?? ""} placeholder={editing ? "Để trống để giữ mật khẩu hiện tại" : "Nhập mật khẩu ban đầu"} aria-required={!editing} autoComplete="new-password" />
                     </FormControl>
-                    <FormDescription>Gửi cho nhân viên và yêu cầu đổi sau lần đăng nhập đầu.</FormDescription>
+                    <FormDescription>{editing ? "Nhập mật khẩu mới sẽ đăng xuất các phiên đang mở của tài khoản." : "Gửi cho nhân viên và yêu cầu đổi sau lần đăng nhập đầu."}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -160,7 +163,7 @@ export const StaffCreate = () => {
               title={clinicAdminOnly ? "Thông tin quản trị phòng khám" : "Hồ sơ chuyên môn"}
               contentClassName="items-start"
               description={clinicAdminOnly
-                ? "Quản trị hệ thống chỉ tạo tài khoản quản trị phòng khám."
+                ? "Quản trị hệ thống quản lý tài khoản quản trị phòng khám."
                 : "Loại nhân viên quyết định quyền trong hệ thống."}
             >
               <FormField
@@ -225,7 +228,7 @@ export const StaffCreate = () => {
 
             <FormSectionActions>
               <Button type="submit" disabled={form.formState.isSubmitting || staffTypeOptions.length === 0}>
-                {form.formState.isSubmitting ? "Đang lưu..." : clinicAdminOnly ? "Tạo quản trị phòng khám" : "Tạo nhân viên"}
+                {form.formState.isSubmitting ? "Đang lưu..." : editing ? "Lưu thay đổi" : clinicAdminOnly ? "Tạo quản trị phòng khám" : "Tạo nhân viên"}
               </Button>
               <Button type="button" variant="outline" onClick={() => navigate(-1)}>
                 Hủy
@@ -234,6 +237,6 @@ export const StaffCreate = () => {
           </SectionedFormPanel>
         </form>
       </Form>
-    </CreateView>
+    </View>
   );
 };
