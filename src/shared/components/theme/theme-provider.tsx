@@ -19,7 +19,6 @@ import {
   DEFAULTS,
   getStoredColorPreset,
   getStoredDensity,
-  getStoredMode,
   getStoredRadius,
   getStoredSidebarTone,
   resolveMode,
@@ -50,7 +49,7 @@ type ThemeProviderState = {
   density: Density;
   setDensity: (density: Density) => void;
 
-  /** Back to the shipped defaults (navy / system / md / dark rail / cozy). */
+  /** Back to the shipped defaults (navy / light / md / dark rail / cozy). */
   reset: () => void;
 
   /**
@@ -82,10 +81,9 @@ export function ThemeProvider({
   defaultDensity = DEFAULTS.density,
 }: ThemeProviderProps) {
   // The inline bootstrap in index.html already put these on <html> before
-  // first paint; we read the same storage so React starts in agreement with
-  // the DOM and nothing flashes on hydration.
+  // first paint. Mode starts fresh on every page load; other settings persist.
   const [mode, setModeState] = useState<ThemeMode>(
-    () => getStoredMode(defaultMode)
+    () => defaultMode
   );
   const [colorPreset, setColorPresetState] = useState<ColorPreset>(
     () => getStoredColorPreset(defaultColorPreset)

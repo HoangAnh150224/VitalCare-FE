@@ -31,15 +31,9 @@
           }
         }
 
-        var mode = read("dth-ui-mode", ["light", "dark", "system"], "system");
-        var isDark =
-          mode === "dark" ||
-          (mode === "system" &&
-            typeof matchMedia === "function" &&
-            matchMedia("(prefers-color-scheme: dark)").matches);
-
-        d.classList.toggle("dark", isDark);
-        d.style.colorScheme = isDark ? "dark" : "light";
+        // Every page load starts light, including returning visitors.
+        d.classList.remove("dark");
+        d.style.colorScheme = "light";
 
         d.setAttribute(
           "data-color-preset",

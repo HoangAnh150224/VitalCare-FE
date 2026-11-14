@@ -1,6 +1,7 @@
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 import React from "react";
+import { EndMembershipButton } from "./end-membership-button";
 
 import {
   actionsColumnWidth,
@@ -108,15 +109,18 @@ export const StaffList = () => {
         cell: ({ row }) => (
           <div className="flex gap-1">
             {row.original.deletedAt ? (
-              <span className="text-muted-foreground text-sm">Đã nghỉ {formatDateTime(row.original.deletedAt)}</span>
+              <span className="text-muted-foreground text-sm">Đã nghỉ {formatDateTime(row.original.membershipEndedAt ?? row.original.deletedAt)}</span>
+            ) : row.original.status === "inactive" ? (
+              <ShowButton recordItemId={row.original.id} iconOnly size="icon-sm" />
             ) : <>
             <EditButton recordItemId={row.original.id} iconOnly size="icon-sm" />
             <ShowButton recordItemId={row.original.id} iconOnly size="icon-sm" />
+            <EndMembershipButton employee={row.original} />
             {clinicAdminsOnly && <DeleteButton recordItemId={row.original.id} iconOnly size="icon-sm" />}
             </>}
           </div>
         ),
-        ...actionsColumnWidth(clinicAdminsOnly ? 3 : 2),
+        ...actionsColumnWidth(clinicAdminsOnly ? 4 : 3),
       }),
     ];
   }, [severalClinics, clinicName, clinicAdminsOnly]);

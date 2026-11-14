@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router";
 
-import { publicGet, publicRetry } from "@/shared/api/public";
+import { PublicError, publicGet, publicRetry } from "@/shared/api/public";
 import {
   EmergencyWarning,
   GuidanceBody,
@@ -175,16 +175,19 @@ function CategoryChip({
 /** SRS 3.17.2: one article as published, with the emergency button at its foot. */
 export function PublicFirstAidShow() {
   const { id } = useParams();
+  const validId = /^[1-9]\d*$/.test(id ?? "") && Number.isSafeInteger(Number(id));
   const {
     data: article,
     isLoading,
     error,
   } = useQuery({
     queryKey: ["public", "first_aid", id],
-    retry: publicRetry,
+    retry: (failures, error) =>
+      !(error instanceof PublicError && error.status === 400) && publicRetry(failures, error),
     queryFn: () => publicGet<PublishedFirstAid>(`first_aid/${id}`),
-    enabled: Boolean(id),
+    enabled: validId,
   });
+  const notFound = !validId || (error instanceof PublicError && [400, 404].includes(error.status ?? 0));
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pt-6 pb-12 sm:px-6">
@@ -195,8 +198,10 @@ export function PublicFirstAidShow() {
         </Link>
       </Button>
       {isLoading && <Skeleton className="h-96 rounded-2xl" />}
-      {error && <EmptyState tone="error" message={(error as Error).message} />}
-      {article && (
+      {(notFound || error) && <EmptyState tone="error" message={notFound
+        ? "Không tìm thấy hướng dẫn. Vui lòng thử lại sau."
+        : "Không tải được hướng dẫn. Vui lòng thử lại sau."} />}
+      {validId && !error && article && (
         <article className="flex flex-col gap-4">
           <header>
             <p className="text-primary text-sm font-medium">

@@ -15,6 +15,7 @@ export type Employee = {
   clinicId: string | null;
   createdAt: string;
   deletedAt?: string | null;
+  membershipEndedAt?: string | null;
 };
 
 /**
