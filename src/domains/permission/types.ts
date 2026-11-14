@@ -77,7 +77,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   feedback: "Góp ý của bệnh nhân",
   my_feedback: "Góp ý của tôi",
   my_licenses: "Giấy phép của tôi",
-  licenses: "Giấy phép nhân viên",
+  licenses: "Chứng chỉ hành nghề",
   monitoring_dashboard: "Tổng quan theo dõi",
   reports: "Báo cáo tổng hợp",
   staff_memberships: "Thành viên phòng khám",

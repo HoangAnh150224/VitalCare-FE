@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { kyInstance } from "@/shared/api/data";
+import { getAuthorities, getIdentity } from "@/shared/api/session";
 import {
   CreateView,
   CreateViewHeader,
@@ -61,8 +62,7 @@ const EMPTY: Values = {
   title: "",
   category: "general",
   summary: "",
-  // The headings of SRS 3.17.2, so a new article starts in the shape patients read.
-  body: "## Tình huống\n\n\n## Việc cần làm ngay\n1. \n\n## Những điều không nên làm\n- \n\n## Khi nào cần hỗ trợ y tế\n",
+  body: "",
   emergencyWarning: "",
   videoUrl: "",
 };
@@ -81,10 +81,10 @@ function previewVideo(link: string | null | undefined): string | null {
 
 /** The marks the body understands, inserted at the caret: SRS 3.17.5's toolbar. */
 const MARKS = [
-  { label: "Tiêu đề", text: "\n## " },
-  { label: "Đoạn văn", text: "\n\n" },
-  { label: "Các bước", text: "\n1. " },
-  { label: "Danh sách", text: "\n- " },
+  { label: "Tiêu đề", prefix: "## ", text: "Nhập tiêu đề mục" },
+  { label: "Đoạn văn", prefix: "", text: "Nhập nội dung đoạn văn" },
+  { label: "Các bước", prefix: "1. ", text: "Nhập bước hướng dẫn" },
+  { label: "Danh sách", prefix: "- ", text: "Nhập nội dung danh sách" },
 ];
 
 /**
@@ -110,6 +110,10 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
     defaultValues: mode === "create" ? EMPTY : undefined,
   });
   const current = query?.data?.data as FirstAidArticle | undefined;
+  const authorities = getAuthorities();
+  const directPublish = Boolean(authorities?.roles.includes("CLINIC_ADMIN")
+    && authorities.permissions.includes("first_aid_articles:review")
+    && (!current || current.status !== "draft" || String(current.authorId) === String(getIdentity()?.id)));
   const values = form.watch();
 
   const save = (andSubmit: boolean) =>
@@ -129,10 +133,10 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
       if (andSubmit) {
         setSending(true);
         try {
-          await kyInstance.post(`first_aid_articles/${id}/submit`, {
+          await kyInstance.post(`first_aid_articles/${id}/${directPublish ? "publish" : "submit"}`, {
             json: {},
           });
-          open?.({ type: "success", message: "Đã lưu và gửi duyệt" });
+          open?.({ type: "success", message: directPublish ? "Đã lưu và xuất bản" : "Đã lưu và gửi duyệt" });
         } catch (error) {
           open?.({
             type: "error",
@@ -145,16 +149,21 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
       navigate(`/first-aid-articles/show/${id}`);
     });
 
-  const insert = (text: string) => {
+  const insert = (mark: (typeof MARKS)[number]) => {
     const area = bodyRef.current;
     const body = form.getValues("body") ?? "";
     const at = area?.selectionStart ?? body.length;
-    form.setValue("body", body.slice(0, at) + text + body.slice(at), {
+    const end = area?.selectionEnd ?? at;
+    const selected = body.slice(at, end);
+    const prefix = (at > 0 ? "\n\n" : "") + mark.prefix;
+    const text = selected || mark.text;
+    form.setValue("body", body.slice(0, at) + prefix + text + "\n\n" + body.slice(end), {
       shouldDirty: true,
+      shouldValidate: true,
     });
     requestAnimationFrame(() => {
-      area?.focus();
-      area?.setSelectionRange(at + text.length, at + text.length);
+      area?.focus({ preventScroll: true });
+      area?.setSelectionRange(at + prefix.length, at + prefix.length + text.length);
     });
   };
 
@@ -169,8 +178,7 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
           <Alert className="mb-4">
             <AlertDescription>
               Bài đang ở trạng thái khác bản nháp. Lưu sẽ tạo phiên bản{" "}
-              {revisionLabel(current.revision + 1)} dạng bản nháp và cần duyệt
-              lại.
+              {revisionLabel(current.revision + 1)} dạng bản nháp. {directPublish ? "Bạn có thể xuất bản trực tiếp." : "Phiên bản này cần được duyệt lại."}
               {current.publishedRevision
                 ? ` Bệnh nhân vẫn xem ${revisionLabel(
                     current.publishedRevision
@@ -183,20 +191,21 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
           <SectionedFormPanel>
             <FormSection
               title="Bản nháp nội dung"
-              description="Soạn theo cấu trúc. Cần người có quyền duyệt trước khi xuất bản."
+              description={directPublish ? "Soạn nội dung và xuất bản trực tiếp để bệnh nhân xem, hoặc lưu nháp để hoàn thiện sau." : "Soạn theo cấu trúc. Cần người có quyền duyệt trước khi xuất bản."}
             >
               <FormField
                 control={form.control}
                 name="title"
                 rules={{
                   required: "Nhập tiêu đề",
+                  validate: (value) => Boolean(value?.trim()) || "Nhập tiêu đề",
                   maxLength: { value: 200, message: "Tối đa 200 ký tự" },
                 }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-8">
-                    <FormLabel>Tiêu đề</FormLabel>
+                    <FormLabel>Tiêu đề <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Khó thở" />
+                      <Input {...field} aria-required="true" placeholder="Khó thở" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -208,10 +217,10 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
                 rules={{ required: "Chọn danh mục" }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
-                    <FormLabel>Danh mục</FormLabel>
+                    <FormLabel>Danh mục <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="w-full" aria-label="Danh mục">
+                        <SelectTrigger className="w-full" aria-label="Danh mục" aria-required="true">
                           <SelectValue placeholder="Chọn danh mục" />
                         </SelectTrigger>
                       </FormControl>
@@ -232,13 +241,14 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
                 name="summary"
                 rules={{
                   required: "Nhập tóm tắt",
+                  validate: (value) => Boolean(value?.trim()) || "Nhập tóm tắt",
                   maxLength: { value: 500, message: "Tối đa 500 ký tự" },
                 }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-12">
-                    <FormLabel>Tóm tắt</FormLabel>
+                    <FormLabel>Tóm tắt <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <FormControl>
-                      <Textarea
+                      <Textarea aria-required="true"
                         {...field}
                         rows={2}
                         placeholder="Tóm tắt ngắn gọn, dễ hiểu cho ứng dụng bệnh nhân."
@@ -253,11 +263,12 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
                 name="body"
                 rules={{
                   required: "Nhập nội dung hướng dẫn",
+                  validate: (value) => Boolean(value?.trim()) || "Vui lòng nhập nội dung hướng dẫn.",
                   maxLength: { value: 20000, message: "Tối đa 20.000 ký tự" },
                 }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-12">
-                    <FormLabel>Nội dung</FormLabel>
+                    <FormLabel>Nội dung <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <div className="flex flex-wrap gap-1">
                       {MARKS.map((mark) => (
                         <Button
@@ -265,20 +276,22 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => insert(mark.text)}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => insert(mark)}
                         >
                           {mark.label}
                         </Button>
                       ))}
                     </div>
                     <FormControl>
-                      <Textarea
+                      <Textarea aria-required="true"
                         {...field}
                         ref={(element) => {
                           field.ref(element);
                           bodyRef.current = element;
                         }}
                         rows={16}
+                        placeholder="Nhập nội dung hướng dẫn tại đây. Dùng các nút phía trên để thêm tiêu đề, đoạn văn, các bước hoặc danh sách."
                         className="font-mono text-sm"
                       />
                     </FormControl>
@@ -296,13 +309,14 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
                 name="emergencyWarning"
                 rules={{
                   required: "Nhập cảnh báo khẩn cấp",
+                  validate: (value) => Boolean(value?.trim()) || "Nhập cảnh báo khẩn cấp",
                   maxLength: { value: 1000, message: "Tối đa 1.000 ký tự" },
                 }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-12">
-                    <FormLabel>Cảnh báo khẩn cấp</FormLabel>
+                    <FormLabel>Cảnh báo khẩn cấp <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <FormControl>
-                      <Textarea
+                      <Textarea aria-required="true"
                         {...field}
                         rows={2}
                         placeholder="Dấu hiệu nào thì gọi 115 ngay."
@@ -349,7 +363,7 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
                 disabled={busy}
                 onClick={save(true)}
               >
-                Lưu & gửi duyệt
+                {directPublish ? "Lưu & xuất bản" : "Lưu & gửi duyệt"}
               </Button>
               <Button
                 type="button"
@@ -372,7 +386,9 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
               <EmergencyWarning text={values.emergencyWarning} />
             )}
             <GuidanceVideo url={previewVideo(values.videoUrl)} title={values.title || "Video"} />
-            <GuidanceBody body={values.body ?? ""} />
+            {values.body?.trim() ? <GuidanceBody body={values.body} /> : (
+              <p className="text-muted-foreground text-sm">Nội dung hướng dẫn sẽ hiển thị tại đây khi bạn bắt đầu soạn.</p>
+            )}
           </section>
         </div>
       </form>

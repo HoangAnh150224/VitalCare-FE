@@ -9,6 +9,7 @@ export type FirstAidStatus =
   | "pending_review"
   | "reviewed"
   | "published"
+  | "paused"
   | "archived";
 
 export type FirstAidCategory =
@@ -27,6 +28,8 @@ export type FirstAidAction =
   | "approve"
   | "reject"
   | "publish"
+  | "pause"
+  | "resume"
   | "archive";
 
 /** An article as staff work it: `GET /first_aid_articles/{id}`. */
@@ -87,6 +90,7 @@ export const FIRST_AID_STATUS_LABELS: Record<FirstAidStatus, string> = {
   pending_review: "Đang duyệt",
   reviewed: "Đã duyệt",
   published: "Đã xuất bản",
+  paused: "Tạm ngưng",
   archived: "Đã lưu trữ",
 };
 

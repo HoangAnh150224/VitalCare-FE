@@ -43,6 +43,43 @@ export const STAFF_TYPE_OPTIONS: { label: string; value: StaffType }[] = [
   { label: "Quản trị phòng khám", value: "clinic_admin" },
 ];
 
+/** The specialties the clinic offers. Stored as the label itself — the API keeps `specialty` as free text. */
+export const SPECIALTY_OPTIONS = [
+  "Tim mạch",
+  "Hô hấp",
+  "Tim mạch nhi",
+  "Hô hấp nhi",
+  "Phẫu thuật tim mạch",
+  "Phẫu thuật lồng ngực",
+] as const;
+
+/** Professional titles, stored as the label itself like the specialty. */
+export const PROFESSIONAL_TITLE_OPTIONS = [
+  "Bác sĩ",
+  "Bác sĩ chuyên khoa I",
+  "Bác sĩ chuyên khoa II",
+  "Thạc sĩ, Bác sĩ",
+  "Tiến sĩ, Bác sĩ",
+  "Phó giáo sư, Tiến sĩ",
+  "Giáo sư, Tiến sĩ",
+  "Điều dưỡng",
+  "Kỹ thuật viên",
+  "Lễ tân",
+] as const;
+
+/** The post someone holds at the clinic, stored as the label itself. */
+export const CLINIC_POSITION_OPTIONS = [
+  "Trưởng khoa",
+  "Phó trưởng khoa",
+  "Bác sĩ điều trị",
+  "Bác sĩ phẫu thuật",
+  "Điều dưỡng trưởng",
+  "Điều dưỡng",
+  "Kỹ thuật viên",
+  "Lễ tân",
+  "Thu ngân",
+] as const;
+
 export const EMPLOYEE_STATUS_LABELS: Record<EmployeeStatus, string> = {
   active: "Đang hoạt động",
   inactive: "Đã nghỉ",

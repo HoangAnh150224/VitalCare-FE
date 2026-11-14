@@ -42,7 +42,10 @@ export const StaffList = () => {
   const clinicAdminsOnly = getAuthorities()?.roles.includes("ADMIN") ?? false;
   const filterFields = clinicAdminsOnly
     ? FILTER_FIELDS.filter((field) => field.field !== "staffType")
-    : FILTER_FIELDS;
+    // A clinic's own list never holds its administrators, so the filter does not offer them.
+    : FILTER_FIELDS.map((field) => field.field === "staffType"
+        ? { ...field, options: STAFF_TYPE_OPTIONS.filter((option) => option.value !== "clinic_admin") }
+        : field);
   const clinics = useClinicOptions();
   const { several: severalClinics, nameOf: clinicName } = clinics;
   const columns = React.useMemo(() => {

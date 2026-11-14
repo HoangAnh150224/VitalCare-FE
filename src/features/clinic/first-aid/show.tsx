@@ -43,7 +43,7 @@ import { FIRST_AID_CATEGORY_LABELS } from "@/domains/first-aid/types";
 import { formatDateTime } from "@/shared/lib/format";
 import { FirstAidStatusBadge, revisionLabel, useFirstAidSteps } from "./parts";
 
-type Confirm = "publish" | "archive" | null;
+type Confirm = "publish" | "archive" | "pause" | "resume" | null;
 
 /**
  * SRS 3.17.6 / 3.17.8: an article and what may be done to it now. The buttons
@@ -94,6 +94,12 @@ export const FirstAidShow = () => {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              {(can("pause") || can("resume")) && (
+                <Button variant="outline" disabled={steps.pending}
+                  onClick={() => setConfirm(can("pause") ? "pause" : "resume")}>
+                  {can("pause") ? "Tạm ngưng" : "Mở lại"}
+                </Button>
+              )}
               {can("submit") && (
                 <Button
                   onClick={() => article && steps.run(article.id, "submit")}
@@ -216,7 +222,7 @@ export const FirstAidShow = () => {
                 </DetailRow>
               )}
               <DetailRow label="Bệnh nhân đang xem">
-                {article?.publishedRevision ? (
+                {article?.status === "paused" ? "Đang tạm ngưng hiển thị" : article?.publishedRevision ? (
                   `${revisionLabel(
                     article.publishedRevision
                   )}, từ ${formatDateTime(article.publishedAt)}`
@@ -239,12 +245,12 @@ export const FirstAidShow = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirm === "publish"
+              {confirm === "pause" ? "Tạm ngưng nội dung này?" : confirm === "resume" ? "Mở lại nội dung này?" : confirm === "publish"
                 ? "Xuất bản nội dung này?"
                 : "Lưu trữ nội dung này?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirm === "publish"
+              {confirm === "pause" ? "Bài sẽ được ẩn khỏi trang sơ cứu của bệnh nhân. Bạn có thể mở lại bất cứ lúc nào, giữ nguyên phiên bản." : confirm === "resume" ? "Bài sẽ hiển thị lại cho bệnh nhân với nội dung và phiên bản đã xuất bản trước đó." : confirm === "publish"
                 ? `Bệnh nhân và người chăm sóc sẽ thấy ${
                     article ? revisionLabel(article.revision) : ""
                   } ngay, thay cho bản đang hiển thị (nếu có).`
@@ -260,7 +266,7 @@ export const FirstAidShow = () => {
                 setConfirm(null);
               }}
             >
-              {confirm === "publish" ? "Xuất bản" : "Lưu trữ"}
+              {confirm === "pause" ? "Tạm ngưng" : confirm === "resume" ? "Mở lại" : confirm === "publish" ? "Xuất bản" : "Lưu trữ"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -7,5 +7,5 @@ import type { DoctorAvailability } from "@/domains/schedule/types";
 export function useOwnClinicDoctors() {
   const { result, query } = useCustom<DoctorAvailability[]>({ url: `${API_URL}/doctors`, method: "get" });
   const doctors = Array.isArray(result?.data) ? result.data : [];
-  return { doctors, isLoading: query.isLoading, refetch: () => void query.refetch() };
+  return { doctors, isLoading: query.isLoading, isError: query.isError, refetch: () => void query.refetch() };
 }

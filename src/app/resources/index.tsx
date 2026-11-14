@@ -353,7 +353,7 @@ export const resources: ResourceProps[] = [
   {
     name: "licenses",
     list: "/licenses",
-    meta: { label: "Giấy phép nhân viên", icon: <Award className="h-4 w-4" />, parent: "clinic" },
+    meta: { label: "Chứng chỉ hành nghề", icon: <Award className="h-4 w-4" />, parent: "clinic" },
   },
   // Ordered in an encounter (on its page), carried out from here: no create.
   {
