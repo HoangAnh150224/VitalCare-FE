@@ -1,6 +1,7 @@
 import { useTable } from "@refinedev/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
 import React from "react";
+import { ExcelTableExport } from "@/shared/components/data-table/excel-export";
 
 import {
   actionsColumnWidth,
@@ -25,9 +26,10 @@ import {
   FIRST_AID_CATEGORY_LABELS,
   FIRST_AID_CATEGORY_OPTIONS,
   FIRST_AID_STATUS_OPTIONS,
+  FIRST_AID_STATUS_LABELS,
 } from "@/domains/first-aid/types";
 import { formatDateTime } from "@/shared/lib/format";
-import { FirstAidStatusBadge, revisionLabel } from "./parts";
+import { FirstAidStatusBadge, revisionLabel, FirstAidAvailabilityButton } from "./parts";
 
 const FILTER_FIELDS: AdvancedFilterField[] = [
   {
@@ -76,7 +78,7 @@ export const FirstAidList = () => {
           <div className="flex flex-col items-start gap-1">
             <FirstAidStatusBadge status={row.original.status} />
             {row.original.publishedRevision &&
-              row.original.status !== "published" && (
+              row.original.status !== "published" && row.original.status !== "paused" && (
                 <span className="text-muted-foreground text-xs">
                   Đang hiển thị {revisionLabel(row.original.publishedRevision)}
                 </span>
@@ -114,6 +116,7 @@ export const FirstAidList = () => {
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex gap-1">
+            <FirstAidAvailabilityButton article={row.original} />
             <ShowButton
               resource="first_aid_articles"
               recordItemId={row.original.id}
@@ -130,7 +133,7 @@ export const FirstAidList = () => {
             )}
           </div>
         ),
-        ...actionsColumnWidth(2),
+        ...actionsColumnWidth(3),
       }),
     ];
   }, []);
@@ -148,7 +151,7 @@ export const FirstAidList = () => {
     <ListView>
       <ListViewHeader
         resource="first_aid_articles"
-        description="Hướng dẫn sơ cứu cho bệnh nhân và người chăm sóc. Bài viết được người khác duyệt rồi mới xuất bản."
+        description="Quản lý hướng dẫn sơ cứu cho bệnh nhân và người chăm sóc. Có thể tạm ngưng và mở lại nội dung đã xuất bản."
       />
       <DataTable
         table={table}
@@ -156,6 +159,22 @@ export const FirstAidList = () => {
           <>
             <ListToolbar
               table={table}
+              exportAction={<ExcelTableExport
+                table={table}
+                resource="first_aid_articles"
+                title="DANH SÁCH NỘI DUNG SƠ CỨU"
+                columns={[
+                  { label: "Mã bài", width: 12, value: (row: FirstAidArticle) => row.id },
+                  { label: "Tiêu đề", width: 36, value: (row: FirstAidArticle) => row.title },
+                  { label: "Danh mục", width: 22, value: (row: FirstAidArticle) => FIRST_AID_CATEGORY_LABELS[row.category] },
+                  { label: "Tóm tắt", width: 55, value: (row: FirstAidArticle) => row.summary },
+                  { label: "Trạng thái", width: 20, value: (row: FirstAidArticle) => FIRST_AID_STATUS_LABELS[row.status] },
+                  { label: "Phiên bản", width: 13, value: (row: FirstAidArticle) => row.revision },
+                  { label: "Người soạn", width: 26, value: (row: FirstAidArticle) => row.authorName ?? "—" },
+                  { label: "Cập nhật gần nhất", width: 27, value: (row: FirstAidArticle) => formatDateTime(row.updatedAt) },
+                  { label: "Ngày xuất bản", width: 27, value: (row: FirstAidArticle) => formatDateTime(row.publishedAt) },
+                ]}
+              />}
               search={<DataTableQuickFilter table={table} placeholder="Tìm theo tiêu đề hoặc tóm tắt hướng dẫn sơ cứu..." />}
               filters={
                 <DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />

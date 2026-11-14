@@ -28,6 +28,9 @@ import { clinicToday } from "../appointments/clinic-day";
 import { doctorLabel } from "../appointments/doctor-day";
 import { useOwnClinicDoctors } from "./use-doctors";
 import { WorkingHoursEditor } from "./working-hours-editor";
+import { getAuthorities } from "@/shared/api/session";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
+import { Card } from "@/shared/ui/card";
 
 /**
  * A doctor's schedule (SRS 3.11.7): the week they work, repeating, and under
@@ -37,15 +40,18 @@ import { WorkingHoursEditor } from "./working-hours-editor";
  * administrator, any doctor's.
  */
 export const DoctorScheduleList = () => {
-  const { doctors, refetch } = useOwnClinicDoctors();
+  const { doctors, isLoading, isError, refetch } = useOwnClinicDoctors();
+  const chooseDoctorFirst = getAuthorities()?.roles.includes("CLINIC_ADMIN") ?? false;
+  const [search, setSearch] = useState("");
   const { data: canWrite } = useCan({ resource: "doctor_schedules", action: "edit" });
   const [chosen, setChosen] = useState("");
   const [from, setFrom] = useState(clinicToday());
 
-  // Until somebody picks: the doctor the caller manages — themselves, for a
-  // doctor — or the first on the list.
-  const selectedId = chosen || String((doctors.find((doctor) => doctor.manageable) ?? doctors[0])?.id ?? "");
+  // Clinic administrators choose a doctor first; doctors open their own schedule.
+  const selectedId = chosen || (chooseDoctorFirst ? "" : String((doctors.find((doctor) => doctor.manageable) ?? doctors[0])?.id ?? ""));
   const doctor = doctors.find((candidate) => String(candidate.id) === selectedId);
+  const term = search.trim().toLocaleLowerCase("vi-VN");
+  const visibleDoctors = doctors.filter((item) => doctorLabel(item).toLocaleLowerCase("vi-VN").includes(term));
 
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<DoctorSchedule>();
@@ -111,10 +117,13 @@ export const DoctorScheduleList = () => {
     <ListView>
       <ListViewHeader
         resource="doctor_schedules"
-        title="Lịch làm việc bác sĩ"
+        title={doctor ? `Lịch làm việc · ${doctor.fullName}` : "Lịch làm việc bác sĩ"}
         canCreate={false}
-        description="Giờ làm việc lặp lại hằng tuần và các khoảng thời gian không nhận khám. Số khám mỗi ngày tính từ đây."
+        description={chooseDoctorFirst && !doctor ? "Chọn bác sĩ trong cơ sở để xem và quản lý lịch làm việc." : "Giờ làm việc lặp lại hằng tuần và các khoảng thời gian không nhận khám của bác sĩ được chọn."}
         actions={
+          (!chooseDoctorFirst || doctor) && (
+          <div className="flex flex-wrap gap-2">
+          {chooseDoctorFirst && <Button variant="outline" onClick={() => setChosen("")}>Danh sách bác sĩ</Button>}
           <Select value={selectedId} onValueChange={setChosen}>
             <SelectTrigger className="w-72" aria-label="Bác sĩ">
               <SelectValue placeholder="Chọn bác sĩ" />
@@ -127,10 +136,35 @@ export const DoctorScheduleList = () => {
               ))}
             </SelectContent>
           </Select>
+          </div>
+          )
         }
       />
 
-      {doctor ? (
+      {isLoading ? <p role="status">Đang tải danh sách bác sĩ...</p> : isError ? (
+        <div role="alert">Không tải được danh sách bác sĩ. <Button variant="outline" onClick={refetch}>Thử lại</Button></div>
+      ) : chooseDoctorFirst && !doctor ? (
+        <Card className="overflow-hidden p-0">
+          <div className="p-4">
+            <Input aria-label="Tìm bác sĩ" placeholder="Tìm theo tên hoặc chuyên khoa bác sĩ..." value={search} onChange={(event) => setSearch(event.target.value)} className="max-w-lg" />
+          </div>
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead>Bác sĩ</TableHead><TableHead>Chuyên khoa</TableHead><TableHead>Chức danh</TableHead><TableHead>Lịch hằng tuần</TableHead><TableHead>Thao tác</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {visibleDoctors.map((item) => <TableRow key={item.id}>
+                <TableCell className="font-medium">{item.fullName}</TableCell>
+                <TableCell>{item.specialty || "—"}</TableCell>
+                <TableCell>{item.professionalTitle || "—"}</TableCell>
+                <TableCell>{item.workingHours.length ? `${item.workingHours.length} buổi / tuần` : "Chưa thiết lập"}</TableCell>
+                <TableCell><Button variant="outline" size="sm" onClick={() => setChosen(String(item.id))}>Xem lịch làm việc<span className="sr-only"> của {item.fullName}</span></Button></TableCell>
+              </TableRow>)}
+              {visibleDoctors.length === 0 && <TableRow><TableCell colSpan={5} className="py-8 text-center text-muted-foreground">{doctors.length ? "Không tìm thấy bác sĩ phù hợp." : "Cơ sở chưa có bác sĩ nào đang làm việc."}</TableCell></TableRow>}
+            </TableBody>
+          </Table>
+        </Card>
+      ) : doctor ? (
         <>
           <WorkingHoursEditor
             // A fresh editor per doctor: one doctor's unsaved rows must not follow to the next.

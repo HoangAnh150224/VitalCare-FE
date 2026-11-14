@@ -170,6 +170,7 @@ export const SERVICE_ORDER_STATUS_VARIANTS: Record<ServiceOrderStatus, BadgeVari
 
 /** Waiting on a reviewer is amber; out for patients is green. */
 export const FIRST_AID_STATUS_VARIANTS: Record<FirstAidStatus, BadgeVariant> = {
+  paused: "warning",
   draft: "outline",
   pending_review: "warning",
   reviewed: "info",

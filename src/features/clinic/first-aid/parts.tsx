@@ -1,4 +1,7 @@
-import { useCustomMutation, useNotification } from "@refinedev/core";
+import { useCustomMutation, useNotification, useInvalidate } from "@refinedev/core";
+import { PauseIcon, PlayIcon } from "lucide-react";
+import { Button } from "@/shared/ui/button";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/shared/ui/alert-dialog";
 
 import { API_URL } from "@/shared/api/constants";
 import { Badge } from "@/shared/ui/badge";
@@ -19,9 +22,42 @@ export const FirstAidStatusBadge = ({ status }: { status: FirstAidStatus }) => (
 /** "v3", the way the wireframes write a revision. */
 export const revisionLabel = (revision: number) => `v${revision}`;
 
-type Step = "submit" | "approve" | "reject" | "publish" | "archive";
+export function FirstAidAvailabilityButton({ article }: { article: FirstAidArticle }) {
+  const invalidate = useInvalidate();
+  const steps = useFirstAidSteps(() => {
+    void invalidate({ resource: "first_aid_articles", invalidates: ["list", "detail"] });
+  });
+  const action = article.actions.includes("pause") ? "pause" : article.actions.includes("resume") ? "resume" : null;
+  if (!action) return null;
+  const label = action === "pause" ? "Tạm ngưng" : "Mở lại";
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon-sm" title={label} aria-label={label} disabled={steps.pending}>
+          {action === "pause" ? <PauseIcon /> : <PlayIcon />}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{label} nội dung này?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {action === "pause" ? "Ẩn bài khỏi trang sơ cứu của bệnh nhân. Bạn có thể mở lại và giữ nguyên phiên bản." : "Hiển thị lại bài cho bệnh nhân, giữ nguyên nội dung và phiên bản đã xuất bản."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Hủy</AlertDialogCancel>
+          <AlertDialogAction onClick={() => void steps.run(article.id, action)}>{label}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+type Step = "submit" | "approve" | "reject" | "publish" | "archive" | "pause" | "resume";
 
 const DONE: Record<Step, string> = {
+  pause: "Đã tạm ngưng nội dung",
+  resume: "Đã mở lại nội dung",
   submit: "Đã gửi duyệt",
   approve: "Đã phê duyệt",
   reject: "Đã trả về cho người viết",

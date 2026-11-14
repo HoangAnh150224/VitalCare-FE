@@ -241,8 +241,8 @@ export const ClinicLicenses = () => {
     <ListView>
       <ListViewHeader
         resource="licenses"
-        title="Giấy phép nhân viên"
-        description="Chứng chỉ hành nghề của nhân viên cơ sở; sắp hết hạn là còn dưới 60 ngày."
+        title="Chứng chỉ hành nghề"
+        description="Chứng chỉ hành nghề của nhân viên tại cơ sở; sắp hết hạn là còn tối đa 60 ngày."
         canCreate={false}
       />
       <div className="flex gap-1">
@@ -258,7 +258,7 @@ export const ClinicLicenses = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Nhân viên</TableHead>
-              <TableHead>Giấy phép</TableHead>
+              <TableHead>Chứng chỉ hành nghề</TableHead>
               <TableHead>Số hiệu</TableHead>
               <TableHead>Hết hạn</TableHead>
               <TableHead>Hiệu lực</TableHead>
@@ -269,7 +269,7 @@ export const ClinicLicenses = () => {
             {!isLoading && rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-muted-foreground py-8 text-center">
-                  Không có giấy phép nào.
+                  Không có chứng chỉ hành nghề nào.
                 </TableCell>
               </TableRow>
             )}
