@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { cn } from "@/shared/lib/utils";
+import { formatVietnamesePhone } from "@/shared/lib/format";
 import { initials } from "@/shared/lib/format";
 
 type NavItem = { to: string; label: string; icon: LucideIcon };
@@ -226,7 +227,7 @@ function AccountMenu() {
           <span className="truncate text-sm font-medium">{name}</span>
           {user?.phone && (
             <span className="text-muted-foreground truncate text-xs font-normal">
-              {user.phone}
+              {formatVietnamesePhone(user.phone)}
             </span>
           )}
         </DropdownMenuLabel>

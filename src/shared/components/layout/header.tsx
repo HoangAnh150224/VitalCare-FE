@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { SidebarTrigger, useSidebar } from "@/shared/ui/sidebar";
+import { formatVietnamesePhone } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 
 type Identity = {
@@ -113,7 +114,7 @@ function UserMenu() {
     user?.fullName ??
     [user?.firstName, user?.lastName].filter(Boolean).join(" ");
   // Email is optional now; the phone number always exists, so it stands in.
-  const contact = user?.email || user?.phone;
+  const contact = user?.email || (user?.phone ? formatVietnamesePhone(user.phone) : undefined);
 
   return (
     <DropdownMenu>

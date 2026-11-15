@@ -115,10 +115,12 @@ export function BookingFields({
           }}
           render={({ field }) => (
             <FormItem className="md:col-span-8">
-              <FormLabel>Người tới khám</FormLabel>
+              <FormLabel>
+                Người tới khám <span className="text-destructive" aria-hidden="true">*</span>
+              </FormLabel>
               <Select onValueChange={field.onChange} value={field.value ?? ""}>
                 <FormControl>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full" aria-required="true">
                     <SelectValue placeholder="Chọn người tới khám" />
                   </SelectTrigger>
                 </FormControl>
@@ -168,10 +170,12 @@ export function BookingFields({
           rules={{ required: "Vui lòng chọn phòng khám" }}
           render={({ field }) => (
             <FormItem className="md:col-span-8">
-              <FormLabel>Phòng khám</FormLabel>
+              <FormLabel>
+                Phòng khám <span className="text-destructive" aria-hidden="true">*</span>
+              </FormLabel>
               <Select onValueChange={field.onChange} value={field.value ?? ""}>
                 <FormControl>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full" aria-required="true">
                     <SelectValue placeholder="Chọn phòng khám" />
                   </SelectTrigger>
                 </FormControl>
@@ -197,11 +201,14 @@ export function BookingFields({
         rules={{ required: "Vui lòng chọn ngày", validate: () => dayClosed ?? true }}
         render={({ field }) => (
           <FormItem className="md:col-span-3">
-            <FormLabel>Ngày khám</FormLabel>
+            <FormLabel>
+              Ngày khám <span className="text-destructive" aria-hidden="true">*</span>
+            </FormLabel>
             <FormControl>
               <Input
                 {...field}
                 type="date"
+                required
                 min={clinicToday()}
                 value={field.value ?? ""}
                 readOnly={todayOnly}
@@ -238,10 +245,13 @@ export function BookingFields({
         }}
         render={({ field }) => (
           <FormItem className="md:col-span-8">
-            <FormLabel>Lý do khám</FormLabel>
+            <FormLabel>
+              Lý do khám <span className="text-destructive" aria-hidden="true">*</span>
+            </FormLabel>
             <FormControl>
               <Input
                 {...field}
+                required
                 value={field.value ?? ""}
                 placeholder="Theo dõi sức khỏe định kỳ"
               />

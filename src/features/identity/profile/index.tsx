@@ -203,6 +203,7 @@ export const Profile = () => {
                 <InputPassword
                   id="current-password"
                   autoComplete="current-password"
+                  placeholder="Nhập mật khẩu hiện tại"
                   required
                   aria-invalid={wrongCurrent || undefined}
                   value={currentPassword}
@@ -242,6 +243,7 @@ export const Profile = () => {
                 <InputPassword
                   id="confirm-password"
                   autoComplete="new-password"
+                  placeholder="Nhập lại mật khẩu mới"
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
