@@ -7,7 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 import type { BaseRecord } from "@refinedev/core";
 
-export function ExcelTableExport<T extends BaseRecord>({ table, resource, title, columns }: { table: UseTableReturnType<T, HttpError>; resource: string; title: string; columns: { label: string; width: number; value: (row: T) => string | number }[] }) {
+export function ExcelTableExport<T extends BaseRecord>({ table, resource, title, columns }: { table: UseTableReturnType<T, HttpError>; resource: string; title: string; columns: { label: string; width: number; numFmt?: string; value: (row: T) => string | number }[] }) {
   const provider = useDataProvider();
   const [busy, setBusy] = useState(false);
   async function exportFile(all: boolean) {

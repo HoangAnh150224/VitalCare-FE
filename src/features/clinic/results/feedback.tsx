@@ -1,4 +1,6 @@
-import { useNotification } from "@refinedev/core";
+import { useCan, useNotification } from "@refinedev/core";
+import { Link, useNavigate, useParams } from "react-router";
+import { Label } from "@/shared/ui/label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { StarIcon } from "lucide-react";
 import { useState } from "react";
@@ -123,6 +125,7 @@ export function MyFeedbackCard({ appointmentId }: { appointmentId: number }) {
           </Button>
         </>
       )}
+      {mine?.reply && <div className="rounded border p-4"><h3 className="font-semibold">Phản hồi từ phòng khám</h3><p className="whitespace-pre-wrap">{mine.reply}</p>{mine.repliedAt && <p className="text-sm text-muted-foreground">{formatDateTime(mine.repliedAt)}</p>}</div>}
     </section>
   );
 }
@@ -141,7 +144,8 @@ export const FeedbackList = () => {
     },
   });
   const rows = data ?? [];
-  const average = rows.length ? rows.reduce((s, f) => s + f.rating, 0) / rows.length : null;
+  const activeRows = rows.filter((f) => !f.deleted);
+  const average = activeRows.length ? activeRows.reduce((s, f) => s + f.rating, 0) / activeRows.length : null;
 
   return (
     <ListView>
@@ -162,7 +166,7 @@ export const FeedbackList = () => {
         </div>
         {average != null && (
           <span className="text-muted-foreground text-sm" data-testid="feedback-average">
-            Trung bình {average.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}/5 · {rows.length} góp ý
+            Trung bình {average.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}/5 · {activeRows.length} góp ý chưa xóa
           </span>
         )}
       </div>
@@ -174,6 +178,7 @@ export const FeedbackList = () => {
             <Card key={f.id} className="gap-2 px-5 py-4" data-testid={`feedback-${f.id}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium">{f.customerName}</span>
+                {f.deleted && <span className="rounded bg-muted px-3 py-1 text-sm text-muted-foreground">Đã xóa{f.deletedAt ? ` · ${formatDateTime(f.deletedAt)}` : ""}</span>}
                 <Stars value={f.rating} size="size-4" />
               </div>
               <p className="text-muted-foreground text-xs">
@@ -181,6 +186,7 @@ export const FeedbackList = () => {
                 {f.doctorName ? ` · BS ${f.doctorName}` : ""} · gửi {formatDateTime(f.createdAt)}
               </p>
               {f.comment && <p className="text-sm whitespace-pre-line">{f.comment}</p>}
+              <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">{f.reply ? "Đã phản hồi" : "Chưa phản hồi"}</span><Button asChild variant="outline" size="sm"><Link to={`/feedback/show/${f.id}`}>Xem chi tiết</Link></Button></div>
             </Card>
           ))}
         </div>
@@ -188,3 +194,41 @@ export const FeedbackList = () => {
     </ListView>
   );
 };
+
+export function FeedbackShow() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const cache = useQueryClient();
+  const { open: notify } = useNotification();
+  const { data: write } = useCan({ resource: "feedback", action: "edit" });
+  const { data: remove } = useCan({ resource: "feedback", action: "delete" });
+  const [reply, setReply] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
+  const { data, isLoading, isError } = useQuery({ queryKey: ["feedback", id], queryFn: () => kyInstance.get(`feedback/${id}`).json<PatientFeedback>() });
+  const action = useMutation({
+    mutationFn: (deleting: boolean) => send(deleting ? "delete" : "put", deleting ? `feedback/${id}` : `feedback/${id}/reply`, deleting ? { reason: reason.trim() } : { reply: (reply ?? data?.reply ?? "").trim() }),
+    onSuccess: (_, deleting) => {
+      void cache.invalidateQueries({ queryKey: ["feedback"] });
+      void cache.invalidateQueries({ queryKey: ["my_feedback"] });
+      setError("");
+      notify?.({ type: "success", message: deleting ? "Đã xóa góp ý không phù hợp" : "Đã lưu phản hồi cho bệnh nhân" });
+      if (deleting) navigate("/feedback");
+    },
+    onError: () => setError("Không thực hiện được thao tác. Vui lòng kiểm tra quyền và thử lại."),
+  });
+  return <ListView>
+    <div className="flex items-center gap-3"><Button variant="ghost" aria-label="Quay lại danh sách" onClick={() => navigate("/feedback")}>←</Button><h1 className="text-3xl font-bold">Chi tiết góp ý</h1></div>
+    {isLoading ? <p>Đang tải...</p> : isError || !data ? <p role="alert">Không tìm thấy góp ý hoặc bạn không có quyền xem.</p> : <>
+      <Card className="gap-3 p-6"><h2 className="text-xl font-semibold">{data.customerName}</h2><Stars value={data.rating} /><p>Lượt khám: {formatLocalDate(data.appointmentDate)} · Bác sĩ: {data.doctorName ?? "—"}</p><p className="text-sm text-muted-foreground">Gửi lúc {formatDateTime(data.createdAt)}</p><p className="whitespace-pre-wrap">{data.comment || "Không có nội dung nhận xét."}</p></Card>
+      {data.deleted && <Card className="gap-2 p-6"><h2 className="font-semibold">Đã xóa{data.deletedAt ? ` · ${formatDateTime(data.deletedAt)}` : ""}</h2><p className="whitespace-pre-wrap">Lý do: {data.removalReason || "—"}</p><p className="text-sm text-muted-foreground">Góp ý này chỉ có thể xem chi tiết.</p></Card>}
+      <Card className="gap-3 p-6"><Label htmlFor="feedback-reply">Phản hồi của phòng khám</Label>
+        {write?.can && !data.deleted ? <><Textarea id="feedback-reply" placeholder="Nhập phản hồi cho bệnh nhân..." maxLength={2000} value={reply ?? data.reply ?? ""} onChange={(e) => setReply(e.target.value)} /><Button className="w-fit" disabled={action.isPending || !(reply ?? data.reply ?? "").trim()} onClick={() => action.mutate(false)}>Lưu phản hồi</Button></> : <p className="whitespace-pre-wrap">{data.reply || "Chưa có phản hồi."}</p>}
+        {data.repliedAt && <p className="text-sm text-muted-foreground">Phản hồi lúc {formatDateTime(data.repliedAt)}</p>}
+      </Card>
+      {remove?.can && !data.deleted && <Card className="gap-3 p-6">{!confirmDelete ? <Button variant="outline" className="w-fit text-destructive" onClick={() => setConfirmDelete(true)}>Xóa góp ý không phù hợp</Button> : <><Label htmlFor="feedback-reason">Lý do xóa <span className="text-destructive">*</span></Label><Textarea id="feedback-reason" required maxLength={500} placeholder="Nhập lý do góp ý không phù hợp..." value={reason} onChange={(e) => setReason(e.target.value)} /><p className="text-sm">Góp ý vẫn hiển thị trong danh sách quản lý với trạng thái Đã xóa và chỉ cho xem chi tiết.</p><div className="flex gap-2"><Button variant="destructive" disabled={action.isPending || !reason.trim()} onClick={() => action.mutate(true)}>Xác nhận xóa</Button><Button variant="outline" disabled={action.isPending} onClick={() => setConfirmDelete(false)}>Hủy</Button></div></>}</Card>}
+      {error && <p role="alert" className="text-destructive">{error}</p>}
+    </>}
+  </ListView>;
+}

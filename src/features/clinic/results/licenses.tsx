@@ -1,3 +1,6 @@
+import { ArrowLeftIcon, EyeIcon } from "lucide-react";
+import { useNavigate, useParams } from "react-router";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { useNotification } from "@refinedev/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
@@ -21,6 +24,7 @@ import {
   type LicenseKind,
 } from "@/domains/results/types";
 import { download, refusal, send } from "./send";
+import { LicenseScan } from "./license-scan";
 
 type Draft = {
   kind: LicenseKind;
@@ -32,6 +36,52 @@ type Draft = {
 };
 const EMPTY: Draft = { kind: "LICENSE", title: "", licenseNumber: "", issuer: "", issuedOn: "", expiresOn: "" };
 const MAX_FILE = 10 * 1024 * 1024;
+
+export const ClinicLicenseShow = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { open: notify } = useNotification();
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
+    queryKey: ["licenses"],
+    queryFn: () => kyInstance.get("licenses").json<License[]>(),
+  });
+  const selected = data?.find((license) => String(license.id) === id);
+  const downloadScan = async () => {
+    if (!selected) return;
+    try { await download(`licenses/${selected.id}/file`, selected.fileName ?? "chung-chi"); }
+    catch { notify?.({ type: "error", message: "Không tải được bản scan. Vui lòng thử lại." }); }
+  };
+  return <ListView>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" aria-label="Quay lại danh sách" title="Quay lại danh sách" onClick={() => navigate("/licenses")}><ArrowLeftIcon className="size-5" /></Button>
+        <h1 className="text-2xl font-semibold">Chi tiết chứng chỉ hành nghề</h1>
+      </div>
+      <Button variant="outline" disabled={isFetching} onClick={() => void refetch()}>Làm mới</Button>
+    </div>
+    <Card className="p-6 sm:p-8">
+      {isLoading ? <p role="status">Đang tải chứng chỉ...</p> : isError ? <p role="alert">Không tải được chứng chỉ. Vui lòng thử lại.</p> : !selected ? <p role="alert">Không tìm thấy chứng chỉ hoặc bạn không có quyền xem chứng chỉ này.</p> : <>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-5">
+          <h2 className="text-xl font-semibold">{selected.title}</h2>
+          <Badge variant={VALIDITY_VARIANTS[selected.validity]}>{VALIDITY_LABELS[selected.validity]}</Badge>
+        </div>
+        <dl className="grid gap-x-8 gap-y-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            ["Người sở hữu", selected.holderName ?? "—"],
+            ["Loại chứng chỉ", LICENSE_KIND_LABELS[selected.kind]],
+            ["Số hiệu", selected.licenseNumber],
+            ["Nơi cấp", selected.issuer],
+            ["Ngày cấp", formatLocalDate(selected.issuedOn)],
+            ["Ngày hết hạn", selected.expiresOn ? formatLocalDate(selected.expiresOn) : "Không thời hạn"],
+            ["Bản scan", selected.fileName ?? "Chưa có bản scan"],
+          ].map(([label, value]) => <div key={label}><dt className="mb-2 text-sm text-muted-foreground">{label}</dt><dd className="break-words font-medium">{value}</dd></div>)}
+        </dl>
+        <p className="text-sm text-muted-foreground">Chứng chỉ sắp hết hạn khi còn tối đa 60 ngày.</p>
+        {selected.hasFile && <div className="flex flex-wrap gap-2 border-t pt-5"><LicenseScan url={`licenses/${selected.id}/file`} name={selected.fileName} /><Button size="sm" variant="outline" onClick={() => void downloadScan()}>Tải bản scan</Button></div>}
+      </>}
+    </Card>
+  </ListView>;
+};
 
 /** FE-17 Manage Own Professional License and Certificate. */
 export const MyLicenses = () => {
@@ -46,14 +96,17 @@ export const MyLicenses = () => {
     queryKey: ["my_licenses"],
     queryFn: () => kyInstance.get("my_licenses").json<License[]>(),
   });
-  const refresh = () => void queryClient.invalidateQueries({ queryKey: ["my_licenses"] });
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ["my_licenses"] });
+    void queryClient.invalidateQueries({ queryKey: ["licenses"] });
+  };
   const save = useMutation({
     mutationFn: () => {
       const body = { ...draft, expiresOn: draft.expiresOn || null, issuedOn: draft.issuedOn || null };
       return editing === "new" ? send("post", "my_licenses", body) : send("put", `my_licenses/${editing}`, body);
     },
     onSuccess: () => {
-      notify?.({ type: "success", message: "Đã lưu giấy phép" });
+      notify?.({ type: "success", message: "Đã lưu chứng chỉ" });
       setEditing(null);
       setDraft(EMPTY);
       setError(null);
@@ -64,7 +117,7 @@ export const MyLicenses = () => {
   const remove = useMutation({
     mutationFn: (id: number) => send("delete", `my_licenses/${id}`),
     onSuccess: () => {
-      notify?.({ type: "success", message: "Đã xoá giấy phép" });
+      notify?.({ type: "success", message: "Đã xoá chứng chỉ" });
       refresh();
     },
     onError: (e) => notify?.({ type: "error", message: resultsErrorText(refusal(e)) }),
@@ -101,10 +154,13 @@ export const MyLicenses = () => {
   };
   const field = (name: keyof Draft, label: string, type = "text") => (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={`license-${name}`}>{label}</Label>
+      <Label htmlFor={`license-${name}`}>{label}{name !== "expiresOn" && <span className="text-destructive"> *</span>}</Label>
       <Input
         id={`license-${name}`}
         type={type}
+        required={name !== "expiresOn"}
+        placeholder={type === "text" ? `Nhập ${label.toLowerCase()}` : undefined}
+        maxLength={name === "licenseNumber" ? 64 : type === "text" ? 255 : undefined}
         value={draft[name]}
         onChange={(e) => setDraft({ ...draft, [name]: e.target.value })}
       />
@@ -116,7 +172,7 @@ export const MyLicenses = () => {
     <ListView>
       <ListViewHeader
         resource="my_licenses"
-        title="Giấy phép của tôi"
+        title="Chứng chỉ của tôi"
         description="Chứng chỉ hành nghề và các chứng nhận chuyên môn, kèm bản scan."
         canCreate={false}
         actions={
@@ -128,7 +184,7 @@ export const MyLicenses = () => {
                 setEditing("new");
               }}
             >
-              Thêm giấy phép
+              Thêm chứng chỉ
             </Button>
           )
         }
@@ -160,7 +216,7 @@ export const MyLicenses = () => {
             ))}
           </RadioGroup>
           <div className="grid gap-3 sm:grid-cols-2">
-            {field("title", "Tên giấy phép")}
+            {field("title", "Tên chứng chỉ")}
             {field("licenseNumber", "Số hiệu")}
             {field("issuer", "Nơi cấp")}
             {field("issuedOn", "Ngày cấp", "date")}
@@ -172,7 +228,14 @@ export const MyLicenses = () => {
             </p>
           )}
           <div className="flex gap-2">
-            <Button disabled={save.isPending} onClick={() => save.mutate()}>
+            <Button disabled={save.isPending} onClick={() => {
+              if (!draft.title.trim() || !draft.licenseNumber.trim() || !draft.issuer.trim() || !draft.issuedOn) {
+                setError("Vui lòng nhập đầy đủ tên chứng chỉ, số hiệu, nơi cấp và ngày cấp.");
+                return;
+              }
+              setError(null);
+              save.mutate();
+            }}>
               Lưu
             </Button>
             <Button variant="outline" onClick={() => setEditing(null)}>
@@ -182,7 +245,7 @@ export const MyLicenses = () => {
         </Card>
       )}
       {!isLoading && rows.length === 0 && editing == null ? (
-        <Card className="text-muted-foreground px-6 py-8 text-center text-sm">Bạn chưa thêm giấy phép nào.</Card>
+        <Card className="text-muted-foreground px-6 py-8 text-center text-sm">Bạn chưa thêm chứng chỉ nào.</Card>
       ) : (
         <div className="flex flex-col gap-3">
           {rows.map((l) => (
@@ -198,6 +261,7 @@ export const MyLicenses = () => {
                 Cấp {formatLocalDate(l.issuedOn)} · {l.expiresOn ? `hết hạn ${formatLocalDate(l.expiresOn)}` : "không thời hạn"}
               </p>
               <div className="flex flex-wrap gap-2">
+                {l.hasFile && <LicenseScan url={`my_licenses/${l.id}/file`} name={l.fileName} />}
                 {l.hasFile && (
                   <Button size="sm" variant="outline" onClick={() => void download(`my_licenses/${l.id}/file`, l.fileName ?? "giay-phep")}>
                     Tải {l.fileName}
@@ -228,77 +292,63 @@ export const MyLicenses = () => {
   );
 };
 
-/** FE-17 for the clinic administrator: every licence on staff, the ones expiring within 60 days first. */
+
+/** Clinic administrators inspect certificates submitted by staff, without editing them. */
 export const ClinicLicenses = () => {
-  const [expiring, setExpiring] = useState(false);
-  const { data, isLoading } = useQuery({
-    queryKey: ["licenses", expiring],
-    queryFn: () =>
-      kyInstance.get("licenses", { searchParams: expiring ? { expiring: "true" } : {} }).json<License[]>(),
+  const [search, setSearch] = useState("");
+  const [validity, setValidity] = useState("all");
+  const [kind, setKind] = useState("all");
+  const [scan, setScan] = useState("all");
+  const [page, setPage] = useState(1);
+  const navigate = useNavigate();
+  const { data, isLoading, isError, isFetching, refetch } = useQuery({
+    queryKey: ["licenses"],
+    queryFn: () => kyInstance.get("licenses").json<License[]>(),
   });
-  const rows = data ?? [];
+  const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
+  const term = normalize(search.trim());
+  const rows = (data ?? []).filter((l) =>
+    (!term || normalize([l.holderName, l.title, l.licenseNumber, l.issuer].join(" ")).includes(term)) &&
+    (validity === "all" || l.validity === validity) && (kind === "all" || l.kind === kind) &&
+    (scan === "all" || l.hasFile === (scan === "yes")));
+  const pages = Math.max(1, Math.ceil(rows.length / 10));
+  const currentPage = Math.min(page, pages);
+  const visible = rows.slice((currentPage - 1) * 10, currentPage * 10);
+  const filter = (value: string, change: (v: string) => void) => { change(value); setPage(1); };
   return (
     <ListView>
-      <ListViewHeader
-        resource="licenses"
-        title="Chứng chỉ hành nghề"
-        description="Chứng chỉ hành nghề của nhân viên tại cơ sở; sắp hết hạn là còn tối đa 60 ngày."
-        canCreate={false}
-      />
-      <div className="flex gap-1">
-        <Button size="sm" variant={expiring ? "outline" : "default"} onClick={() => setExpiring(false)}>
-          Tất cả
-        </Button>
-        <Button size="sm" variant={expiring ? "default" : "outline"} onClick={() => setExpiring(true)}>
-          Sắp hết hạn / hết hạn
-        </Button>
-      </div>
-      <Card className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nhân viên</TableHead>
-              <TableHead>Chứng chỉ hành nghề</TableHead>
-              <TableHead>Số hiệu</TableHead>
-              <TableHead>Hết hạn</TableHead>
-              <TableHead>Hiệu lực</TableHead>
-              <TableHead className="text-right">Bản scan</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {!isLoading && rows.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-muted-foreground py-8 text-center">
-                  Không có chứng chỉ hành nghề nào.
-                </TableCell>
-              </TableRow>
-            )}
-            {rows.map((l) => (
-              <TableRow key={l.id} data-testid={`clinic-license-${l.id}`}>
-                <TableCell>{l.holderName ?? "—"}</TableCell>
-                <TableCell>
-                  {l.title}
-                  <span className="text-muted-foreground block text-xs">{LICENSE_KIND_LABELS[l.kind]}</span>
-                </TableCell>
-                <TableCell className="tabular-nums">{l.licenseNumber}</TableCell>
-                <TableCell className="tabular-nums">{l.expiresOn ? formatLocalDate(l.expiresOn) : "Không thời hạn"}</TableCell>
-                <TableCell>
-                  <Badge variant={VALIDITY_VARIANTS[l.validity]}>{VALIDITY_LABELS[l.validity]}</Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  {l.hasFile ? (
-                    <Button size="sm" variant="outline" onClick={() => void download(`licenses/${l.id}/file`, l.fileName ?? "giay-phep")}>
-                      Tải
-                    </Button>
-                  ) : (
-                    "—"
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <ListViewHeader resource="licenses" title="Chứng chỉ hành nghề" canCreate={false}
+        description="Danh sách chứng chỉ do bác sĩ khai báo tại cơ sở. Tìm kiếm, theo dõi hiệu lực và xem hồ sơ chứng chỉ."
+        actions={<Button variant="outline" disabled={isFetching} onClick={() => void refetch()}>Làm mới</Button>} />
+      <Card className="overflow-hidden p-0">
+        <div className="flex flex-wrap gap-3 p-4">
+          <Input className="min-w-64 flex-1" aria-label="Tìm chứng chỉ" placeholder="Tìm theo tên bác sĩ, chứng chỉ, số hiệu hoặc nơi cấp..." value={search} onChange={(e) => filter(e.target.value, setSearch)} />
+          <Select value={validity} onValueChange={(v) => filter(v, setValidity)}><SelectTrigger aria-label="Hiệu lực" className="w-44"><SelectValue /></SelectTrigger><SelectContent>
+            <SelectItem value="all">Tất cả hiệu lực</SelectItem>
+            {Object.entries(VALIDITY_LABELS).map(([v, label]) => <SelectItem key={v} value={v}>{label}</SelectItem>)}
+          </SelectContent></Select>
+          <Select value={kind} onValueChange={(v) => filter(v, setKind)}><SelectTrigger aria-label="Loại chứng chỉ" className="w-52"><SelectValue /></SelectTrigger><SelectContent>
+            <SelectItem value="all">Tất cả loại chứng chỉ</SelectItem>
+            {Object.entries(LICENSE_KIND_LABELS).map(([v, label]) => <SelectItem key={v} value={v}>{label}</SelectItem>)}
+          </SelectContent></Select>
+          <Select value={scan} onValueChange={(v) => filter(v, setScan)}><SelectTrigger aria-label="Bản scan" className="w-44"><SelectValue /></SelectTrigger><SelectContent>
+            <SelectItem value="all">Tất cả bản scan</SelectItem><SelectItem value="yes">Có bản scan</SelectItem><SelectItem value="no">Chưa có bản scan</SelectItem>
+          </SelectContent></Select>
+          {(search || validity !== "all" || kind !== "all" || scan !== "all") && <Button variant="ghost" onClick={() => { setSearch(""); setValidity("all"); setKind("all"); setScan("all"); setPage(1); }}>Xóa bộ lọc</Button>}
+        </div>
+        <Table><TableHeader><TableRow>
+          <TableHead>Người sở hữu</TableHead><TableHead>Chứng chỉ</TableHead><TableHead>Số hiệu</TableHead><TableHead>Nơi cấp</TableHead><TableHead>Hết hạn</TableHead><TableHead>Hiệu lực</TableHead><TableHead>Bản scan</TableHead><TableHead>Thao tác</TableHead>
+        </TableRow></TableHeader><TableBody>
+          {isLoading || isError ? <TableRow><TableCell colSpan={8} className="py-8 text-center"><span role={isError ? "alert" : "status"}>{isError ? "Không tải được danh sách chứng chỉ. Vui lòng bấm Làm mới để thử lại." : "Đang tải chứng chỉ..."}</span></TableCell></TableRow> : visible.length === 0 ? <TableRow><TableCell colSpan={8} className="py-8 text-center text-muted-foreground">Không có chứng chỉ phù hợp.</TableCell></TableRow> : visible.map((l) => <TableRow key={l.id}>
+            <TableCell>{l.holderName ?? "—"}</TableCell><TableCell><span className="block max-w-64 whitespace-normal">{l.title}</span><span className="text-xs text-muted-foreground">{LICENSE_KIND_LABELS[l.kind]}</span></TableCell>
+            <TableCell>{l.licenseNumber}</TableCell><TableCell>{l.issuer}</TableCell><TableCell>{l.expiresOn ? formatLocalDate(l.expiresOn) : "Không thời hạn"}</TableCell>
+            <TableCell><Badge variant={VALIDITY_VARIANTS[l.validity]}>{VALIDITY_LABELS[l.validity]}</Badge></TableCell><TableCell>{l.hasFile ? "Đã tải lên" : "Chưa có"}</TableCell>
+            <TableCell><Button variant="ghost" size="icon-sm" aria-label={`Xem chi tiết chứng chỉ ${l.licenseNumber}`} title="Xem chi tiết" onClick={() => navigate(`/licenses/show/${l.id}`)}><EyeIcon /></Button></TableCell>
+          </TableRow>)}
+        </TableBody></Table>
+        {!isLoading && !isError && <div className="flex flex-wrap items-center justify-between gap-3 border-t p-4 text-sm"><span>{rows.length} chứng chỉ · Trang {currentPage}/{pages}</span><div className="flex gap-2"><Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Trước</Button><Button variant="outline" size="sm" disabled={currentPage >= pages} onClick={() => setPage(currentPage + 1)}>Sau</Button></div></div>}
       </Card>
+
     </ListView>
   );
 };

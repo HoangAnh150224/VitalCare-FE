@@ -111,6 +111,7 @@ import {
   ViewAsFrontDesk,
   ExamRoomBoard,
   MedicalServiceList,
+  MedicalServiceShow,
   MedicalServiceCreate,
   FirstAidList,
   FirstAidCreate,
@@ -148,8 +149,10 @@ import {
   ReportsPage,
   ResultReturnList,
   FeedbackList,
+  FeedbackShow,
   MyLicenses,
   ClinicLicenses,
+  ClinicLicenseShow,
   SharedPatientList,
   SharedPatientShow,
   EmergencyShow,
@@ -530,6 +533,10 @@ export function AppRoutes() {
           }
         />
         <Route
+          path="/feedback/show/:id"
+          element={<CanAccess resource="feedback" action="list" fallback={<Forbidden resource="feedback" />}><FeedbackShow /></CanAccess>}
+        />
+        <Route
           path="/feedback"
           element={
             <CanAccess resource="feedback" action="list" fallback={<Forbidden resource="feedback" />}>
@@ -542,6 +549,14 @@ export function AppRoutes() {
           element={
             <CanAccess resource="my_licenses" action="list" fallback={<Forbidden resource="my_licenses" />}>
               <MyLicenses />
+            </CanAccess>
+          }
+        />
+        <Route
+          path="/licenses/show/:id"
+          element={
+            <CanAccess resource="licenses" action="list" fallback={<Forbidden resource="licenses" />}>
+              <ClinicLicenseShow />
             </CanAccess>
           }
         />
@@ -798,6 +813,7 @@ export function AppRoutes() {
           }
         >
           <Route index element={<MedicalServiceList />} />
+          <Route path="show/:id" element={<MedicalServiceShow />} />
           <Route path="create" element={<MedicalServiceCreate />} />
           <Route path="edit/:id" element={<MedicalServiceEdit />} />
         </Route>

@@ -2,9 +2,11 @@ import type { HttpError } from "@refinedev/core";
 import { useShow } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { useTable } from "@refinedev/react-table";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
 import React from "react";
+import { LockKeyhole, LockKeyholeOpen } from "lucide-react";
+import { toast } from "sonner";
 import type { Control } from "react-hook-form";
 import { Link, useNavigate, useSearchParams } from "react-router";
 
@@ -15,6 +17,7 @@ import {
   RESIZABLE_COLUMN_DEFAULTS,
 } from "@/shared/components/data-table/data-table";
 import { DataTableQuickFilter } from "@/shared/components/data-table/data-table-quick-filter";
+import { ExcelTableExport } from "@/shared/components/data-table/excel-export";
 import {
   DataTableAdvancedFilter,
   DataTableFilterChips,
@@ -71,6 +74,7 @@ import {
   METRIC_OPTIONS,
   METRIC_UNITS,
   OPERATOR_OPTIONS,
+  OPERATOR_LABELS,
   SEVERITY_LABELS,
   SEVERITY_OPTIONS,
   SEVERITY_VARIANTS,
@@ -99,6 +103,35 @@ const FILTER_FIELDS: AdvancedFilterField[] = [
     options: SEVERITY_OPTIONS,
   },
 ];
+
+function RulePauseButton({ rule }: { rule: AlertRule }) {
+  const queryClient = useQueryClient();
+  const toggle = useMutation({
+    mutationFn: () => kyInstance.patch(`alert_rules/${rule.id}`, {
+      json: {
+        name: rule.name,
+        metric: rule.metric,
+        operator: rule.operator,
+        threshold: Number(rule.threshold),
+        severity: rule.severity,
+        enabled: !rule.enabled,
+        note: rule.note?.trim() || "Tạm ngưng/mở lại quy tắc cảnh báo",
+      },
+    }).json(),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+      toast.success(rule.enabled ? "Đã tạm ngưng quy tắc" : "Đã mở lại quy tắc");
+    },
+    onError: () => toast.error("Không đổi được trạng thái quy tắc. Hãy kiểm tra quyền hoặc kết nối máy chủ."),
+  });
+  const label = rule.enabled ? "Tạm ngưng quy tắc" : "Mở lại quy tắc";
+  return (
+    <Button type="button" size="icon-sm" variant="ghost" disabled={toggle.isPending}
+      onClick={(event) => { event.stopPropagation(); toggle.mutate(); }} aria-label={label} title={label}>
+      {rule.enabled ? <LockKeyhole className="size-4" /> : <LockKeyholeOpen className="size-4" />}
+    </Button>
+  );
+}
 
 /** Alert Rule List (FE-05): the clinic's rules and patients' own. */
 export const AlertRuleList = () => {
@@ -161,7 +194,7 @@ export const AlertRuleList = () => {
           getValue() ? (
             <Badge variant="success">Đang bật</Badge>
           ) : (
-            <Badge variant="neutral">Tắt</Badge>
+            <Badge variant="neutral">Tạm ngưng</Badge>
           ),
       }),
       col.display({
@@ -170,6 +203,7 @@ export const AlertRuleList = () => {
         enableSorting: false,
         cell: ({ row }) => (
           <div className="flex gap-1">
+            <RulePauseButton rule={row.original} />
             <EditButton
               resource="alert_rules"
               recordItemId={row.original.id}
@@ -210,6 +244,25 @@ export const AlertRuleList = () => {
           <>
             <ListToolbar
               table={table}
+              exportAction={<ExcelTableExport<AlertRule>
+                table={table}
+                resource="alert_rules"
+                title="Quy tắc cảnh báo"
+                columns={[
+                  { label: "Tên quy tắc", width: 36, value: (r) => r.name },
+                  { label: "Chỉ số", width: 24, value: (r) => METRIC_LABELS[r.metric] },
+                  { label: "Điều kiện", width: 16, value: (r) => OPERATOR_LABELS[r.operator] },
+                  { label: "Ngưỡng", width: 14, value: (r) => Number(r.threshold) },
+                  { label: "Đơn vị", width: 12, value: (r) => METRIC_UNITS[r.metric].trim() },
+                  { label: "Mức độ", width: 18, value: (r) => SEVERITY_LABELS[r.severity] },
+                  { label: "Phạm vi áp dụng", width: 24, value: (r) => r.patient ? "Riêng bệnh nhân" : "Toàn cơ sở" },
+                  { label: "Mã bệnh nhân", width: 22, value: (r) => r.patient?.customerCode ?? "—" },
+                  { label: "Tên bệnh nhân", width: 30, value: (r) => r.patient?.fullName ?? "—" },
+                  { label: "Trạng thái", width: 18, value: (r) => r.enabled ? "Đang bật" : "Đã tắt" },
+                  { label: "Ghi chú", width: 48, value: (r) => r.note ?? "—" },
+                  { label: "Cập nhật gần nhất", width: 27, value: (r) => r.updatedAt ? formatDateTime(r.updatedAt) : "—" },
+                ]}
+              />}
               search={<DataTableQuickFilter table={table} placeholder="Tìm theo tên quy tắc cảnh báo..." />}
               filters={
                 <DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />
@@ -251,7 +304,7 @@ const SelectField = ({
     rules={{ required: `Chọn ${label.toLowerCase()}` }}
     render={({ field }) => (
       <FormItem className="md:col-span-2">
-        <FormLabel>{label}</FormLabel>
+        <FormLabel>{label} <span className="text-destructive">*</span></FormLabel>
         <Select value={field.value} onValueChange={field.onChange}>
           <FormControl>
             <SelectTrigger className="w-full" aria-label={label}>
@@ -295,11 +348,12 @@ function RuleFields({
         name="name"
         rules={{
           required: "Nhập tên quy tắc",
+          validate: (v) => !!v.trim() || "Vui lòng nhập tên quy tắc",
           maxLength: { value: 255, message: "Tối đa 255 ký tự" },
         }}
         render={({ field }) => (
           <FormItem className="md:col-span-6">
-            <FormLabel>Tên quy tắc</FormLabel>
+            <FormLabel>Tên quy tắc <span className="text-destructive">*</span></FormLabel>
             <FormControl>
               <Input {...field} placeholder="VD: SpO₂ rất thấp" />
             </FormControl>
@@ -325,11 +379,11 @@ function RuleFields({
         rules={{
           required: "Nhập ngưỡng",
           validate: (v) =>
-            Number.isFinite(Number(v)) ? true : "Ngưỡng phải là số",
+            String(v ?? "").trim() !== "" && Number.isFinite(Number(v)) ? true : "Vui lòng nhập ngưỡng hợp lệ",
         }}
         render={({ field }) => (
           <FormItem className="md:col-span-2">
-            <FormLabel>Ngưỡng ({METRIC_UNITS[metric].trim()})</FormLabel>
+            <FormLabel>Ngưỡng ({METRIC_UNITS[metric].trim()}) <span className="text-destructive">*</span></FormLabel>
             <FormControl>
               <Input {...field} inputMode="decimal" />
             </FormControl>
@@ -346,6 +400,7 @@ function RuleFields({
       <FormField
         control={control}
         name="enabled"
+        rules={{ validate: (v) => typeof v === "boolean" || "Vui lòng chọn trạng thái" }}
         render={({ field }) => (
           <FormItem className="flex items-center gap-2 md:col-span-4">
             <FormControl>
@@ -354,22 +409,25 @@ function RuleFields({
                 onCheckedChange={(v) => field.onChange(v === true)}
               />
             </FormControl>
-            <FormLabel className="!mt-0">Đang bật</FormLabel>
+            <FormLabel className="!mt-0">Đang bật <span className="text-destructive">*</span></FormLabel>
+            <FormMessage />
           </FormItem>
         )}
       />
       <FormField
         control={control}
         name="note"
+        rules={{ required: "Vui lòng nhập ghi chú", validate: (v) => !!v?.trim() || "Vui lòng nhập ghi chú", maxLength: { value: 1000, message: "Tối đa 1000 ký tự" } }}
         render={({ field }) => (
           <FormItem className="md:col-span-6">
-            <FormLabel>Ghi chú</FormLabel>
+            <FormLabel>Ghi chú <span className="text-destructive">*</span></FormLabel>
             <FormControl>
-              <Textarea {...field} rows={3} />
+              <Textarea {...field} value={field.value ?? ""} rows={3} placeholder="Nhập căn cứ hoặc lý do thiết lập quy tắc" aria-required="true" />
             </FormControl>
             <FormDescription>
               Căn cứ chuyên môn, hoặc vì sao bệnh nhân này cần ngưỡng riêng.
             </FormDescription>
+            <FormMessage />
           </FormItem>
         )}
       />

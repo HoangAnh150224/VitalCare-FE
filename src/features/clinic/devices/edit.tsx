@@ -56,12 +56,12 @@ export const DeviceEdit = () => {
 
   return (
     <EditView>
-      <EditViewHeader />
+      <EditViewHeader title="Chỉnh sửa thiết bị IoMT" />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="min-w-0">
           <SectionedFormPanel>
             <FormSection title="Thiết bị" description="Mã thiết bị không đổi được.">
-              <DeviceFields control={form.control} />
+              <DeviceFields control={form.control} required />
             </FormSection>
             <FormSection title="Trạng thái" description="Bảo trì hoặc ngừng sử dụng chỉ khi thiết bị không đang gán cho bệnh nhân.">
               <FormField

@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 
 export function createTableWorkbook<T>(records: T[], all: boolean, title: string,
-  columns: { label: string; width: number; value: (row: T) => string | number }[]) {
+  columns: { label: string; width: number; numFmt?: string; value: (row: T) => string | number }[]) {
   const book = new ExcelJS.Workbook();
   book.creator = "VitalCare";
   const sheet = book.addWorksheet(title.slice(0, 31), {
@@ -23,6 +23,7 @@ export function createTableWorkbook<T>(records: T[], all: boolean, title: string
   records.forEach((record, i) => {
     const values = [i + 1, ...columns.map((c) => c.value(record))];
     const row = sheet.addRow(values);
+    columns.forEach((column, index) => { if (column.numFmt) row.getCell(index + 2).numFmt = column.numFmt; });
     const lines = values.map((value, col) => String(value).split("\n").reduce(
       (sum, line) => sum + Math.max(1, Math.ceil(line.length / (widths[col] - 4))), 0));
     row.height = Math.min(409, Math.max(34, Math.max(...lines) * 16 + 12));

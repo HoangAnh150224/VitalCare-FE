@@ -31,6 +31,7 @@ import { WorkingHoursEditor } from "./working-hours-editor";
 import { getAuthorities } from "@/shared/api/session";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 import { Card } from "@/shared/ui/card";
+import { ScheduleExport } from "./schedule-export";
 
 /**
  * A doctor's schedule (SRS 3.11.7): the week they work, repeating, and under
@@ -43,6 +44,9 @@ export const DoctorScheduleList = () => {
   const { doctors, isLoading, isError, refetch } = useOwnClinicDoctors();
   const chooseDoctorFirst = getAuthorities()?.roles.includes("CLINIC_ADMIN") ?? false;
   const [search, setSearch] = useState("");
+  const [specialty, setSpecialty] = useState("all");
+  const [professionalTitle, setProfessionalTitle] = useState("all");
+  const [scheduleStatus, setScheduleStatus] = useState("all");
   const { data: canWrite } = useCan({ resource: "doctor_schedules", action: "edit" });
   const [chosen, setChosen] = useState("");
   const [from, setFrom] = useState(clinicToday());
@@ -51,7 +55,13 @@ export const DoctorScheduleList = () => {
   const selectedId = chosen || (chooseDoctorFirst ? "" : String((doctors.find((doctor) => doctor.manageable) ?? doctors[0])?.id ?? ""));
   const doctor = doctors.find((candidate) => String(candidate.id) === selectedId);
   const term = search.trim().toLocaleLowerCase("vi-VN");
-  const visibleDoctors = doctors.filter((item) => doctorLabel(item).toLocaleLowerCase("vi-VN").includes(term));
+  const specialties = Array.from(new Set(doctors.map((item) => item.specialty).filter((value): value is string => Boolean(value)))).sort((a, b) => a.localeCompare(b, "vi"));
+  const titles = Array.from(new Set(doctors.map((item) => item.professionalTitle).filter((value): value is string => Boolean(value)))).sort((a, b) => a.localeCompare(b, "vi"));
+  const visibleDoctors = doctors.filter((item) =>
+    doctorLabel(item).toLocaleLowerCase("vi-VN").includes(term) &&
+    (specialty === "all" || item.specialty === specialty) &&
+    (professionalTitle === "all" || item.professionalTitle === professionalTitle) &&
+    (scheduleStatus === "all" || (scheduleStatus === "configured" ? item.workingHours.length > 0 : item.workingHours.length === 0)));
 
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<DoctorSchedule>();
@@ -145,8 +155,32 @@ export const DoctorScheduleList = () => {
         <div role="alert">Không tải được danh sách bác sĩ. <Button variant="outline" onClick={refetch}>Thử lại</Button></div>
       ) : chooseDoctorFirst && !doctor ? (
         <Card className="overflow-hidden p-0">
-          <div className="p-4">
+          <div className="flex flex-wrap items-center gap-3 p-4">
             <Input aria-label="Tìm bác sĩ" placeholder="Tìm theo tên hoặc chuyên khoa bác sĩ..." value={search} onChange={(event) => setSearch(event.target.value)} className="max-w-lg" />
+            <Select value={specialty} onValueChange={setSpecialty}>
+              <SelectTrigger className="w-48" aria-label="Lọc chuyên khoa"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả chuyên khoa</SelectItem>
+                {specialties.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={professionalTitle} onValueChange={setProfessionalTitle}>
+              <SelectTrigger className="w-56" aria-label="Lọc chức danh"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả chức danh</SelectItem>
+                {titles.map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={scheduleStatus} onValueChange={setScheduleStatus}>
+              <SelectTrigger className="w-52" aria-label="Lọc lịch hằng tuần"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả lịch hằng tuần</SelectItem>
+                <SelectItem value="configured">Đã thiết lập lịch</SelectItem>
+                <SelectItem value="empty">Chưa thiết lập lịch</SelectItem>
+              </SelectContent>
+            </Select>
+            <ScheduleExport doctors={visibleDoctors} />
+            {(search || specialty !== "all" || professionalTitle !== "all" || scheduleStatus !== "all") && <Button variant="ghost" onClick={() => { setSearch(""); setSpecialty("all"); setProfessionalTitle("all"); setScheduleStatus("all"); }}>Xóa bộ lọc</Button>}
           </div>
           <Table>
             <TableHeader><TableRow>
@@ -163,6 +197,7 @@ export const DoctorScheduleList = () => {
               {visibleDoctors.length === 0 && <TableRow><TableCell colSpan={5} className="py-8 text-center text-muted-foreground">{doctors.length ? "Không tìm thấy bác sĩ phù hợp." : "Cơ sở chưa có bác sĩ nào đang làm việc."}</TableCell></TableRow>}
             </TableBody>
           </Table>
+          <p className="border-t px-4 py-3 text-sm text-muted-foreground" role="status">Hiển thị {visibleDoctors.length} / {doctors.length} bác sĩ</p>
         </Card>
       ) : doctor ? (
         <>

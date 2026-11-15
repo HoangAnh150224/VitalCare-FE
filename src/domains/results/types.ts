@@ -29,6 +29,11 @@ export const RETURN_STATUS_VARIANTS: Record<ReturnStatus, "default" | "secondary
 
 /** FE-07 Patient Feedback (`/api/feedback`, `/api/my_feedback`). */
 export type PatientFeedback = {
+  deleted: boolean;
+  deletedAt: string | null;
+  removalReason: string | null;
+  reply: string | null;
+  repliedAt: string | null;
   id: number;
   appointmentId: number;
   appointmentDate: string;

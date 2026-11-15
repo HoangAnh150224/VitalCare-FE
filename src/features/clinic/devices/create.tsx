@@ -42,7 +42,7 @@ export const DeviceCreate = () => {
 
   return (
     <CreateView>
-      <CreateViewHeader />
+      <CreateViewHeader title="Thiết bị IoMT" />
       <Form {...form}>
         <form onSubmit={form.handleSubmit((values) => onFinish(values))} className="min-w-0">
           <SectionedFormPanel>
@@ -50,19 +50,19 @@ export const DeviceCreate = () => {
               <FormField
                 control={form.control}
                 name="deviceCode"
-                rules={{ required: "Vui lòng nhập mã thiết bị", maxLength: { value: 64, message: "Tối đa 64 ký tự" } }}
+                rules={{ required: "Vui lòng nhập mã thiết bị", validate: (value) => !!value.trim() || "Vui lòng nhập mã thiết bị", maxLength: { value: 64, message: "Tối đa 64 ký tự" } }}
                 render={({ field }) => (
                   <FormItem className="md:col-span-4">
-                    <FormLabel>Mã thiết bị</FormLabel>
+                    <FormLabel>Mã thiết bị <span className="text-destructive" aria-hidden="true">*</span></FormLabel>
                     <FormControl>
-                      <Input {...field} className="font-mono uppercase" placeholder="VC-W-004" />
+                      <Input {...field} aria-required="true" className="font-mono uppercase" placeholder="VC-W-004" />
                     </FormControl>
                     <FormDescription>Không đổi được sau khi tạo.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <DeviceFields control={form.control} />
+              <DeviceFields control={form.control} required />
             </FormSection>
             <FormSectionActions>
               <Button type="submit" disabled={form.formState.isSubmitting}>
