@@ -343,16 +343,18 @@ export const resources: ResourceProps[] = [
   {
     name: "feedback",
     list: "/feedback",
+    show: "/feedback/show/:id",
     meta: { label: "Góp ý của bệnh nhân", icon: <MessageSquareHeart className="h-4 w-4" />, parent: "clinic" },
   },
   {
     name: "my_licenses",
     list: "/my-licenses",
-    meta: { label: "Giấy phép của tôi", icon: <Award className="h-4 w-4" />, parent: "clinic" },
+    meta: { label: "Chứng chỉ của tôi", icon: <Award className="h-4 w-4" />, parent: "clinic" },
   },
   {
     name: "licenses",
     list: "/licenses",
+    show: "/licenses/show/:id",
     meta: { label: "Chứng chỉ hành nghề", icon: <Award className="h-4 w-4" />, parent: "clinic" },
   },
   // Ordered in an encounter (on its page), carried out from here: no create.
@@ -545,6 +547,7 @@ export const resources: ResourceProps[] = [
   {
     name: "medical_services",
     list: "/medical-services",
+    show: "/medical-services/show/:id",
     create: "/medical-services/create",
     edit: "/medical-services/edit/:id",
     meta: {

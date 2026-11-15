@@ -32,8 +32,8 @@ export const SERVICE_CATEGORY_OPTIONS = (Object.keys(SERVICE_CATEGORY_LABELS) as
 }));
 
 export const SERVICE_STATUS_LABELS: Record<ServiceStatus, string> = {
-  active: "Đang áp dụng",
-  inactive: "Ngừng áp dụng",
+  active: "Đang hoạt động",
+  inactive: "Tạm ngừng",
 };
 
 export type ServiceOrderStatus = "ordered" | "in_progress" | "result_ready" | "reviewed" | "cancelled";

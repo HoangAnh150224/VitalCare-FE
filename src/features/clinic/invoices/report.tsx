@@ -1,6 +1,6 @@
 import { useCustom } from "@refinedev/core";
 import { DownloadIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { API_URL } from "@/shared/api/constants";
 import { toast } from "sonner";
@@ -48,19 +48,24 @@ export const RevenueReportPage = () => {
   const report = customResult(result?.data, "total");
 
   const [exporting, setExporting] = useState(false);
+  const [downloadFile, setDownloadFile] = useState<{ url: string; name: string; from: string; to: string } | null>(null);
+  useEffect(() => () => { if (downloadFile) URL.revokeObjectURL(downloadFile.url); }, [downloadFile]);
   const exportExcel = async () => {
-    if (!report || !valid || query.isFetching) return;
+    if (!report || !valid || query.isFetching || query.isError || exporting) return;
     setExporting(true);
     try {
       const label = period === "month" ? `Tháng ${month}/${year}` : period === "quarter" ? `Quý ${quarter}/${year}` : period === "year" ? `Năm ${year}` : "Theo khoảng ngày";
       const { createRevenueWorkbook } = await import("./revenue-excel");
       const buffer = await createRevenueWorkbook(report, period, label).xlsx.writeBuffer();
       const url = URL.createObjectURL(new Blob([new Uint8Array(buffer)], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+      const name = `doanh-thu-${report.from}-${report.to}.xlsx`;
+      setDownloadFile({ url, name, from: report.from, to: report.to });
       const link = document.createElement("a");
       link.href = url;
-      link.download = `doanh-thu-${report.from}-${report.to}.xlsx`;
+      link.download = name;
+      document.body.appendChild(link);
       link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      link.remove();
     } catch {
       toast.error("Không xuất được Excel. Vui lòng thử lại.");
     } finally {
@@ -142,11 +147,16 @@ export const RevenueReportPage = () => {
             }} />
           </div>
           </>}
-          <Button variant="outline" onClick={exportExcel} disabled={exporting || !valid || query.isFetching || !report} className="ms-auto">
+          <Button variant="outline" onClick={exportExcel} disabled={exporting || !valid || query.isFetching || query.isError || !report} className="ms-auto">
             <DownloadIcon />
             {exporting ? "Đang xuất..." : "Xuất Excel"}
           </Button>
         </div>
+        {downloadFile && downloadFile.from === from && downloadFile.to === to && <div className="flex flex-wrap items-center gap-3 px-6 pt-3">
+          <span className="text-sm text-muted-foreground">File Excel đã tạo. Nếu chưa tự tải xuống:</span>
+          <Button variant="outline" size="sm" asChild><a href={downloadFile.url} download={downloadFile.name}>Tải file đã tạo</a></Button>
+        </div>}
+        {query.isError && <div role="alert" className="px-6 pt-3 text-destructive">Không tải được dữ liệu báo cáo nên chưa thể xuất Excel. <Button variant="outline" onClick={() => void query.refetch()}>Thử lại</Button></div>}
         {valid && <p className="text-muted-foreground px-6 pt-2 text-sm">Từ {formatLocalDate(from)} đến {formatLocalDate(to)}</p>}
         {!valid && <p className="text-destructive px-6 pt-2 text-sm">{period === "custom" ? "Vui lòng chọn khoảng ngày hợp lệ, ngày bắt đầu không sau ngày kết thúc." : "Nhập năm hợp lệ từ 1900 đến 9999."}</p>}
       </Card>

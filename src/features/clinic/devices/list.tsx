@@ -32,6 +32,8 @@ import { ConnectivityBadge, BatteryLevel } from "./device-status";
 import { DEVICE_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatDate, formatDateTime } from "@/shared/lib/format";
 import { useClinicOptions } from "../clinics/use-clinic-options";
+import { ExcelTableExport } from "@/shared/components/data-table/excel-export";
+import { CONNECTIVITY_LABELS } from "@/domains/device/types";
 
 const FILTER_FIELDS: AdvancedFilterField[] = [
   {
@@ -230,6 +232,7 @@ export const DeviceList = ({
     <ListView>
       <ListViewHeader
         resource="devices"
+        title="Thiết bị IoMT"
         canCreate={readOnly ? false : undefined}
         description="Thiết bị IoMT của phòng khám. Gán thiết bị cho bệnh nhân ở trang chi tiết khách hàng."
       />
@@ -239,6 +242,25 @@ export const DeviceList = ({
           <>
             <ListToolbar
               table={table}
+              exportAction={<ExcelTableExport<Device>
+                table={table}
+                resource={resource}
+                title="Danh sách thiết bị IoMT"
+                columns={[
+                  { label: "Mã thiết bị", width: 22, value: (d) => d.deviceCode },
+                  { label: "Số sê-ri", width: 25, value: (d) => d.serialNumber ?? "—" },
+                  { label: "Model", width: 24, value: (d) => d.model ?? "—" },
+                  { label: "Hãng sản xuất", width: 24, value: (d) => d.manufacturer ?? "—" },
+                  { label: "Trạng thái", width: 20, value: (d) => DEVICE_STATUS_LABELS[d.status] ?? d.status },
+                  { label: "Kết nối", width: 20, value: (d) => CONNECTIVITY_LABELS[d.connectivity] ?? "—" },
+                  { label: "Pin (%)", width: 14, value: (d) => d.batteryLevel ?? "—" },
+                  { label: "Đồng bộ gần nhất", width: 27, value: (d) => d.lastSyncAt ? formatDateTime(d.lastSyncAt) : "Chưa đồng bộ" },
+                  { label: "Phòng khám", width: 30, value: (d) => clinicName(d.clinicId) },
+                  { label: "Mã bệnh nhân", width: 22, value: (d) => d.currentPatient?.customerCode ?? "—" },
+                  { label: "Người đang đeo", width: 30, value: (d) => d.currentPatient?.fullName ?? "Chưa gán" },
+                  { label: "Ngày bắt đầu đeo", width: 24, value: (d) => d.currentPatient?.since ? formatDate(d.currentPatient.since) : "—" },
+                ]}
+              />}
               search={<DataTableQuickFilter table={table} placeholder="Tìm theo mã thiết bị, số sê-ri hoặc model..." />}
               filters={
                 <DataTableAdvancedFilter table={table} fields={filterFields} />

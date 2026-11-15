@@ -12,7 +12,8 @@ import {
 import { ListToolbar, ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { ShowButton } from "@/shared/components/buttons/show";
 import type { Invoice } from "@/domains/billing/types";
-import { INVOICE_STATUS_OPTIONS } from "@/domains/billing/types";
+import { INVOICE_STATUS_OPTIONS, INVOICE_STATUS_LABELS, INVOICE_KIND_LABELS, PAYMENT_METHOD_LABELS } from "@/domains/billing/types";
+import { ExcelTableExport } from "@/shared/components/data-table/excel-export";
 import { formatDateTime, formatMoney } from "@/shared/lib/format";
 import { InvoiceStatusBadge } from "./invoice-lines";
 
@@ -92,6 +93,22 @@ export const InvoiceList = () => {
           <>
             <ListToolbar
               table={table}
+              exportAction={<ExcelTableExport<Invoice>
+                table={table} resource="invoices" title="Danh sách hóa đơn"
+                columns={[
+                  { label: "Số hóa đơn", width: 24, numFmt: "@", value: (r) => r.invoiceNumber },
+                  { label: "Ngày lập", width: 26, value: (r) => formatDateTime(r.issuedAt) },
+                  { label: "Loại hóa đơn", width: 24, value: (r) => INVOICE_KIND_LABELS[r.kind] ?? "—" },
+                  { label: "Mã bệnh nhân", width: 22, numFmt: "@", value: (r) => r.patient.customerCode },
+                  { label: "Bệnh nhân", width: 30, value: (r) => r.patient.fullName },
+                  { label: "Số điện thoại", width: 20, numFmt: "@", value: (r) => r.patient.phone?.replace(/^\+?84(?=\d{9}$)/, "0") ?? "—" },
+                  { label: "Cơ sở", width: 30, value: (r) => r.clinic?.name ?? "—" },
+                  { label: "Tổng tiền (đồng)", width: 23, numFmt: "#,##0", value: (r) => Number(r.totalAmount) },
+                  { label: "Trạng thái", width: 24, value: (r) => INVOICE_STATUS_LABELS[r.status] },
+                  { label: "Ngày thanh toán", width: 26, value: (r) => r.paidAt ? formatDateTime(r.paidAt) : "—" },
+                  { label: "Hình thức thanh toán thành công", width: 30, value: (r) => [...new Set((r.payments ?? []).filter((p) => p.status === "paid").map((p) => PAYMENT_METHOD_LABELS[p.method]))].join("\n") || "—" },
+                ]}
+              />}
               search={<DataTableQuickFilter table={table} placeholder="Tìm theo số hóa đơn hoặc tên bệnh nhân..." />}
               filters={<DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />}
             />

@@ -28,16 +28,17 @@ export const EMPTY_MEDICAL_SERVICE: MedicalServiceFormValues = {
 };
 
 /** A catalogue entry's fields, the same on create and edit. */
-export function MedicalServiceFields({ control }: { control: Control<MedicalServiceFormValues> }) {
+export function MedicalServiceFields({ control, requireAll = false }: { control: Control<MedicalServiceFormValues>; requireAll?: boolean }) {
+  const requiredMark = <span className="text-destructive" aria-hidden="true"> *</span>;
   return (
     <>
       <FormField
         control={control}
         name="code"
-        rules={{ required: "Vui lòng nhập mã dịch vụ", maxLength: { value: 64, message: "Tối đa 64 ký tự" } }}
+        rules={{ required: "Vui lòng nhập mã dịch vụ", validate: (value) => !!value.trim() || "Vui lòng nhập mã dịch vụ", maxLength: { value: 64, message: "Tối đa 64 ký tự" } }}
         render={({ field }) => (
           <FormItem className="md:col-span-4">
-            <FormLabel>Mã dịch vụ</FormLabel>
+            <FormLabel>Mã dịch vụ{requiredMark}</FormLabel>
             <FormControl>
               <Input {...field} className="font-mono uppercase" placeholder="XN-CTM" />
             </FormControl>
@@ -48,10 +49,10 @@ export function MedicalServiceFields({ control }: { control: Control<MedicalServ
       <FormField
         control={control}
         name="name"
-        rules={{ required: "Vui lòng nhập tên dịch vụ", maxLength: { value: 255, message: "Tối đa 255 ký tự" } }}
+        rules={{ required: "Vui lòng nhập tên dịch vụ", validate: (value) => !!value.trim() || "Vui lòng nhập tên dịch vụ", maxLength: { value: 255, message: "Tối đa 255 ký tự" } }}
         render={({ field }) => (
           <FormItem className="md:col-span-8">
-            <FormLabel>Tên dịch vụ</FormLabel>
+            <FormLabel>Tên dịch vụ{requiredMark}</FormLabel>
             <FormControl>
               <Input {...field} placeholder="Xét nghiệm công thức máu" />
             </FormControl>
@@ -62,9 +63,10 @@ export function MedicalServiceFields({ control }: { control: Control<MedicalServ
       <FormField
         control={control}
         name="category"
+        rules={{ required: "Vui lòng chọn nhóm dịch vụ" }}
         render={({ field }) => (
           <FormItem className="md:col-span-4">
-            <FormLabel>Nhóm</FormLabel>
+            <FormLabel>Nhóm{requiredMark}</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger className="w-full">
@@ -94,7 +96,7 @@ export function MedicalServiceFields({ control }: { control: Control<MedicalServ
         }}
         render={({ field }) => (
           <FormItem className="md:col-span-4">
-            <FormLabel>Giá (đồng)</FormLabel>
+            <FormLabel>Giá (đồng){requiredMark}</FormLabel>
             <FormControl>
               <Input {...field} type="number" min={0} step={1000} inputMode="numeric" />
             </FormControl>
@@ -112,7 +114,7 @@ export function MedicalServiceFields({ control }: { control: Control<MedicalServ
         }}
         render={({ field }) => (
           <FormItem className="md:col-span-4">
-            <FormLabel>Thời gian trả kết quả (phút)</FormLabel>
+            <FormLabel>Thời gian trả kết quả (phút){requiredMark}</FormLabel>
             <FormControl>
               <Input {...field} type="number" min={0} step={5} inputMode="numeric" />
             </FormControl>
@@ -124,9 +126,10 @@ export function MedicalServiceFields({ control }: { control: Control<MedicalServ
       <FormField
         control={control}
         name="status"
+        rules={{ required: requireAll ? "Vui lòng chọn trạng thái" : false }}
         render={({ field }) => (
           <FormItem className="md:col-span-4">
-            <FormLabel>Trạng thái</FormLabel>
+            <FormLabel>Trạng thái{requireAll && requiredMark}</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger className="w-full">
@@ -149,12 +152,12 @@ export function MedicalServiceFields({ control }: { control: Control<MedicalServ
       <FormField
         control={control}
         name="description"
-        rules={{ maxLength: { value: 2000, message: "Tối đa 2000 ký tự" } }}
+        rules={{ required: requireAll ? "Vui lòng nhập mô tả dịch vụ" : false, validate: (value) => !requireAll || !!value?.trim() || "Vui lòng nhập mô tả dịch vụ", maxLength: { value: 2000, message: "Tối đa 2000 ký tự" } }}
         render={({ field }) => (
           <FormItem className="md:col-span-12">
-            <FormLabel>Mô tả</FormLabel>
+            <FormLabel>Mô tả{requireAll && requiredMark}</FormLabel>
             <FormControl>
-              <Textarea {...field} value={field.value ?? ""} rows={3} />
+              <Textarea {...field} value={field.value ?? ""} rows={3} placeholder="Nhập mô tả dịch vụ y tế" aria-required={requireAll} />
             </FormControl>
             <FormMessage />
           </FormItem>

@@ -177,12 +177,12 @@ export function MembershipPanel({ employee }: { employee: Employee }) {
               </div>
             )}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="membership-reason">Lý do {mode === "move" && <span className="text-destructive">*</span>}</Label>
+              <Label htmlFor="membership-reason">Lý do <span className="text-destructive">*</span></Label>
               <Input
                 id="membership-reason"
                 value={reason}
                 maxLength={500}
-                aria-required={mode === "move"}
+                aria-required={true}
                 aria-invalid={Boolean(reasonError)}
                 aria-describedby={reasonError ? "membership-reason-error" : undefined}
                 onChange={(e) => { setReason(e.target.value); setReasonError(null); }}
@@ -205,8 +205,8 @@ export function MembershipPanel({ employee }: { employee: Employee }) {
                 size="sm"
                 disabled={act.isPending || (mode === "move" && !clinicId)}
                 onClick={() => {
-                  if (mode === "move" && !reason.trim()) {
-                    setReasonError("Vui lòng nhập lý do chuyển cơ sở.");
+                  if (!reason.trim()) {
+                    setReasonError(mode === "move" ? "Vui lòng nhập lý do chuyển cơ sở." : "Vui lòng nhập lý do kết thúc thành viên.");
                     return;
                   }
                   setReasonError(null);

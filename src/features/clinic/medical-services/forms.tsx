@@ -38,7 +38,7 @@ function MedicalServiceForm({ mode }: { mode: "create" | "edit" }) {
             title="Dịch vụ"
             description="Danh mục dùng chung cho mọi cơ sở. Đổi giá chỉ áp dụng cho chỉ định mới."
           >
-            <MedicalServiceFields control={form.control} />
+            <MedicalServiceFields control={form.control} requireAll={mode === "create"} />
           </FormSection>
           <FormSectionActions>
             <Button type="submit" disabled={form.formState.isSubmitting}>

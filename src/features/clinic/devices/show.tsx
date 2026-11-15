@@ -63,6 +63,7 @@ export const DeviceShow = () => {
   return (
     <ShowView>
       <ShowViewHeader
+        title="Thiết bị IoMT"
         actions={
           record && operate?.can ? (
             <>

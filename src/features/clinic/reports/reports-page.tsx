@@ -4,7 +4,6 @@ import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 
 import { kyInstance } from "@/shared/api/data";
-import { download, toCsv } from "@/shared/components/data-table/data-table-actions";
 import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
@@ -12,7 +11,6 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import {
   cellText,
-  csvCell,
   REPORTS,
   reportErrorText,
   vnDay,
@@ -23,7 +21,7 @@ import { ClinicPicker } from "./clinic-picker";
 
 /**
  * BF-08's summary reports: patients, devices, vital signs and alerts over a
- * period, for the viewer's clinic; exported as CSV by those allowed to.
+ * period, for the viewer's clinic; exported as Excel by those allowed to.
  */
 export const ReportsPage = () => {
   const [kind, setKind] = useState<ReportKind>("patients");
@@ -31,6 +29,7 @@ export const ReportsPage = () => {
   const [from, setFrom] = useState(`${vnDay().slice(0, 8)}01`);
   const [to, setTo] = useState(vnDay());
   const [clinicId, setClinicId] = useState("");
+  const [exporting, setExporting] = useState(false);
   const { data: canExport } = useCan({ resource: "reports", action: "export" });
   const { open: notify } = useNotification();
   const spec = REPORTS.find((r) => r.kind === kind)!;
@@ -44,20 +43,25 @@ export const ReportsPage = () => {
     retry: false,
   });
 
-  const exportCsv = async () => {
+  const exportExcel = async () => {
+    if (!valid || exporting || !data || error) return;
+    setExporting(true);
     try {
       // Asked of the server first: it holds the export to its permission and keeps a record of it.
       const report = await kyInstance.post(`reports/${kind}/export`, { searchParams }).json<SummaryReport>();
-      download(
-        `bao-cao-${kind}-${report.from}-${report.to}.csv`,
-        toCsv([
-          spec.columns.map((c) => c.label),
-          ...report.rows.map((row) => spec.columns.map((c) => csvCell(row[c.key], c.format))),
-        ]),
-      );
+      const { createSummaryWorkbook } = await import("./report-excel");
+      const buffer = await createSummaryWorkbook(report, spec).xlsx.writeBuffer();
+      const url = URL.createObjectURL(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `VitalCare-bao-cao-${kind}-${report.from}-${report.to}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) {
       notify?.({ type: "error", message: reportErrorText((e as { data?: unknown }).data ?? e) });
-    }
+    } finally { setExporting(false); }
   };
 
   return (
@@ -91,9 +95,9 @@ export const ReportsPage = () => {
           </div>
           <ClinicPicker value={clinicId} onChange={setClinicId} answeredClinicId={data?.clinicId} />
           {canExport?.can && (
-            <Button variant="outline" onClick={() => void exportCsv()} disabled={!data} className="ms-auto">
+            <Button variant="outline" onClick={() => void exportExcel()} disabled={!data || !valid || Boolean(error) || exporting} className="ms-auto">
               <DownloadIcon />
-              Xuất CSV
+              {exporting ? "Đang xuất..." : "Xuất Excel"}
             </Button>
           )}
         </div>

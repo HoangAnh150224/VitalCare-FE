@@ -162,12 +162,13 @@ export function isPortalAccount(
  * (a device's readings, the rooms' queue), so this is the menu, not the grants.
  */
 export const CLINIC_ADMIN_MENU = {
-  clinic: ["employees", "licenses", "doctor_schedules", "devices", "alert_rules", "clinic_roles", "exam_rooms", "clinics"],
+  clinic: ["employees", "licenses", "doctor_schedules", "devices", "alert_rules", "clinic_roles", "clinics"],
   administration: ["medical_services", "invoices", "revenue_report", "reports", "feedback", "first_aid_articles", "notifications"],
 } as const;
 
 /** The staff's and doctors' screens a clinic administrator does not open. */
 export const CLINIC_ADMIN_HIDDEN = new Set([
+  "exam_rooms",
   "appointments",
   "customers",
   "vital_signs",
