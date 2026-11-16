@@ -215,6 +215,36 @@ export const resources: ResourceProps[] = [
       parent: "clinic",
     },
   },
+  // Ordered in an encounter (on its page), carried out from here: no create.
+  {
+    name: "service_orders",
+    list: "/service-orders",
+    show: "/service-orders/show/:id",
+    meta: {
+      label: "Chỉ định dịch vụ",
+      icon: <FlaskConical className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  // Opened from a patient, so the list has no create button; the create route
+  // exists for the links on a patient's page and on a checked-in appointment.
+  {
+    name: "clinical_encounters",
+    list: "/clinical-encounters",
+    create: "/clinical-encounters/create",
+    edit: "/clinical-encounters/edit/:id",
+    show: "/clinical-encounters/show/:id",
+    meta: {
+      label: "Lần khám",
+      icon: <Stethoscope className="h-4 w-4" />,
+      parent: "clinic",
+    },
+  },
+  {
+    name: "result_returns",
+    list: "/result-returns",
+    meta: { label: "Hẹn trả kết quả", icon: <CalendarClock className="h-4 w-4" />, parent: "clinic" },
+  },
   {
     name: "customers",
     list: "/customers",
@@ -308,20 +338,6 @@ export const resources: ResourceProps[] = [
       parent: "clinic",
     },
   },
-  // Opened from a patient, so the list has no create button; the create route
-  // exists for the links on a patient's page and on a checked-in appointment.
-  {
-    name: "clinical_encounters",
-    list: "/clinical-encounters",
-    create: "/clinical-encounters/create",
-    edit: "/clinical-encounters/edit/:id",
-    show: "/clinical-encounters/show/:id",
-    meta: {
-      label: "Lần khám",
-      icon: <Stethoscope className="h-4 w-4" />,
-      parent: "clinic",
-    },
-  },
   // BF-07: when patients come back for their results; FE-07 what they said; FE-17 licenses.
   // SRS 3.18.10: the roles staff hold at the clinic.
   {
@@ -334,11 +350,6 @@ export const resources: ResourceProps[] = [
     name: "reports",
     list: "/reports",
     meta: { label: "Báo cáo tổng hợp", icon: <ChartColumn className="h-4 w-4" />, parent: "clinic" },
-  },
-  {
-    name: "result_returns",
-    list: "/result-returns",
-    meta: { label: "Hẹn trả kết quả", icon: <CalendarClock className="h-4 w-4" />, parent: "clinic" },
   },
   {
     name: "feedback",
@@ -356,17 +367,6 @@ export const resources: ResourceProps[] = [
     list: "/licenses",
     show: "/licenses/show/:id",
     meta: { label: "Chứng chỉ hành nghề", icon: <Award className="h-4 w-4" />, parent: "clinic" },
-  },
-  // Ordered in an encounter (on its page), carried out from here: no create.
-  {
-    name: "service_orders",
-    list: "/service-orders",
-    show: "/service-orders/show/:id",
-    meta: {
-      label: "Chỉ định dịch vụ",
-      icon: <FlaskConical className="h-4 w-4" />,
-      parent: "clinic",
-    },
   },
   // The clinic's support inbox (SRS 3.16): patients and guests writing in.
   {

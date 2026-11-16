@@ -186,7 +186,9 @@ export function isClinicAdminOnly(roles: readonly string[] | undefined): boolean
 }
 
 /** A doctor orders services from the catalogue (Chỉ định dịch vụ) but does not manage it. */
-const DOCTOR_HIDDEN = new Set(["medical_services"]);
+const DOCTOR_HIDDEN = new Set(["medical_services", "exam_rooms", "first_aid_articles"]);
+/** Healthcare staff (the front desk) works the day; managing the clinic's staff is the clinic administrator's. */
+const MANAGER_HIDDEN = new Set(["employees"]);
 const NONE_HIDDEN = new Set<string>();
 
 /**
@@ -197,5 +199,6 @@ const NONE_HIDDEN = new Set<string>();
 export function hiddenMenus(roles: readonly string[] | undefined): ReadonlySet<string> {
   if (isClinicAdminOnly(roles)) return CLINIC_ADMIN_HIDDEN;
   if (roles?.includes("DOCTOR") && !roles.includes("CLINIC_ADMIN") && !roles.includes("ADMIN")) return DOCTOR_HIDDEN;
+  if (roles?.includes("MANAGER") && !roles.includes("CLINIC_ADMIN") && !roles.includes("ADMIN")) return MANAGER_HIDDEN;
   return NONE_HIDDEN;
 }
