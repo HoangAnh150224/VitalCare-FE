@@ -47,10 +47,6 @@ export const STAFF_TYPE_OPTIONS: { label: string; value: StaffType }[] = [
 export const SPECIALTY_OPTIONS = [
   "Tim mạch",
   "Hô hấp",
-  "Tim mạch nhi",
-  "Hô hấp nhi",
-  "Phẫu thuật tim mạch",
-  "Phẫu thuật lồng ngực",
 ] as const;
 
 /** Professional titles, stored as the label itself like the specialty. */
