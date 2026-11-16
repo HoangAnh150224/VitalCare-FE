@@ -42,6 +42,8 @@ type ShowViewHeaderProps = PropsWithChildren<{
   title?: string;
   /** False hides Edit for a record that can no longer change, whatever the permission says. */
   canEdit?: boolean;
+  /** False hides Delete when this detail screen is read-only. */
+  canDelete?: boolean;
   /** The page's own controls (issue a secret, run a simulation...), before Refresh/Edit/Delete. */
   actions?: ReactNode;
   wrapperClassName?: string;
@@ -52,6 +54,7 @@ export const ShowViewHeader = ({
   resource: resourceFromProps,
   title: titleFromProps,
   canEdit,
+  canDelete = true,
   actions,
   wrapperClassName,
   headerClassName,
@@ -139,15 +142,17 @@ export const ShowViewHeader = ({
             put would leave the detail of a row that no longer exists — and the
             refetch that follows the invalidation would turn it into a 404.
           */}
-          <DeleteButton
-            variant="outline"
-            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-            recordItemId={recordItemId}
-            resource={resourceName}
-            onSuccess={() => {
-              if (resourceName) list(resourceName);
-            }}
-          />
+          {canDelete && (
+            <DeleteButton
+              variant="outline"
+              className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              recordItemId={recordItemId}
+              resource={resourceName}
+              onSuccess={() => {
+                if (resourceName) list(resourceName);
+              }}
+            />
+          )}
         </div>
       </div>
     </div>

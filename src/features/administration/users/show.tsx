@@ -18,7 +18,7 @@ import {
   MetaItem,
   MetaStrip,
 } from "@/shared/components/views/record-detail";
-import { formatDateTime } from "@/shared/lib/format";
+import { formatDateTime, formatVietnamesePhone } from "@/shared/lib/format";
 import type { User } from "@/domains/user/types";
 import { STATUS_LABELS } from "@/domains/user/types";
 import { USER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
@@ -68,7 +68,7 @@ export const UserShow = () => {
 
   return (
     <ShowView>
-      <ShowViewHeader />
+      <ShowViewHeader canEdit={false} canDelete={false} />
 
       <Card className="py-4">
         <LoadingOverlay loading={isLoading}>
@@ -91,7 +91,7 @@ export const UserShow = () => {
                 )}
               </div>
               <p className="text-muted-foreground text-sm">
-                <span className="font-mono">{record?.phone ?? "—"}</span>
+                <span className="font-mono">{formatVietnamesePhone(record?.phone)}</span>
                 {record?.email ? ` · ${record.email}` : ""}
               </p>
             </div>
@@ -115,7 +115,7 @@ export const UserShow = () => {
         <DetailPanel title="Thông tin định danh">
           <DetailList>
             <DetailRow label="Số điện thoại">
-              <span className="font-mono">{record?.phone ?? "—"}</span>
+              <span className="font-mono">{formatVietnamesePhone(record?.phone)}</span>
             </DetailRow>
             <DetailRow label="Email">
               {record?.email ? (
