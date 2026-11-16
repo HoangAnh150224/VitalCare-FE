@@ -41,6 +41,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/toggle-group";
 import type { Appointment } from "@/domains/appointment/types";
 import type { Customer } from "@/domains/customer/types";
+import { SPECIALTY_OPTIONS } from "@/domains/employee/types";
 import { BookingFields } from "./booking-fields";
 import { EMPTY_BOOKING, type BookingFormValues } from "./booking";
 import { birthDateProblem, clinicToday, oldestBirthDate } from "./clinic-day";
@@ -51,6 +52,7 @@ type WalkInValues = BookingFormValues & {
   dateOfBirth: string;
   nationalId: string;
   gender: string;
+  department: string;
 };
 
 /**
@@ -80,6 +82,7 @@ export const WalkInRegistration = () => {
       dateOfBirth: "",
       nationalId: "",
       gender: "",
+      department: "",
     },
   });
   void refineCore;
@@ -87,7 +90,9 @@ export const WalkInRegistration = () => {
   const { options: customerOptions, onSearch } = useSelect<Customer>({
     resource: "customers",
     optionLabel: (customer) =>
-      `${customer.fullName} · ${customer.phone} · ${customer.customerCode}${customer.nationalId ? ` · ID …${customer.nationalId.slice(-4)}` : ""}`,
+      `${customer.fullName} · ${customer.phone} · ${customer.customerCode}${
+        customer.nationalId ? ` · ID …${customer.nationalId.slice(-4)}` : ""
+      }`,
     optionValue: "id",
     onSearch: (value) => [{ field: "q", operator: "eq", value }],
   });
@@ -111,6 +116,7 @@ export const WalkInRegistration = () => {
               : null,
           clinicId: values.clinicId || undefined,
           reason: values.reason.trim(),
+          department: values.department,
           note: values.note?.trim() || null,
         },
         config: { headers: { "Content-Type": "application/json" } },
@@ -181,7 +187,12 @@ export const WalkInRegistration = () => {
                   rules={{ required: "Vui lòng chọn khách hàng" }}
                   render={({ field }) => (
                     <FormItem className="md:col-span-8">
-                      <FormLabel>Khách hàng</FormLabel>
+                      <FormLabel>
+                        Khách hàng{" "}
+                        <span className="text-destructive" aria-hidden="true">
+                          *
+                        </span>
+                      </FormLabel>
                       <Input
                         placeholder="Tìm theo tên, số điện thoại, mã hồ sơ hoặc giấy tờ định danh"
                         onChange={(event) => onSearch(event.target.value)}
@@ -225,9 +236,17 @@ export const WalkInRegistration = () => {
                     }}
                     render={({ field }) => (
                       <FormItem className="md:col-span-6">
-                        <FormLabel>Họ và tên</FormLabel>
+                        <FormLabel>
+                          Họ và tên{" "}
+                          <span className="text-destructive" aria-hidden="true">
+                            *
+                          </span>
+                        </FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Nhập họ và tên bệnh nhân" />
+                          <Input
+                            {...field}
+                            placeholder="Nhập họ và tên bệnh nhân"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -245,7 +264,12 @@ export const WalkInRegistration = () => {
                     }}
                     render={({ field }) => (
                       <FormItem className="md:col-span-6">
-                        <FormLabel>Số điện thoại</FormLabel>
+                        <FormLabel>
+                          Số điện thoại{" "}
+                          <span className="text-destructive" aria-hidden="true">
+                            *
+                          </span>
+                        </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -253,7 +277,10 @@ export const WalkInRegistration = () => {
                             placeholder="0901234567"
                           />
                         </FormControl>
-                        <FormDescription>Số liên hệ của hồ sơ; không tạo tài khoản đăng nhập cho bệnh nhân vãng lai.</FormDescription>
+                        <FormDescription>
+                          Số liên hệ của hồ sơ; không tạo tài khoản đăng nhập
+                          cho bệnh nhân vãng lai.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -261,12 +288,25 @@ export const WalkInRegistration = () => {
                   <FormField
                     control={form.control}
                     name="dateOfBirth"
-                    rules={{ required: "Nhập ngày sinh", validate: (value) => birthDateProblem(value) }}
+                    rules={{
+                      required: "Nhập ngày sinh",
+                      validate: (value) => birthDateProblem(value),
+                    }}
                     render={({ field }) => (
                       <FormItem className="md:col-span-6">
-                        <FormLabel>Ngày sinh</FormLabel>
+                        <FormLabel>
+                          Ngày sinh{" "}
+                          <span className="text-destructive" aria-hidden="true">
+                            *
+                          </span>
+                        </FormLabel>
                         <FormControl>
-                          <Input {...field} type="date" min={oldestBirthDate()} max={clinicToday()} />
+                          <Input
+                            {...field}
+                            type="date"
+                            min={oldestBirthDate()}
+                            max={clinicToday()}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -283,7 +323,12 @@ export const WalkInRegistration = () => {
                     }}
                     render={({ field }) => (
                       <FormItem className="md:col-span-6">
-                        <FormLabel>Số giấy tờ định danh</FormLabel>
+                        <FormLabel>
+                          Số giấy tờ định danh{" "}
+                          <span className="text-destructive" aria-hidden="true">
+                            *
+                          </span>
+                        </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -291,7 +336,10 @@ export const WalkInRegistration = () => {
                             placeholder="Nhập số CCCD hoặc hộ chiếu"
                           />
                         </FormControl>
-                        <FormDescription>Dùng cùng họ tên, ngày sinh và số liên hệ để phát hiện hồ sơ trùng.</FormDescription>
+                        <FormDescription>
+                          Dùng cùng họ tên, ngày sinh và số liên hệ để phát hiện
+                          hồ sơ trùng.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -302,7 +350,12 @@ export const WalkInRegistration = () => {
                     rules={{ required: "Chọn giới tính" }}
                     render={({ field }) => (
                       <FormItem className="md:col-span-6">
-                        <FormLabel>Giới tính</FormLabel>
+                        <FormLabel>
+                          Giới tính{" "}
+                          <span className="text-destructive" aria-hidden="true">
+                            *
+                          </span>
+                        </FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
@@ -334,6 +387,43 @@ export const WalkInRegistration = () => {
               description="Số khám là số tiếp theo của bác sĩ trong ngày. Thứ tự gọi vào phòng tính theo thời điểm trả phí khám."
             >
               {/* The booking half of this form is the shared one; the patient fields only add to it. */}
+              <FormField
+                control={form.control}
+                name="department"
+                rules={{ required: "Vui lòng chọn khoa khám" }}
+                render={({ field }) => (
+                  <FormItem className="md:col-span-8">
+                    <FormLabel>
+                      Khám khoa{" "}
+                      <span className="text-destructive" aria-hidden="true">
+                        *
+                      </span>
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger
+                          className="w-full"
+                          aria-label="Khám khoa"
+                          aria-required="true"
+                        >
+                          <SelectValue placeholder="Chọn khoa khám" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {SPECIALTY_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Bệnh nhân được gọi vào một phòng của khoa này.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <BookingFields
                 control={form.control as unknown as Control<BookingFormValues>}
                 todayOnly

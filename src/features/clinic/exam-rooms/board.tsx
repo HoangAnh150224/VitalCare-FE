@@ -69,6 +69,16 @@ const clockTime = (value: string | null) =>
  * reload; the board itself comes over HTTP, through the clinic scope), with a
  * slow poll behind it for when the socket is down.
  */
+/** The rooms in their departments, in the order the board already sends them (by department, then code). */
+function byDepartment<R extends { department?: string | null }>(rooms: R[]): [string | null, R[]][] {
+  const groups = new Map<string | null, R[]>();
+  for (const room of rooms) {
+    const key = room.department ?? null;
+    groups.set(key, [...(groups.get(key) ?? []), room]);
+  }
+  return [...groups.entries()];
+}
+
 export function ExamRoomBoard() {
   const { result, query } = useCustom<RoomBoard>({
     url: `${API_URL}/exam_rooms/board`,
@@ -173,22 +183,33 @@ export function ExamRoomBoard() {
         </Card>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {rooms.map((room) => (
-          <RoomCard
-            key={room.id}
-            room={room}
-            canOperate={canOperate?.can ?? false}
-            canExamine={canExamine?.can ?? false}
-            pending={pending[room.id] ?? null}
-            onAction={(action) =>
-              action === "finish" || action === "pass-over" || action === "no-show"
-                ? setAsking({ room, action })
-                : act(room, action)
-            }
-          />
-        ))}
-      </div>
+      {byDepartment(rooms).map(([department, group]) => (
+        <section key={department ?? "none"} className="flex flex-col gap-3">
+          <div className="flex items-baseline gap-3">
+            <h2 className="text-lg font-semibold">{department ? `Khoa ${department}` : "Phòng chưa thuộc khoa"}</h2>
+            <span className="text-muted-foreground text-sm">
+              {group.filter((r) => r.status === "occupied").length} / {group.length} phòng đang khám ·{" "}
+              {group.reduce((sum, r) => sum + r.waiting.length, 0)} người chờ
+            </span>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {group.map((room) => (
+              <RoomCard
+                key={room.id}
+                room={room}
+                canOperate={canOperate?.can ?? false}
+                canExamine={canExamine?.can ?? false}
+                pending={pending[room.id] ?? null}
+                onAction={(action) =>
+                  action === "finish" || action === "pass-over" || action === "no-show"
+                    ? setAsking({ room, action })
+                    : act(room, action)
+                }
+              />
+            ))}
+          </div>
+        </section>
+      ))}
 
       <ConfirmDecision
         asking={asking}
@@ -237,6 +258,7 @@ export function ExamRoomBoard() {
                 <Link to={`/appointments/show/${visit.appointmentId}`} className="min-w-0 flex-1 truncate hover:underline">
                   {visit.patientName}
                 </Link>
+                {visit.department && <Badge variant="outline">{visit.department}</Badge>}
               </li>
             ))}
           </ol>

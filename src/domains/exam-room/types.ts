@@ -14,6 +14,8 @@ export type ExamRoom = {
   /** What the sign on the door says, e.g. `P101`; unique within the clinic. */
   code: string;
   name: string | null;
+  /** The department the room serves — one of the specialties ("Tim mạch", "Hô hấp"); null for none. */
+  department: string | null;
   status: ExamRoomStatus;
 };
 
@@ -32,6 +34,8 @@ export type BoardVisit = {
   returned?: boolean;
   /** The doctor who referred the patient here today. */
   referredBy?: string | null;
+  /** The department the patient came for; only its rooms call them from the shared line. */
+  department?: string | null;
 };
 
 /** A patient out of the room for ordered services or another doctor: how far along. */
@@ -51,6 +55,8 @@ export type RoomBoard = {
     id: number;
     code: string;
     name: string | null;
+    /** The department the room serves; the board groups rooms by it. */
+    department?: string | null;
     status: ExamRoomStatus;
     /** The doctor whose session puts them in this room now; null outside any session. */
     doctor: BoardDoctor | null;

@@ -34,6 +34,8 @@ export type Appointment = {
   startTime: string | null;
   endTime: string | null;
   reason: string | null;
+  /** The department the visit is for ("Tim mạch", "Hô hấp"); null when none was asked. */
+  department?: string | null;
   status: AppointmentStatus;
   note: string | null;
   checkedInAt: string | null;

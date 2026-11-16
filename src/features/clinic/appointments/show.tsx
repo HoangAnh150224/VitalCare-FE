@@ -282,6 +282,9 @@ export const AppointmentShow = () => {
             <DetailRow label="Phòng khám">
               {record?.clinic.name ?? <EmptyValue />}
             </DetailRow>
+            <DetailRow label="Khám khoa">
+              {record?.department ?? <EmptyValue />}
+            </DetailRow>
             <DetailRow label="Lý do">
               {record?.reason ?? <EmptyValue />}
             </DetailRow>

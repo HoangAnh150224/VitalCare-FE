@@ -15,6 +15,8 @@ import {
 } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { SPECIALTY_OPTIONS } from "@/domains/employee/types";
 import { DetailPanel } from "@/shared/components/views/record-detail";
 import { EXAM_ROOM_STATUS_LABELS, type ExamRoom } from "@/domains/exam-room/types";
 
@@ -66,6 +68,7 @@ export function ClinicRoomsPanel({ clinicId }: { clinicId: string }) {
             <li key={room.id} className="flex items-center gap-3 py-2.5">
               <span className="w-16 font-semibold">{room.code}</span>
               <span className="text-muted-foreground min-w-0 flex-1 truncate text-sm">{room.name ?? "—"}</span>
+              {room.department && <Badge variant="outline">{room.department}</Badge>}
               <Badge variant="secondary">{EXAM_ROOM_STATUS_LABELS[room.status]}</Badge>
               {canEdit?.can && (
                 <Button size="icon-sm" variant="ghost" aria-label={`Sửa ${room.code}`} onClick={() => setEditing(room)}>
@@ -84,9 +87,13 @@ export function ClinicRoomsPanel({ clinicId }: { clinicId: string }) {
   );
 }
 
+/** The select's value for "no department" (a Select item cannot be empty). */
+const NO_DEPARTMENT = "__none__";
+
 function RoomDialog({ clinicId, room, onClose }: { clinicId: string; room: ExamRoom | null; onClose: () => void }) {
   const [code, setCode] = useState(room?.code ?? "");
   const [name, setName] = useState(room?.name ?? "");
+  const [department, setDepartment] = useState(room?.department ?? NO_DEPARTMENT);
   const [error, setError] = useState<string | null>(null);
   const { mutate: create, mutation: creating } = useCreate<ExamRoom>();
   const { mutate: update, mutation: updating } = useUpdate<ExamRoom>();
@@ -105,7 +112,12 @@ function RoomDialog({ clinicId, room, onClose }: { clinicId: string; room: ExamR
   const save = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const values = { clinicId, code: code.trim(), name: name.trim() || null };
+    const values = {
+      clinicId,
+      code: code.trim(),
+      name: name.trim() || null,
+      department: department === NO_DEPARTMENT ? null : department,
+    };
     if (room) {
       update({ resource: "exam_rooms", id: room.id, values, errorNotification: false }, done);
     } else {
@@ -134,6 +146,22 @@ function RoomDialog({ clinicId, room, onClose }: { clinicId: string; room: ExamR
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="room-department">Khoa</Label>
+            <Select value={department} onValueChange={setDepartment}>
+              <SelectTrigger id="room-department" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_DEPARTMENT}>Không thuộc khoa</SelectItem>
+                {SPECIALTY_OPTIONS.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {error && <p className="text-destructive text-sm">{error}</p>}
           <DialogFooter>
