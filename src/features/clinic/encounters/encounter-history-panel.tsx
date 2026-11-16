@@ -10,7 +10,10 @@ import type { Encounter } from "@/domains/encounter/types";
 import { ENCOUNTER_STATUS_LABELS, newEncounterPath, type NewEncounterTarget } from "@/domains/encounter/types";
 import { ENCOUNTER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 
-type Props = NewEncounterTarget;
+type Props = NewEncounterTarget & {
+  /** The page already offers "Tạo lần khám" in its header. */
+  hideCreate?: boolean;
+};
 
 /**
  * A patient's encounters, newest first, and the way to open a new one.
@@ -18,7 +21,7 @@ type Props = NewEncounterTarget;
  * Renders nothing for somebody without `clinical_encounters:read` — which is
  * what keeps it off an administrator's read-only view of this page.
  */
-export function EncounterHistoryPanel(props: Props) {
+export function EncounterHistoryPanel({ hideCreate = false, ...props }: Props) {
   const { data: canRead } = useCan({ resource: "clinical_encounters", action: "list" });
   const { data: canCreate } = useCan({ resource: "clinical_encounters", action: "create" });
 
@@ -36,7 +39,7 @@ export function EncounterHistoryPanel(props: Props) {
     <DetailPanel
       title="Lịch sử khám"
       action={
-        canCreate?.can ? (
+        canCreate?.can && !hideCreate ? (
           <Button asChild size="sm" variant="outline">
             <Link to={newEncounterPath(props)}>
               <PlusIcon />
