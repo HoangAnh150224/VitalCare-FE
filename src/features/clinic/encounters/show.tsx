@@ -243,7 +243,7 @@ export const EncounterShow = () => {
       {record && <ConsultationPanel key={`${record.id}-${record.consultedAt ?? ""}`} encounter={record} />}
       {record?.appointmentId && <ReturnPanel appointmentId={record.appointmentId} encounterId={record.id} />}
 
-      {record?.patient && <MonitoringOrdersPanel customerId={record.patient.id} encounterId={record.id} />}
+      {record?.patient && <MonitoringOrdersPanel customerId={record.patient.id} />}
 
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>

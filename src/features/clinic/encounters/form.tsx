@@ -1,12 +1,17 @@
-import { useCan, type HttpError } from "@refinedev/core";
+import { useCan, useNavigation, useNotification, type BaseKey, type HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router";
 
+import { kyInstance } from "@/shared/api/data";
 import { CreateView, CreateViewHeader } from "@/shared/components/views/create-view";
 import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
 import { Textarea } from "@/shared/ui/textarea";
 import {
   Form,
@@ -29,12 +34,20 @@ import {
   type VisitVitals,
 } from "@/domains/encounter/types";
 import { billingErrorNotification } from "@/domains/billing/messages";
+import { monitoringOrdersKey, useMonitoringOrders } from "../monitoring/use-monitoring-orders";
 
 type TextField = "chiefComplaint" | "examinationFindings" | "clinicalNote" | "diagnosis" | "followUp";
 
 /** Number inputs hold text until sent; an empty one is "not measured". */
 type EncounterFormValues = Record<TextField, string> & {
   vitals: Record<keyof VisitVitals, string | number | null>;
+  /** BF-04, optional: home monitoring ordered at this visit. Not part of the encounter's own request. */
+  monitoring: {
+    ordered: boolean;
+    reason: string;
+    decision: "" | "ACCEPTED" | "DECLINED";
+    note: string;
+  };
 };
 
 const EXAMINATION: { name: TextField; label: string; rows: number; max: number; placeholder?: string }[] = [
@@ -61,15 +74,25 @@ const toNumber = (value: string | number | null | undefined) =>
  */
 function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?: Record<string, number> }) {
   const navigate = useNavigate();
+  const { show } = useNavigation();
+  const { open: notify } = useNotification();
+  const queryClient = useQueryClient();
   const { data: canConclude } = useCan({ resource: "clinical_encounters", action: "conclude" });
   const writesDiagnosis = canConclude?.can ?? false;
+  const customerId = patient?.customerId;
+  // Monitoring is ordered with a new visit only, and not over one already running.
+  const { data: canOrder } = useCan({ resource: "monitoring_orders", action: "create" });
+  const { data: orders } = useMonitoringOrders(customerId ?? 0, Boolean(customerId && canOrder?.can));
+  const alreadyMonitored = orders?.some((o) => o.status === "ACTIVE") ?? false;
+  const offersMonitoring = Boolean(customerId && canOrder?.can && orders && !alreadyMonitored);
   const {
     refineCore: { onFinish, query },
     ...form
   } = useForm<Encounter, HttpError, EncounterFormValues>({
     refineCoreProps: {
       resource: "clinical_encounters",
-      redirect: "show",
+      // A new visit opens once its monitoring order (if any) is saved too.
+      redirect: patient ? false : "show",
       // The refusal in Vietnamese: a 422 names what is missing (BF-02: the fee unpaid).
       errorNotification: billingErrorNotification,
     },
@@ -80,9 +103,39 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
       diagnosis: "",
       followUp: "",
       vitals: EMPTY_VITALS,
+      monitoring: { ordered: false, reason: "", decision: "", note: "" },
     },
   });
   const record = query?.data?.data;
+  const monitoringOrdered = form.watch("monitoring.ordered");
+
+  /** After the visit is saved: its monitoring order, then the visit itself. */
+  const afterCreate = async (encounterId: BaseKey, values: EncounterFormValues) => {
+    const m = values.monitoring;
+    if (offersMonitoring && m.ordered && customerId) {
+      try {
+        await kyInstance
+          .post("monitoring_orders", {
+            json: {
+              customerId,
+              encounterId,
+              reason: m.reason.trim(),
+              decision: m.decision,
+              consentNote: m.note.trim() || null,
+            },
+          })
+          .json();
+        await queryClient.invalidateQueries({ queryKey: monitoringOrdersKey(customerId) });
+      } catch {
+        notify?.({
+          type: "error",
+          message: "Đã lưu lần khám nhưng chưa lưu được chỉ định theo dõi IoMT",
+          description: "Bệnh nhân có thể đang có chỉ định theo dõi khác.",
+        });
+      }
+    }
+    show("clinical_encounters", encounterId);
+  };
 
   // Reached by URL after the 24 hours: say so instead of taking text the API will refuse.
   if (record && isEncounterLocked(record)) {
@@ -141,9 +194,14 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
             diagnosis: values.diagnosis ?? "",
             followUp: values.followUp ?? "",
             vitals: Object.fromEntries(VITAL_FIELDS.map((f) => [f.name, toNumber(values.vitals?.[f.name])])),
-          } as unknown as EncounterFormValues).catch(() => {
-            // Said by the notification above; nothing left to throw.
-          })
+          } as unknown as EncounterFormValues)
+            .then((result) => {
+              const id = (result as { data?: { id?: BaseKey } } | void)?.data?.id;
+              if (patient && id != null) return afterCreate(id, values);
+            })
+            .catch(() => {
+              // Said by the notification above; nothing left to throw.
+            })
         )}
         className="min-w-0"
         // The ranges are checked below with Vietnamese messages; the browser's own
@@ -222,6 +280,93 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
             {textField("followUp", "Hướng dẫn theo dõi / tái khám", 3, 5000)}
           </FormSection>
 
+          {offersMonitoring && (
+            <FormSection
+              title="Chỉ định theo dõi IoMT"
+              description="Không bắt buộc. Thiết bị chỉ được gán khi bệnh nhân đã đồng ý."
+            >
+              <FormField
+                control={form.control}
+                name="monitoring.ordered"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-12">
+                    <Label className="flex items-center gap-2 font-normal">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} />
+                      </FormControl>
+                      Chỉ định theo dõi tại nhà bằng vòng đeo
+                    </Label>
+                  </FormItem>
+                )}
+              />
+              {monitoringOrdered && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="monitoring.reason"
+                    rules={{
+                      validate: (v, all) =>
+                        !all.monitoring.ordered || Boolean(v.trim()) || "Nhập lý do chỉ định",
+                      maxLength: { value: 1000, message: "Tối đa 1000 ký tự" },
+                    }}
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-6">
+                        <FormLabel>Lý do chỉ định</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={2} placeholder="VD theo dõi SpO₂ sau viêm phổi" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="monitoring.note"
+                    rules={{ maxLength: { value: 1000, message: "Tối đa 1000 ký tự" } }}
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-6">
+                        <FormLabel>Ghi chú</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            {...field}
+                            rows={2}
+                            placeholder="Đã giải thích mục đích, cách đeo, phạm vi theo dõi..."
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="monitoring.decision"
+                    rules={{
+                      validate: (v, all) =>
+                        !all.monitoring.ordered || v !== "" || "Chọn bệnh nhân đồng ý hay từ chối",
+                    }}
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-12">
+                        <FormControl>
+                          <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-4">
+                            <Label className="flex items-center gap-2 font-normal">
+                              <RadioGroupItem value="ACCEPTED" />
+                              Bệnh nhân đồng ý
+                            </Label>
+                            <Label className="flex items-center gap-2 font-normal">
+                              <RadioGroupItem value="DECLINED" />
+                              Bệnh nhân từ chối
+                            </Label>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+            </FormSection>
+          )}
+
           <FormSectionActions>
             <Button type="submit" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? "Đang lưu..." : submitLabel}
@@ -247,7 +392,7 @@ export const EncounterCreate = () => {
       <CreateViewHeader resource="clinical_encounters" title={patientName ? `Lần khám mới — ${patientName}` : undefined} />
       {customerId ? (
         <EncounterForm
-          submitLabel="Bắt đầu lần khám"
+          submitLabel="Lưu"
           patient={{ customerId, ...(appointmentId ? { appointmentId } : {}) }}
         />
       ) : (
