@@ -1,6 +1,5 @@
 import { useCan, useList, useNavigation, useNotification, type BaseKey, type HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
-import { useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useFieldArray } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
@@ -10,10 +9,7 @@ import { CreateView, CreateViewHeader } from "@/shared/components/views/create-v
 import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
-import { Checkbox } from "@/shared/ui/checkbox";
 import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
 import { Textarea } from "@/shared/ui/textarea";
 import { formatMoney } from "@/shared/lib/format";
 import type { MedicalService } from "@/domains/billing/types";
@@ -38,7 +34,6 @@ import {
   type VisitVitals,
 } from "@/domains/encounter/types";
 import { billingErrorNotification } from "@/domains/billing/messages";
-import { monitoringOrdersKey, useMonitoringOrders } from "../monitoring/use-monitoring-orders";
 import { ServicePicker } from "../service-orders/service-picker";
 
 type TextField = "chiefComplaint" | "examinationFindings" | "clinicalNote" | "diagnosis" | "followUp";
@@ -48,13 +43,6 @@ type EncounterFormValues = Record<TextField, string> & {
   vitals: Record<keyof VisitVitals, string | number | null>;
   /** Services ordered with a new visit, each sent once the visit exists. */
   services: { serviceId: string; instruction: string }[];
-  /** BF-04, optional: home monitoring ordered at this visit. Not part of the encounter's own request. */
-  monitoring: {
-    ordered: boolean;
-    reason: string;
-    decision: "" | "ACCEPTED" | "DECLINED";
-    note: string;
-  };
 };
 
 const EXAMINATION: { name: TextField; label: string; rows: number; max: number; placeholder?: string }[] = [
@@ -83,15 +71,9 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
   const navigate = useNavigate();
   const { show } = useNavigation();
   const { open: notify } = useNotification();
-  const queryClient = useQueryClient();
   const { data: canConclude } = useCan({ resource: "clinical_encounters", action: "conclude" });
   const writesDiagnosis = canConclude?.can ?? false;
   const customerId = patient?.customerId;
-  // Monitoring is ordered with a new visit only, and not over one already running.
-  const { data: canOrder } = useCan({ resource: "monitoring_orders", action: "create" });
-  const { data: orders } = useMonitoringOrders(customerId ?? 0, Boolean(customerId && canOrder?.can));
-  const alreadyMonitored = orders?.some((o) => o.status === "ACTIVE") ?? false;
-  const offersMonitoring = Boolean(customerId && canOrder?.can && orders && !alreadyMonitored);
   // Services too are ordered with a new visit; later ones go on the visit's own page.
   const { data: canOrderServices } = useCan({ resource: "service_orders", action: "create" });
   const offersServices = Boolean(customerId && canOrderServices?.can);
@@ -108,7 +90,7 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
   } = useForm<Encounter, HttpError, EncounterFormValues>({
     refineCoreProps: {
       resource: "clinical_encounters",
-      // A new visit opens once its monitoring order (if any) is saved too.
+      // A new visit opens once its service orders are saved too.
       redirect: patient ? false : "show",
       // The refusal in Vietnamese: a 422 names what is missing (BF-02: the fee unpaid).
       errorNotification: billingErrorNotification,
@@ -121,11 +103,9 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
       followUp: "",
       vitals: EMPTY_VITALS,
       services: [],
-      monitoring: { ordered: false, reason: "", decision: "", note: "" },
     },
   });
   const record = query?.data?.data;
-  const monitoringOrdered = form.watch("monitoring.ordered");
   const serviceRows = useFieldArray({ control: form.control, name: "services" });
   const chosenServices = form.watch("services");
   const servicesTotal = chosenServices.reduce(
@@ -133,7 +113,7 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
     0
   );
 
-  /** After the visit is saved: its service orders and monitoring order, then the visit itself. */
+  /** After the visit is saved: its service orders, then the visit itself. */
   const afterCreate = async (encounterId: BaseKey, values: EncounterFormValues) => {
     if (offersServices) {
       const failed: string[] = [];
@@ -153,29 +133,6 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
           type: "error",
           message: "Đã lưu lần khám nhưng chưa chỉ định được dịch vụ",
           description: `${failed.join(", ")}. Chỉ định lại trên trang lần khám.`,
-        });
-      }
-    }
-    const m = values.monitoring;
-    if (offersMonitoring && m.ordered && customerId) {
-      try {
-        await kyInstance
-          .post("monitoring_orders", {
-            json: {
-              customerId,
-              encounterId,
-              reason: m.reason.trim(),
-              decision: m.decision,
-              consentNote: m.note.trim() || null,
-            },
-          })
-          .json();
-        await queryClient.invalidateQueries({ queryKey: monitoringOrdersKey(customerId) });
-      } catch {
-        notify?.({
-          type: "error",
-          message: "Đã lưu lần khám nhưng chưa lưu được chỉ định theo dõi IoMT",
-          description: "Bệnh nhân có thể đang có chỉ định theo dõi khác.",
         });
       }
     }
@@ -392,93 +349,6 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
                   </span>
                 )}
               </div>
-            </FormSection>
-          )}
-
-          {offersMonitoring && (
-            <FormSection
-              title="Chỉ định theo dõi IoMT"
-              description="Không bắt buộc. Thiết bị chỉ được gán khi bệnh nhân đã đồng ý."
-            >
-              <FormField
-                control={form.control}
-                name="monitoring.ordered"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-12">
-                    <Label className="flex items-center gap-2 font-normal">
-                      <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} />
-                      </FormControl>
-                      Chỉ định theo dõi tại nhà bằng vòng đeo
-                    </Label>
-                  </FormItem>
-                )}
-              />
-              {monitoringOrdered && (
-                <>
-                  <FormField
-                    control={form.control}
-                    name="monitoring.reason"
-                    rules={{
-                      validate: (v, all) =>
-                        !all.monitoring.ordered || Boolean(v.trim()) || "Nhập lý do chỉ định",
-                      maxLength: { value: 1000, message: "Tối đa 1000 ký tự" },
-                    }}
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-6">
-                        <FormLabel>Lý do chỉ định</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={2} placeholder="VD theo dõi SpO₂ sau viêm phổi" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="monitoring.note"
-                    rules={{ maxLength: { value: 1000, message: "Tối đa 1000 ký tự" } }}
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-6">
-                        <FormLabel>Ghi chú</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            {...field}
-                            rows={2}
-                            placeholder="Đã giải thích mục đích, cách đeo, phạm vi theo dõi..."
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="monitoring.decision"
-                    rules={{
-                      validate: (v, all) =>
-                        !all.monitoring.ordered || v !== "" || "Chọn bệnh nhân đồng ý hay từ chối",
-                    }}
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-12">
-                        <FormControl>
-                          <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-4">
-                            <Label className="flex items-center gap-2 font-normal">
-                              <RadioGroupItem value="ACCEPTED" />
-                              Bệnh nhân đồng ý
-                            </Label>
-                            <Label className="flex items-center gap-2 font-normal">
-                              <RadioGroupItem value="DECLINED" />
-                              Bệnh nhân từ chối
-                            </Label>
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
             </FormSection>
           )}
 

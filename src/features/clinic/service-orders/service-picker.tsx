@@ -16,14 +16,19 @@ import { formatMoney } from "@/shared/lib/format";
 import type { MedicalService } from "@/domains/billing/types";
 import { SERVICE_CATEGORY_LABELS } from "@/domains/billing/types";
 
-/** "Công thức máu" is found by "cong thuc mau" too. */
+/**
+ * "Công thức máu" is found by "cong thuc mau" too, and "X-quang" by "x quang":
+ * accents dropped, punctuation read as a space.
+ */
 const fold = (text: string) =>
   text
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D")
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/[^a-z0-9#]+/g, " ")
+    .trim();
 
 type Props = {
   services: MedicalService[];
@@ -66,7 +71,7 @@ export const ServicePicker = forwardRef<HTMLButtonElement, Props>(function Servi
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-(--radix-popover-trigger-width) min-w-72 p-0" align="start">
-        <Command filter={(itemValue, search) => (fold(itemValue).includes(fold(search.trim())) ? 1 : 0)}>
+        <Command filter={(itemValue, search) => (fold(itemValue).includes(fold(search)) ? 1 : 0)}>
           <CommandInput placeholder="Tìm dịch vụ..." />
           <CommandList>
             <CommandEmpty>Không tìm thấy dịch vụ.</CommandEmpty>

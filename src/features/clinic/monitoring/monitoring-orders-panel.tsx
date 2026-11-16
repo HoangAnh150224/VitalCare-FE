@@ -11,7 +11,7 @@ import { monitoringOrdersKey, useMonitoringOrders } from "./use-monitoring-order
 
 /**
  * BF-04 on a patient: the monitoring orders and the patient's answers. The
- * order itself is written with the visit (the encounter form); this shows what
+ * order itself is written with the doctor's conclusion (the consultation panel); this shows what
  * was ordered and lets a doctor end an active one. A patient never ordered
  * monitoring gets no panel at all.
  */
