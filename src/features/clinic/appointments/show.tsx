@@ -7,7 +7,7 @@ import {
   useShow,
   useUpdate,
 } from "@refinedev/core";
-import { BanknoteIcon, PencilIcon, PrinterIcon } from "lucide-react";
+import { BanknoteIcon, PencilIcon, PlusIcon, PrinterIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
@@ -101,7 +101,29 @@ export const AppointmentShow = () => {
 
   return (
     <ShowView>
-      <ShowViewHeader />
+      <ShowViewHeader
+        actions={
+          /* The visit follows the check-in: open its encounter from here, beside Refresh. */
+          record &&
+          (record.status === "checked_in" ||
+            record.status === "ready_for_examination" ||
+            record.status === "in_exam") &&
+          canRecordEncounter?.can && (
+            <Button asChild>
+              <Link
+                to={newEncounterPath({
+                  customerId: record.customer.id,
+                  patientName: record.customer.fullName,
+                  appointmentId: record.id,
+                })}
+              >
+                <PlusIcon />
+                Tạo lần khám
+              </Link>
+            </Button>
+          )
+        }
+      />
 
       <Card className="py-4">
         <LoadingOverlay loading={isLoading}>
@@ -150,23 +172,6 @@ export const AppointmentShow = () => {
                   </Button>
                 )}
               </div>
-              {/* The visit follows the check-in: open its encounter from here. */}
-              {(record?.status === "checked_in" ||
-                record?.status === "ready_for_examination" ||
-                record?.status === "in_exam") &&
-                canRecordEncounter?.can && (
-                  <Button asChild variant="outline">
-                    <Link
-                      to={newEncounterPath({
-                        customerId: record.customer.id,
-                        patientName: record.customer.fullName,
-                        appointmentId: record.id,
-                      })}
-                    >
-                      Tạo lần khám
-                    </Link>
-                  </Button>
-                )}
             </div>
 
             <MetaStrip className="shrink-0">
