@@ -14,7 +14,6 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Textarea } from "@/shared/ui/textarea";
 import { formatMoney } from "@/shared/lib/format";
 import type { MedicalService } from "@/domains/billing/types";
@@ -40,6 +39,7 @@ import {
 } from "@/domains/encounter/types";
 import { billingErrorNotification } from "@/domains/billing/messages";
 import { monitoringOrdersKey, useMonitoringOrders } from "../monitoring/use-monitoring-orders";
+import { ServicePicker } from "../service-orders/service-picker";
 
 type TextField = "chiefComplaint" | "examinationFindings" | "clinicalNote" | "diagnosis" | "followUp";
 
@@ -338,20 +338,15 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
                     rules={{ required: "Chọn dịch vụ" }}
                     render={({ field }) => (
                       <FormItem className="md:col-span-5">
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <FormControl>
-                            <SelectTrigger className="w-full" aria-label={`Dịch vụ ${index + 1}`}>
-                              <SelectValue placeholder="Chọn dịch vụ" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {services.map((service) => (
-                              <SelectItem key={service.id} value={String(service.id)}>
-                                {service.name} · {formatMoney(service.price)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <ServicePicker
+                            ref={field.ref}
+                            services={services}
+                            value={field.value}
+                            onChange={field.onChange}
+                            aria-label={`Dịch vụ ${index + 1}`}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

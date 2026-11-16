@@ -15,7 +15,6 @@ import {
   DialogTitle,
 } from "@/shared/ui/dialog";
 import { Label } from "@/shared/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Textarea } from "@/shared/ui/textarea";
 import type { MedicalService, ServiceOrder } from "@/domains/billing/types";
 import { isOrderOutstanding, SERVICE_CATEGORY_LABELS } from "@/domains/billing/types";
@@ -23,6 +22,7 @@ import { formatDateTime, formatMoney } from "@/shared/lib/format";
 import { billingErrorNotification } from "@/domains/billing/messages";
 import { Badge } from "@/shared/ui/badge";
 import { CancelOrderDialog, OrderFiles, OrderStatusBadge, useOrderActions } from "./order-parts";
+import { ServicePicker } from "./service-picker";
 
 /**
  * An encounter's orders. The encounter page and its panel ask with the same
@@ -198,18 +198,7 @@ function OrderDialog({
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="order-service">Dịch vụ</Label>
-            <Select value={serviceId} onValueChange={setServiceId}>
-              <SelectTrigger id="order-service" className="w-full">
-                <SelectValue placeholder="Chọn dịch vụ" />
-              </SelectTrigger>
-              <SelectContent>
-                {services.map((service) => (
-                  <SelectItem key={service.id} value={String(service.id)}>
-                    {service.name} · {formatMoney(service.price)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ServicePicker id="order-service" services={services} value={serviceId} onChange={setServiceId} />
             {chosen && (
               <p className="text-muted-foreground text-xs">
                 {SERVICE_CATEGORY_LABELS[chosen.category]}, có kết quả sau khoảng {chosen.turnaroundMinutes} phút.
