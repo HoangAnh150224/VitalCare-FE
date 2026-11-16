@@ -19,7 +19,7 @@ import { formatDate, formatLocalDate } from "@/shared/lib/format";
 import type { MyPatient } from "@/domains/assignment/types";
 import { STAFF_TYPE_LABELS } from "@/domains/employee/types";
 import { newEncounterPath } from "@/domains/encounter/types";
-import { EncounterHistoryPanel } from "../encounters/encounter-history-panel";
+import { HealthRecord } from "../encounters/health-record";
 import { MedicalRecordPanel } from "../encounters/medical-record-panel";
 import { MonitoringNotesPanel } from "../encounters/monitoring-notes-panel";
 import { MonitoringSummaryPanel } from "../vital-signs/monitoring-summary";
@@ -140,17 +140,15 @@ export const MyPatientShow = ({
       {record && <MonitoringSummaryPanel customerId={record.id} />}
       {record && <MonitoringOrdersPanel customerId={record.id} />}
 
+      {/* The visits and their results, a timeline like the patient's own health record. */}
+      {record && <HealthRecord key={`health-${record.id}`} customerId={record.id} />}
+
       {record && (
         <div className="grid min-w-0 gap-4 lg:grid-cols-2">
           <MedicalRecordPanel key={record.id} customerId={record.id} />
           <MonitoringNotesPanel
             key={`notes-${record.id}`}
             customerId={record.id}
-          />
-          <EncounterHistoryPanel
-            customerId={record.id}
-            patientName={record.fullName}
-            hideCreate={canStartEncounter}
           />
         </div>
       )}
