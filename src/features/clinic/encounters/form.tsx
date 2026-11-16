@@ -1,6 +1,8 @@
-import { useCan, useNavigation, useNotification, type BaseKey, type HttpError } from "@refinedev/core";
+import { useCan, useList, useNavigation, useNotification, type BaseKey, type HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
+import { PlusIcon, Trash2Icon } from "lucide-react";
+import { useFieldArray } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
 
 import { kyInstance } from "@/shared/api/data";
@@ -12,7 +14,10 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Textarea } from "@/shared/ui/textarea";
+import { formatMoney } from "@/shared/lib/format";
+import type { MedicalService } from "@/domains/billing/types";
 import {
   Form,
   FormControl,
@@ -41,6 +46,8 @@ type TextField = "chiefComplaint" | "examinationFindings" | "clinicalNote" | "di
 /** Number inputs hold text until sent; an empty one is "not measured". */
 type EncounterFormValues = Record<TextField, string> & {
   vitals: Record<keyof VisitVitals, string | number | null>;
+  /** Services ordered with a new visit, each sent once the visit exists. */
+  services: { serviceId: string; instruction: string }[];
   /** BF-04, optional: home monitoring ordered at this visit. Not part of the encounter's own request. */
   monitoring: {
     ordered: boolean;
@@ -85,6 +92,16 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
   const { data: orders } = useMonitoringOrders(customerId ?? 0, Boolean(customerId && canOrder?.can));
   const alreadyMonitored = orders?.some((o) => o.status === "ACTIVE") ?? false;
   const offersMonitoring = Boolean(customerId && canOrder?.can && orders && !alreadyMonitored);
+  // Services too are ordered with a new visit; later ones go on the visit's own page.
+  const { data: canOrderServices } = useCan({ resource: "service_orders", action: "create" });
+  const offersServices = Boolean(customerId && canOrderServices?.can);
+  const { result: serviceList } = useList<MedicalService>({
+    resource: "medical_services",
+    pagination: { mode: "off" },
+    queryOptions: { enabled: offersServices },
+  });
+  // The examination fee is on every bill, never ordered.
+  const services = (serviceList?.data ?? []).filter((s) => s.status === "active" && s.category !== "consultation");
   const {
     refineCore: { onFinish, query },
     ...form
@@ -103,14 +120,42 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
       diagnosis: "",
       followUp: "",
       vitals: EMPTY_VITALS,
+      services: [],
       monitoring: { ordered: false, reason: "", decision: "", note: "" },
     },
   });
   const record = query?.data?.data;
   const monitoringOrdered = form.watch("monitoring.ordered");
+  const serviceRows = useFieldArray({ control: form.control, name: "services" });
+  const chosenServices = form.watch("services");
+  const servicesTotal = chosenServices.reduce(
+    (sum, row) => sum + (services.find((s) => String(s.id) === row.serviceId)?.price ?? 0),
+    0
+  );
 
-  /** After the visit is saved: its monitoring order, then the visit itself. */
+  /** After the visit is saved: its service orders and monitoring order, then the visit itself. */
   const afterCreate = async (encounterId: BaseKey, values: EncounterFormValues) => {
+    if (offersServices) {
+      const failed: string[] = [];
+      for (const row of values.services) {
+        try {
+          await kyInstance
+            .post(`clinical_encounters/${encounterId}/service_orders`, {
+              json: { serviceId: Number(row.serviceId), instruction: row.instruction.trim() || null },
+            })
+            .json();
+        } catch {
+          failed.push(services.find((s) => String(s.id) === row.serviceId)?.name ?? `dịch vụ #${row.serviceId}`);
+        }
+      }
+      if (failed.length) {
+        notify?.({
+          type: "error",
+          message: "Đã lưu lần khám nhưng chưa chỉ định được dịch vụ",
+          description: `${failed.join(", ")}. Chỉ định lại trên trang lần khám.`,
+        });
+      }
+    }
     const m = values.monitoring;
     if (offersMonitoring && m.ordered && customerId) {
       try {
@@ -279,6 +324,81 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
             })}
             {textField("followUp", "Hướng dẫn theo dõi / tái khám", 3, 5000)}
           </FormSection>
+
+          {offersServices && (
+            <FormSection
+              title="Chỉ định dịch vụ"
+              description="Xét nghiệm, chẩn đoán hình ảnh... bệnh nhân đi làm sau khi lưu. Không bắt buộc."
+            >
+              {serviceRows.fields.map((row, index) => (
+                <div key={row.id} className="grid grid-cols-1 gap-3 md:col-span-12 md:grid-cols-12 md:items-start">
+                  <FormField
+                    control={form.control}
+                    name={`services.${index}.serviceId`}
+                    rules={{ required: "Chọn dịch vụ" }}
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-5">
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger className="w-full" aria-label={`Dịch vụ ${index + 1}`}>
+                              <SelectValue placeholder="Chọn dịch vụ" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {services.map((service) => (
+                              <SelectItem key={service.id} value={String(service.id)}>
+                                {service.name} · {formatMoney(service.price)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`services.${index}.instruction`}
+                    rules={{ maxLength: { value: 1000, message: "Tối đa 1000 ký tự" } }}
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-6">
+                        <FormControl>
+                          <Input {...field} placeholder="Ghi chú cho người thực hiện (không bắt buộc)" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="md:col-span-1"
+                    aria-label="Bỏ dịch vụ này"
+                    onClick={() => serviceRows.remove(index)}
+                  >
+                    <Trash2Icon />
+                  </Button>
+                </div>
+              ))}
+              <div className="flex flex-wrap items-center gap-3 md:col-span-12">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => serviceRows.append({ serviceId: "", instruction: "" })}
+                >
+                  <PlusIcon />
+                  Thêm dịch vụ
+                </Button>
+                {servicesTotal > 0 && (
+                  <span className="text-muted-foreground text-sm tabular-nums">
+                    Tổng {formatMoney(servicesTotal)}
+                  </span>
+                )}
+              </div>
+            </FormSection>
+          )}
 
           {offersMonitoring && (
             <FormSection
