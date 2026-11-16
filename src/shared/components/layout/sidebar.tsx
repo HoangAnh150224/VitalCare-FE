@@ -13,7 +13,13 @@ import {
   ListIcon,
   PanelLeftIcon,
 } from "lucide-react";
-import { CLINIC_ADMIN_MENU, hiddenMenus, isClinicAdminOnly, permissionFor } from "@/shared/lib/permissions";
+import {
+  CLINIC_ADMIN_MENU,
+  hiddenMenus,
+  isClinicAdminOnly,
+  permissionFor,
+  sidebarOnlyHidden,
+} from "@/shared/lib/permissions";
 import { getAuthorities } from "@/shared/api/session";
 
 import {
@@ -112,7 +118,9 @@ function useAccessibleMenuItems(items: TreeMenuItem[]): TreeMenuItem[] {
 
   return React.useMemo(() => {
     if (!permissions) return items;
-    const hidden = hiddenMenus(getAuthorities()?.roles);
+    const roles = getAuthorities()?.roles;
+    const hidden = hiddenMenus(roles);
+    const notInMenu = sidebarOnlyHidden(roles);
 
     const filter = (nodes: TreeMenuItem[]): TreeMenuItem[] =>
       nodes.flatMap((node) => {
@@ -123,7 +131,7 @@ function useAccessibleMenuItems(items: TreeMenuItem[]): TreeMenuItem[] {
         // A node with no surviving children is only kept if it is a real
         // destination in its own right and this account may open it.
         if (!node.route) return [];
-        if (hidden.has(node.name)) return [];
+        if (hidden.has(node.name) || notInMenu.has(node.name)) return [];
 
         const required = permissionFor(node.name, "list");
         return !required || permissions.includes(required) ? [node] : [];
