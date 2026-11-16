@@ -16,6 +16,8 @@ export type BookingFormValues = {
   employeeId: string;
   appointmentDate: string;
   reason: string;
+  /** The department to be seen in ("Tim mạch", "Hô hấp"): only its rooms call the visit in. */
+  department: string;
   note?: string;
 };
 
@@ -24,6 +26,7 @@ export const EMPTY_BOOKING: BookingFormValues = {
   employeeId: "",
   appointmentDate: "",
   reason: "",
+  department: "",
   note: "",
 };
 
@@ -35,5 +38,6 @@ export function toBookingPayload(values: BookingFormValues) {
     clinicId: values.clinicId || undefined,
     appointmentDate: values.appointmentDate,
     reason: values.reason.trim(),
+    department: values.department,
   };
 }

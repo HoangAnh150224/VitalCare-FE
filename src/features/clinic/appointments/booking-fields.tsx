@@ -19,6 +19,7 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 import type { Clinic } from "@/domains/clinic/types";
+import { SPECIALTY_OPTIONS } from "@/domains/employee/types";
 import type { Profile } from "@/domains/profile/types";
 import { profileKind, relativesFull } from "@/domains/profile/types";
 import type { BookingFormValues } from "./booking";
@@ -195,6 +196,34 @@ export function BookingFields({
           )}
         />
       )}
+      <FormField
+        control={control}
+        name="department"
+        rules={{ required: "Vui lòng chọn khoa khám" }}
+        render={({ field }) => (
+          <FormItem className="md:col-span-8">
+            <FormLabel>
+              Khám khoa <span className="text-destructive" aria-hidden="true">*</span>
+            </FormLabel>
+            <Select onValueChange={field.onChange} value={field.value ?? ""}>
+              <FormControl>
+                <SelectTrigger className="w-full" aria-label="Khám khoa" aria-required="true">
+                  <SelectValue placeholder="Chọn khoa khám" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {SPECIALTY_OPTIONS.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-muted-foreground text-sm">Bệnh nhân được gọi vào một phòng của khoa này.</p>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       <FormField
         control={control}
         name="appointmentDate"

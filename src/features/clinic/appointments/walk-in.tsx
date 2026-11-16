@@ -41,7 +41,6 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/toggle-group";
 import type { Appointment } from "@/domains/appointment/types";
 import type { Customer } from "@/domains/customer/types";
-import { SPECIALTY_OPTIONS } from "@/domains/employee/types";
 import { BookingFields } from "./booking-fields";
 import { EMPTY_BOOKING, type BookingFormValues } from "./booking";
 import { birthDateProblem, clinicToday, oldestBirthDate } from "./clinic-day";
@@ -52,7 +51,6 @@ type WalkInValues = BookingFormValues & {
   dateOfBirth: string;
   nationalId: string;
   gender: string;
-  department: string;
 };
 
 /**
@@ -82,7 +80,6 @@ export const WalkInRegistration = () => {
       dateOfBirth: "",
       nationalId: "",
       gender: "",
-      department: "",
     },
   });
   void refineCore;
@@ -387,43 +384,6 @@ export const WalkInRegistration = () => {
               description="Số khám là số tiếp theo của bác sĩ trong ngày. Thứ tự gọi vào phòng tính theo thời điểm trả phí khám."
             >
               {/* The booking half of this form is the shared one; the patient fields only add to it. */}
-              <FormField
-                control={form.control}
-                name="department"
-                rules={{ required: "Vui lòng chọn khoa khám" }}
-                render={({ field }) => (
-                  <FormItem className="md:col-span-8">
-                    <FormLabel>
-                      Khám khoa{" "}
-                      <span className="text-destructive" aria-hidden="true">
-                        *
-                      </span>
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger
-                          className="w-full"
-                          aria-label="Khám khoa"
-                          aria-required="true"
-                        >
-                          <SelectValue placeholder="Chọn khoa khám" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {SPECIALTY_OPTIONS.map((option) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Bệnh nhân được gọi vào một phòng của khoa này.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <BookingFields
                 control={form.control as unknown as Control<BookingFormValues>}
                 todayOnly
