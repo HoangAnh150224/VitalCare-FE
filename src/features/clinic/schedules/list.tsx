@@ -42,7 +42,9 @@ import { ScheduleExport } from "./schedule-export";
  */
 export const DoctorScheduleList = () => {
   const { doctors, isLoading, isError, refetch } = useOwnClinicDoctors();
-  const chooseDoctorFirst = getAuthorities()?.roles.includes("CLINIC_ADMIN") ?? false;
+  // The clinic administrator and the front desk look across the clinic's doctors; a doctor opens their own.
+  const roles = getAuthorities()?.roles ?? [];
+  const chooseDoctorFirst = roles.includes("CLINIC_ADMIN") || (roles.includes("MANAGER") && !roles.includes("DOCTOR"));
   const [search, setSearch] = useState("");
   const [specialty, setSpecialty] = useState("all");
   const [professionalTitle, setProfessionalTitle] = useState("all");
@@ -129,7 +131,7 @@ export const DoctorScheduleList = () => {
         resource="doctor_schedules"
         title={doctor ? `Lịch làm việc · ${doctor.fullName}` : "Lịch làm việc bác sĩ"}
         canCreate={false}
-        description={chooseDoctorFirst && !doctor ? "Chọn bác sĩ trong cơ sở để xem và quản lý lịch làm việc." : "Giờ làm việc lặp lại hằng tuần và các khoảng thời gian không nhận khám của bác sĩ được chọn."}
+        description={chooseDoctorFirst && !doctor ? "Chọn bác sĩ trong cơ sở để xem lịch làm việc." : "Giờ làm việc lặp lại hằng tuần và các khoảng thời gian không nhận khám của bác sĩ được chọn."}
         actions={
           (!chooseDoctorFirst || doctor) && (
           <div className="flex flex-wrap gap-2">

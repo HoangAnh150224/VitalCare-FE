@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useCan, useCustomMutation, useList, useNotification, type HttpError } from "@refinedev/core";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { DoorOpenIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { API_URL } from "@/shared/api/constants";
 import { Button } from "@/shared/ui/button";
+import { Badge } from "@/shared/ui/badge";
 import { Input } from "@/shared/ui/input";
 import {
   Select,
@@ -181,6 +182,8 @@ export function WorkingHoursEditor({
     );
   };
 
+  if (!editable) return <WeekView doctor={doctor} sessions={rows} rooms={rooms} />;
+
   const columns = showRooms
     ? "md:grid-cols-[minmax(10rem,1.2fr)_minmax(10rem,1fr)_minmax(10rem,1fr)_minmax(9rem,1fr)_6rem_minmax(12rem,1.4fr)_2.5rem]"
     : "md:grid-cols-[minmax(10rem,1.2fr)_minmax(10rem,1fr)_minmax(10rem,1fr)_minmax(9rem,1fr)_6rem_2.5rem]";
@@ -315,6 +318,86 @@ export function WorkingHoursEditor({
           </div>
         )}
       </div>
+    </DetailPanel>
+  );
+}
+
+/**
+ * The week as somebody who cannot change it reads it (the front desk, a
+ * doctor looking at a colleague): a day per row, its sessions side by side,
+ * and a day without any said to be off — not a form of locked inputs.
+ */
+function WeekView({
+  doctor,
+  sessions,
+  rooms,
+}: {
+  doctor: DoctorAvailability;
+  sessions: WorkingHoursEntry[];
+  rooms: ExamRoom[];
+}) {
+  const roomOf = (id: number | null | undefined) => {
+    if (id == null) return null;
+    const room = rooms.find((candidate) => candidate.id === id);
+    return room ? room.code + (room.name ? " · " + room.name : "") : "Phòng #" + id;
+  };
+  const visits = sessions.reduce((sum, session) => sum + visitsIn(session), 0);
+  const days = new Set(sessions.map((session) => session.dayOfWeek)).size;
+
+  return (
+    <DetailPanel title={`Lịch làm việc hằng tuần — ${doctor.fullName}`} bodyClassName="p-0">
+      <div className="flex flex-wrap gap-x-8 gap-y-2 border-b px-4 py-3 text-sm" data-testid="week-summary">
+        <span>
+          <span className="text-muted-foreground">Chuyên khoa: </span>
+          <span className="font-medium">{doctor.specialty || "—"}</span>
+        </span>
+        <span>
+          <span className="text-muted-foreground">Làm việc: </span>
+          <span className="font-medium tabular-nums">{days} ngày · {sessions.length} buổi / tuần</span>
+        </span>
+        <span>
+          <span className="text-muted-foreground">Tối đa: </span>
+          <span className="font-medium tabular-nums">{visits} lượt khám / tuần</span>
+        </span>
+      </div>
+      <ul className="divide-y">
+        {WEEKDAY_LABELS.map((label, index) => {
+          const today = sessions.filter((session) => session.dayOfWeek === index + 1);
+          return (
+            <li key={label} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-6">
+              <span className={`w-24 shrink-0 font-semibold ${today.length ? "" : "text-muted-foreground"}`}>{label}</span>
+              {today.length === 0 ? (
+                <Badge variant="secondary">Nghỉ</Badge>
+              ) : (
+                <div className="grid flex-1 gap-2 sm:grid-cols-2">
+                  {today.map((session, at) => {
+                    const room = roomOf(session.examRoomId);
+                    return (
+                      <div key={at} className="bg-muted/40 flex flex-col gap-1 rounded-lg border px-3 py-2">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="text-base font-semibold tabular-nums">
+                            {hhmm(session.startTime)} – {hhmm(session.endTime)}
+                          </span>
+                          <span className="text-muted-foreground text-xs">
+                            {Number(session.startTime.slice(0, 2)) < 12 ? "Buổi sáng" : "Buổi chiều"}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                          <span className="tabular-nums">{visitsIn(session)} lượt · {session.visitMinutes} phút/lượt</span>
+                          <span className={`inline-flex items-center gap-1 ${room ? "" : "text-muted-foreground"}`}>
+                            <DoorOpenIcon className="size-3.5" />
+                            {room ?? "Chưa xếp phòng"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </DetailPanel>
   );
 }

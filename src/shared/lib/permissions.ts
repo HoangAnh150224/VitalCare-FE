@@ -193,18 +193,19 @@ export function isClinicAdminOnly(roles: readonly string[] | undefined): boolean
 /** A doctor orders services from the catalogue (Chỉ định dịch vụ) but does not manage it. */
 const DOCTOR_HIDDEN = new Set(["medical_services", "exam_rooms", "first_aid_articles"]);
 /**
- * Left out of a doctor's sidebar only: a doctor reaches encounters and the
- * services ordered in them from their patients (Bệnh nhân của tôi), so the
- * screens stay open — the patient's history, the visit and the order pages
- * read these lists — but need no menu entry of their own.
+ * Left out of the sidebar only, for a doctor and for the front desk. A doctor
+ * reaches encounters and the services ordered in them from their patients
+ * (Bệnh nhân của tôi) and their queue; the front desk does not examine or
+ * order at all, and only follows a visit from its booking or bill. The screens
+ * stay open — the patient's history, the visit, the bill and the order pages
+ * link to them — but neither needs a menu entry. Technicians keep theirs.
  */
-const DOCTOR_SIDEBAR_ONLY = new Set(["clinical_encounters", "service_orders"]);
+const VISIT_SCREENS = new Set(["clinical_encounters", "service_orders"]);
 
 /** Menu entries an account does not need, though their screens stay open to it (unlike {@link hiddenMenus}). */
 export function sidebarOnlyHidden(roles: readonly string[] | undefined): ReadonlySet<string> {
-  if (roles?.includes("DOCTOR") && !roles.includes("CLINIC_ADMIN") && !roles.includes("ADMIN")) {
-    return DOCTOR_SIDEBAR_ONLY;
-  }
+  const administers = roles?.includes("CLINIC_ADMIN") || roles?.includes("ADMIN");
+  if (!administers && (roles?.includes("DOCTOR") || roles?.includes("MANAGER"))) return VISIT_SCREENS;
   return NONE_HIDDEN;
 }
 

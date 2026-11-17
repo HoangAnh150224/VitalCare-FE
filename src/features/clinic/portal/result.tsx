@@ -2,6 +2,7 @@ import { useCustom, useOne, type HttpError } from "@refinedev/core";
 import {
   ActivityIcon,
   ChevronLeftIcon,
+  ChevronRightIcon,
   CloudOffIcon,
   DropletsIcon,
   FileHeartIcon,
@@ -16,7 +17,7 @@ import {
   WindIcon,
   type LucideIcon,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 
 import { API_URL } from "@/shared/api/constants";
@@ -29,7 +30,9 @@ import { bodyMassIndex, VITAL_FIELDS } from "@/domains/encounter/types";
 import { MyInvoiceCard } from "../invoices/my-invoice-card";
 import { MyFeedbackCard } from "../results/feedback";
 import { MyResultReturn } from "../results/my-return";
-import { OrderFiles, OrderStatusBadge } from "../service-orders/order-parts";
+import { OrderStatusBadge } from "../service-orders/order-parts";
+import type { ServiceOrder } from "@/domains/billing/types";
+import { OrderResultDialog } from "./order-result-dialog";
 import { EmptyState, IconChip, PortalSection, type Tone } from "./parts";
 import { formatVisitDay } from "./visit";
 
@@ -66,6 +69,7 @@ export const PortalResult = () => {
   const missing = !validId || visitQuery.isError;
   const vitals = encounter?.vitals ?? null;
   const tiles = vitalTiles(vitals);
+  const [opened, setOpened] = useState<ServiceOrder | null>(null);
 
   return (
     <div className="screen-enter screen-enter-stagger mx-auto flex w-full max-w-3xl flex-col gap-6">
@@ -163,26 +167,39 @@ export const PortalResult = () => {
             <PortalSection title="Dịch vụ & kết quả">
               <ul className="flex flex-col gap-3">
                 {data.orders.map((order) => (
-                  <li key={order.id} className="card-soft flex gap-4 p-4 sm:p-5">
-                    <IconChip icon={FlaskConicalIcon} tone="sky" />
-                    <div className="flex min-w-0 flex-1 flex-col gap-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <span className="font-semibold">{order.service.name}</span>
-                        <OrderStatusBadge status={order.status} />
+                  <li key={order.id}>
+                    <button
+                      type="button"
+                      onClick={() => setOpened(order)}
+                      className="card-soft hover:ring-primary/30 flex w-full gap-4 p-4 text-left transition hover:ring-2 sm:p-5"
+                      aria-label={`Xem kết quả ${order.service.name}`}
+                    >
+                      <IconChip icon={FlaskConicalIcon} tone="sky" />
+                      <div className="flex min-w-0 flex-1 flex-col gap-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="font-semibold">{order.service.name}</span>
+                          <OrderStatusBadge status={order.status} />
+                        </div>
+                        {order.resultText && (
+                          <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed whitespace-pre-line">
+                            {order.resultText}
+                          </p>
+                        )}
+                        <span className="text-primary inline-flex items-center gap-1 text-xs font-medium">
+                          Xem chi tiết kết quả
+                          {order.files.length > 0 && ` · ${order.files.length} file`}
+                          <ChevronRightIcon className="size-3.5" />
+                        </span>
                       </div>
-                      {order.resultText && (
-                        <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
-                          {order.resultText}
-                        </p>
-                      )}
-                      <OrderFiles
-                        order={order}
-                        downloadPath={(fileId) => `my_appointments/${id}/result/files/${fileId}`}
-                      />
-                    </div>
+                    </button>
                   </li>
                 ))}
               </ul>
+              <OrderResultDialog
+                order={opened}
+                appointmentId={id}
+                onOpenChange={(open) => !open && setOpened(null)}
+              />
             </PortalSection>
           )}
 
