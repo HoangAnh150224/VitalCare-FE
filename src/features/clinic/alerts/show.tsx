@@ -39,7 +39,9 @@ import {
   SEVERITY_VARIANTS,
   condition,
   valueWithUnit,
+  type Alert,
   type AlertDetail,
+  type Metric,
 } from "@/domains/alerts/types";
 import { CallLogPanel } from "../sharing/call-log-panel";
 
@@ -71,6 +73,100 @@ const STEP_TEXT: Record<
   },
 };
 
+type LiveReading = {
+  id: number;
+  measuredAt: string;
+  heartRate: number | null;
+  spo2: number | null;
+  bodyTemperature: number | null;
+};
+
+const beyond = (a: Alert, metric: Metric, v: number | null) =>
+  a.metric === metric &&
+  v != null &&
+  a.threshold != null &&
+  (a.operator === "BELOW" ? v < a.threshold : v > a.threshold);
+
+/**
+ * The patient's readings as the band sends them, newest first: followed every
+ * 3 seconds while the alert is being handled, so the numbers are seen moving
+ * before it is taken up.
+ */
+function LiveReadings({ alert, live }: { alert: Alert; live: boolean }) {
+  const { data } = useQuery({
+    queryKey: ["alerts", "live", alert.id],
+    queryFn: () =>
+      kyInstance.get(`alerts/${alert.id}/live`).json<LiveReading[]>(),
+    refetchInterval: live ? 3_000 : false,
+  });
+  const rows = data ?? [];
+  const cell = (metric: Metric, v: number | null, unit: string) =>
+    v == null ? (
+      <span className="text-muted-foreground">—</span>
+    ) : (
+      <span
+        className={
+          beyond(alert, metric, v) ? "text-destructive font-semibold" : ""
+        }
+      >
+        {Number(v)}
+        {unit}
+      </span>
+    );
+  return (
+    <DetailPanel
+      title={live ? "Số đo trực tiếp · cập nhật mỗi 3 giây" : "Số đo gần nhất"}
+      bodyClassName="p-0"
+    >
+      {rows.length ? (
+        <div className="max-h-72 overflow-auto">
+          <table className="w-full text-sm" data-testid="alert-live-readings">
+            <thead className="text-muted-foreground text-xs">
+              <tr className="border-b">
+                <th className="px-4 py-2 text-left font-medium">
+                  Thời điểm đo
+                </th>
+                <th className="px-4 py-2 text-right font-medium">SpO₂</th>
+                <th className="px-4 py-2 text-right font-medium">Nhịp tim</th>
+                <th className="px-4 py-2 text-right font-medium">
+                  Nhiệt độ cơ thể
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr
+                  key={r.id}
+                  className={`border-b last:border-0 ${
+                    i === 0 ? "bg-muted/40 text-base" : ""
+                  }`}
+                >
+                  <td className="px-4 py-2 tabular-nums">
+                    {new Date(r.measuredAt).toLocaleTimeString("vi-VN")}
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {cell("SPO2", r.spo2, "%")}
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {cell("HEART_RATE", r.heartRate, " bpm")}
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">
+                    {cell("BODY_TEMPERATURE", r.bodyTemperature, " °C")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="text-muted-foreground p-4 text-sm">
+          Chưa có số đo nào từ thiết bị của bệnh nhân.
+        </p>
+      )}
+    </DetailPanel>
+  );
+}
+
 /**
  * Alert Details (FE-05): who, which measure and how far off, the rule that
  * fired, and the whole Action History — with acknowledge, notes, resolve (with
@@ -90,7 +186,11 @@ export const AlertShow = () => {
     queryKey: ["alerts", "detail", id],
     queryFn: () => kyInstance.get(`alerts/${id}`).json<AlertDetail>(),
     enabled: Boolean(id),
-    refetchInterval: 30_000,
+    // An alert still being handled is followed live: the band sends a reading every few seconds.
+    refetchInterval: (query) => {
+      const status = query.state.data?.alert.status;
+      return status === "OPEN" || status === "ACKNOWLEDGED" ? 3_000 : 30_000;
+    },
   });
   const act = useMutation({
     mutationFn: ({ path, note }: { path: string; note?: string }) =>
@@ -304,6 +404,7 @@ export const AlertShow = () => {
               </DetailList>
             </DetailPanel>
           </div>
+          {a && <LiveReadings alert={a} live={Boolean(active)} />}
           {a && <CallLogPanel alertId={a.id} />}
           <DetailPanel title="Lịch sử xử lý" bodyClassName="p-4">
             <ol className="flex flex-col gap-3" data-testid="alert-history">
