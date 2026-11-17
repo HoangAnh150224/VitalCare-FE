@@ -13,6 +13,7 @@ import { Textarea } from "@/shared/ui/textarea";
 import type { ServiceOrder } from "@/domains/billing/types";
 import { SERVICE_CATEGORY_LABELS } from "@/domains/billing/types";
 import { formatDateTime, formatMoney } from "@/shared/lib/format";
+import { ReturnPanel } from "../results/return-panel";
 import { AttachFileButton, OrderFiles, OrderStatusBadge, useOrderActions } from "./order-parts";
 
 /**
@@ -117,6 +118,13 @@ export const ServiceOrderShow = () => {
             {order && <OrderFiles order={order} />}
           </div>
         </DetailPanel>
+
+        {/* The result is in: whoever recorded it tells the patient when to come back for it. */}
+        {order?.appointmentId != null && (order.status === "result_ready" || order.status === "reviewed") && (
+          <div className="lg:col-start-1">
+            <ReturnPanel appointmentId={order.appointmentId} orderId={order.id} />
+          </div>
+        )}
 
         <DetailPanel title="Thông tin">
           <DetailList>

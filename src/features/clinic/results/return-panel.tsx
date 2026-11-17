@@ -17,10 +17,29 @@ import {
 } from "@/domains/results/types";
 import { refusal, send, vnLocal } from "./send";
 
-/** BF-07 on a visit: when the patient comes back for their results; the patient is told when it is set. */
-export function ReturnPanel({ appointmentId, encounterId }: { appointmentId: number; encounterId: number }) {
+/**
+ * BF-07 on a visit: when the patient comes back for their results; the
+ * patient is told when it is set. It is set by the service technician who
+ * records a result, from the order (`orderId`); on the visit's page the
+ * doctor may set it too, and the front desk only sees it.
+ */
+export function ReturnPanel({
+  appointmentId,
+  encounterId,
+  orderId,
+}: {
+  appointmentId: number;
+  encounterId?: number;
+  orderId?: number;
+}) {
   const { data: canRead } = useCan({ resource: "result_returns", action: "list" });
-  const { data: canWrite } = useCan({ resource: "result_returns", action: "create" });
+  const { data: canSchedule } = useCan({ resource: "result_returns", action: "create" });
+  // From an order: whoever carries it out. From the visit: the doctor, not the front desk.
+  const { data: canPerform } = useCan({ resource: "service_orders", action: "perform" });
+  const { data: canConclude } = useCan({ resource: "clinical_encounters", action: "conclude" });
+  const canWrite = {
+    can: orderId != null ? (canPerform?.can ?? false) : (canSchedule?.can ?? false) && (canConclude?.can ?? false),
+  };
   const queryClient = useQueryClient();
   const { open: notify } = useNotification();
   const [at, setAt] = useState("");
@@ -36,7 +55,10 @@ export function ReturnPanel({ appointmentId, encounterId }: { appointmentId: num
     enabled: Boolean(canRead?.can),
   });
   const schedule = useMutation({
-    mutationFn: () => send("post", "result_returns", { encounterId, scheduledAt: vnLocal(at), note }),
+    mutationFn: () =>
+      orderId != null
+        ? send("post", `service_orders/${orderId}/result_return`, { scheduledAt: vnLocal(at), note })
+        : send("post", "result_returns", { encounterId, scheduledAt: vnLocal(at), note }),
     onSuccess: () => {
       setAt("");
       setNote("");

@@ -63,6 +63,8 @@ export type ServiceOrder = {
   _can?: Record<string, boolean>;
   /** Its own bill is paid (BF-03); the service is done only then. */
   paid: boolean;
+  /** The registered visit it was ordered in, where its result is returned. */
+  appointmentId?: number | null;
 };
 
 export const SERVICE_ORDER_STATUS_LABELS: Record<ServiceOrderStatus, string> = {
