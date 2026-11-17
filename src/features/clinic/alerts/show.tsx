@@ -44,6 +44,7 @@ import {
   type Metric,
 } from "@/domains/alerts/types";
 import { CallLogPanel } from "../sharing/call-log-panel";
+import { MonitorTrace, type TraceKind } from "./monitor-trace";
 
 type Step = "notes" | "resolve" | "dismiss";
 
@@ -79,7 +80,11 @@ type LiveReading = {
   heartRate: number | null;
   spo2: number | null;
   bodyTemperature: number | null;
+  skinTemperature: number | null;
 };
+
+/** A reading older than this is no longer "now": the cards' traces lie flat. */
+const FRESH_MS = 20_000;
 
 const beyond = (a: Alert, metric: Metric, v: number | null) =>
   a.metric === metric &&
@@ -93,13 +98,54 @@ const beyond = (a: Alert, metric: Metric, v: number | null) =>
  * before it is taken up.
  */
 function LiveReadings({ alert, live }: { alert: Alert; live: boolean }) {
-  const { data } = useQuery({
+  const { data, dataUpdatedAt } = useQuery({
     queryKey: ["alerts", "live", alert.id],
     queryFn: () =>
       kyInstance.get(`alerts/${alert.id}/live`).json<LiveReading[]>(),
     refetchInterval: live ? 3_000 : false,
   });
   const rows = data ?? [];
+  const latest = rows[0];
+  // Read at fetch time, not at render: the query's own clock says how old the newest reading is.
+  const fresh =
+    live &&
+    latest != null &&
+    dataUpdatedAt - new Date(latest.measuredAt).getTime() < FRESH_MS;
+  const bpm = fresh ? latest.heartRate ?? 0 : 0;
+  const body = latest?.bodyTemperature ?? null;
+  const cards: {
+    label: string;
+    metric: Metric;
+    value: number | null;
+    unit: string;
+    kind: TraceKind;
+    color: string;
+  }[] = [
+    {
+      label: "SpO₂",
+      metric: "SPO2",
+      value: latest?.spo2 ?? null,
+      unit: "%",
+      kind: "pleth",
+      color: "#1f6f8a",
+    },
+    {
+      label: "Nhịp tim",
+      metric: "HEART_RATE",
+      value: latest?.heartRate ?? null,
+      unit: " bpm",
+      kind: "ecg",
+      color: "#b23a48",
+    },
+    {
+      label: body != null ? "Nhiệt độ cơ thể" : "Nhiệt độ da",
+      metric: body != null ? "BODY_TEMPERATURE" : "SKIN_TEMPERATURE",
+      value: body ?? latest?.skinTemperature ?? null,
+      unit: " °C",
+      kind: "ripple",
+      color: "#8a5a12",
+    },
+  ];
   const cell = (metric: Metric, v: number | null, unit: string) =>
     v == null ? (
       <span className="text-muted-foreground">—</span>
@@ -118,6 +164,31 @@ function LiveReadings({ alert, live }: { alert: Alert; live: boolean }) {
       title={live ? "Số đo trực tiếp · cập nhật mỗi 3 giây" : "Số đo gần nhất"}
       bodyClassName="p-0"
     >
+      <div
+        className="grid gap-3 border-b p-4 sm:grid-cols-3"
+        data-testid="alert-live-cards"
+      >
+        {cards.map((c) => (
+          <div key={c.label} className="rounded-xl border p-4">
+            <p className="text-muted-foreground text-sm">{c.label}</p>
+            <p
+              className={`mt-1 text-3xl font-bold tabular-nums ${
+                c.value != null && beyond(alert, c.metric, c.value)
+                  ? "text-destructive"
+                  : ""
+              }`}
+            >
+              {c.value == null ? "--" : Number(c.value)}
+              <span className="text-sm font-normal">{c.unit}</span>
+            </p>
+            <MonitorTrace
+              kind={c.kind}
+              bpm={c.value == null ? 0 : bpm}
+              color={c.color}
+            />
+          </div>
+        ))}
+      </div>
       {rows.length ? (
         <div className="max-h-72 overflow-auto">
           <table className="w-full text-sm" data-testid="alert-live-readings">
