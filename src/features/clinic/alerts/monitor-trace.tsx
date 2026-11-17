@@ -9,7 +9,7 @@ const bump = (x: number, center: number, width: number) =>
 const height = (kind: TraceKind, phase: number) =>
   kind === "ecg"
     ? 0.12 * bump(phase, 0.18, 0.04) +
-      bump(phase, 0.34, 0.016) +
+      bump(phase, 0.34, 0.03) +
       0.28 * bump(phase, 0.58, 0.06)
     : kind === "pleth"
     ? 0.9 * bump(phase, 0.25, 0.1) + 0.35 * bump(phase, 0.52, 0.11)
@@ -64,7 +64,7 @@ export function MonitorTrace({
       ctx.lineWidth = 2;
       ctx.lineJoin = "round";
       ctx.beginPath();
-      for (let x = 0; x <= w; x++) {
+      for (let x = 0; x <= w; x += 0.5) {
         const at = ms / 1000 - (w - x) / SPEED;
         const phase = (((at * beats) % 1) + 1) % 1;
         const y = bpm > 0 ? base - (base - top) * height(kind, phase) : base;
