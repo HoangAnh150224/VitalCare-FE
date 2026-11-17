@@ -1,33 +1,26 @@
 import { useCan, useList } from "@refinedev/core";
-import { PlusIcon } from "lucide-react";
 import { Link } from "react-router";
 
 import { Badge } from "@/shared/ui/badge";
-import { Button } from "@/shared/ui/button";
 import { DetailPanel } from "@/shared/components/views/record-detail";
 import { formatDateTime } from "@/shared/lib/format";
 import type { Encounter } from "@/domains/encounter/types";
-import { ENCOUNTER_STATUS_LABELS, newEncounterPath, type NewEncounterTarget } from "@/domains/encounter/types";
+import { ENCOUNTER_STATUS_LABELS } from "@/domains/encounter/types";
 import { ENCOUNTER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 
-type Props = NewEncounterTarget & {
-  /** The page already offers "Tạo lần khám" in its header. */
-  hideCreate?: boolean;
-};
-
 /**
- * A patient's encounters, newest first, and the way to open a new one.
+ * A patient's encounters, newest first. A new one is opened from the patient's
+ * checked-in booking, not from here.
  *
  * Renders nothing for somebody without `clinical_encounters:read` — which is
  * what keeps it off an administrator's read-only view of this page.
  */
-export function EncounterHistoryPanel({ hideCreate = false, ...props }: Props) {
+export function EncounterHistoryPanel({ customerId }: { customerId: number }) {
   const { data: canRead } = useCan({ resource: "clinical_encounters", action: "list" });
-  const { data: canCreate } = useCan({ resource: "clinical_encounters", action: "create" });
 
   const { result } = useList<Encounter>({
     resource: "clinical_encounters",
-    filters: [{ field: "customer.id", operator: "eq", value: props.customerId }],
+    filters: [{ field: "customer.id", operator: "eq", value: customerId }],
     pagination: { pageSize: 20 },
     queryOptions: { enabled: canRead?.can ?? false },
   });
@@ -36,20 +29,7 @@ export function EncounterHistoryPanel({ hideCreate = false, ...props }: Props) {
   const rows = result?.data ?? [];
 
   return (
-    <DetailPanel
-      title="Lịch sử khám"
-      action={
-        canCreate?.can && !hideCreate ? (
-          <Button asChild size="sm" variant="outline">
-            <Link to={newEncounterPath(props)}>
-              <PlusIcon />
-              Tạo lần khám
-            </Link>
-          </Button>
-        ) : undefined
-      }
-      bodyClassName="p-4"
-    >
+    <DetailPanel title="Lịch sử khám" bodyClassName="p-4">
       {rows.length ? (
         <ul className="flex flex-col gap-2">
           {rows.map((row) => (

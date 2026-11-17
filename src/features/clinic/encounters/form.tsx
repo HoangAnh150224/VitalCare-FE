@@ -375,15 +375,17 @@ export const EncounterCreate = () => {
   return (
     <CreateView>
       <CreateViewHeader resource="clinical_encounters" title={patientName ? `Lần khám mới — ${patientName}` : undefined} />
-      {customerId ? (
+      {/* Only from a checked-in booking: the visit's result reaches the patient through it. */}
+      {customerId && appointmentId ? (
         <EncounterForm
           submitLabel="Lưu"
-          patient={{ customerId, ...(appointmentId ? { appointmentId } : {}) }}
+          patient={{ customerId, appointmentId }}
         />
       ) : (
         <Alert>
           <AlertDescription>
-            Lần khám được tạo từ trang bệnh nhân hoặc từ lượt đăng ký khám đã tiếp nhận, để biết đang khám cho ai.
+            Lần khám được tạo từ lượt đăng ký khám đã tiếp nhận (trang Đăng ký khám hoặc bảng điều phối phòng
+            khám), để kết quả gửi về đúng lượt khám của bệnh nhân. Bệnh nhân cần đặt lịch trước.
           </AlertDescription>
         </Alert>
       )}

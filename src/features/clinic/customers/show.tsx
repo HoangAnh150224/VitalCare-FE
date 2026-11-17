@@ -246,10 +246,7 @@ export const CustomerShow = () => {
             key={`notes-${record.id}`}
             customerId={record.id}
           />
-          <EncounterHistoryPanel
-            customerId={record.id}
-            patientName={record.fullName}
-          />
+          <EncounterHistoryPanel customerId={record.id} />
         </div>
       )}
 

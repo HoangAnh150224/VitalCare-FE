@@ -173,6 +173,16 @@ export const resources: ResourceProps[] = [
     },
   },
 
+  // A doctor's own queue of booked, checked-in patients: where a visit is started.
+  {
+    name: "my_exam_queue",
+    list: "/my-queue",
+    meta: {
+      label: "Hàng chờ khám",
+      icon: <Stethoscope className="h-4 w-4" />,
+    },
+  },
+
   // An administrator looking at a customer's or a member of staff's own
   // screens, read-only. Only ADMIN holds `view_as:read`.
   {

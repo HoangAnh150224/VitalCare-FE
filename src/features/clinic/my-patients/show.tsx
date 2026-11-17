@@ -1,11 +1,8 @@
-import { useCan, useShow, type BaseKey } from "@refinedev/core";
-import { PlusIcon } from "lucide-react";
-import { Link } from "react-router";
+import { useShow, type BaseKey } from "@refinedev/core";
 
 import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
 import { Badge } from "@/shared/ui/badge";
-import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import {
   DetailList,
@@ -18,7 +15,6 @@ import {
 import { formatDate, formatLocalDate } from "@/shared/lib/format";
 import type { MyPatient } from "@/domains/assignment/types";
 import { STAFF_TYPE_LABELS } from "@/domains/employee/types";
-import { newEncounterPath } from "@/domains/encounter/types";
 import { HealthRecord } from "../encounters/health-record";
 import { MedicalRecordPanel } from "../encounters/medical-record-panel";
 import { MonitoringNotesPanel } from "../encounters/monitoring-notes-panel";
@@ -44,27 +40,12 @@ export const MyPatientShow = ({
   title,
 }: MyPatientShowProps = {}) => {
   const { result: record, query } = useShow<MyPatient>({ resource, id });
-  const { data: canCreateEncounter } = useCan({ resource: "clinical_encounters", action: "create" });
-  // Not on an administrator's read-only view-as copy (which passes its own resource).
-  const canStartEncounter = Boolean(record) && !resource && (canCreateEncounter?.can ?? false);
 
+  // No "Tạo lần khám" here: a visit is opened from the patient's checked-in
+  // booking, so its result reaches them in the portal.
   return (
     <ShowView>
-      <ShowViewHeader
-        resource={resource}
-        title={title}
-        actions={
-          canStartEncounter &&
-          record && (
-            <Button asChild>
-              <Link to={newEncounterPath({ customerId: record.id, patientName: record.fullName })}>
-                <PlusIcon />
-                Tạo lần khám
-              </Link>
-            </Button>
-          )
-        }
-      />
+      <ShowViewHeader resource={resource} title={title} />
 
       <Card className="py-4">
         <LoadingOverlay loading={query.isLoading}>

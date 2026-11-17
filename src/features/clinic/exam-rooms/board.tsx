@@ -40,10 +40,10 @@ import {
 } from "@/domains/exam-room/types";
 import { cn } from "@/shared/lib/utils";
 
-type Room = RoomBoard["rooms"][number];
-type RoomAction = "call-next" | "pass-over" | "no-show" | "finish" | "pause" | "resume";
+export type Room = RoomBoard["rooms"][number];
+export type RoomAction = "call-next" | "pass-over" | "no-show" | "finish" | "pause" | "resume";
 /** What happens to the patient in the room: each asks before it is done. */
-type Decision = "finish" | "pass-over" | "no-show";
+export type Decision = "finish" | "pass-over" | "no-show";
 
 const STATUS_VARIANT: Record<ExamRoomStatus, "success" | "default" | "neutral"> = {
   available: "success",
@@ -410,7 +410,7 @@ function RoomCard({
   );
 }
 
-function WaitingList({ visits }: { visits: BoardVisit[] }) {
+export function WaitingList({ visits }: { visits: BoardVisit[] }) {
   if (visits.length === 0) {
     return <span className="text-muted-foreground text-sm">Không có ai.</span>;
   }
@@ -458,7 +458,7 @@ const DECISIONS: Record<Decision, { title: (name: string) => string; text: strin
  * the visit's encounter: closing a visit nobody wrote up leaves the patient
  * with no result and no bill, which is worth saying before, not after.
  */
-function ConfirmDecision({
+export function ConfirmDecision({
   asking,
   onClose,
   onConfirm,
@@ -516,7 +516,7 @@ function ConfirmDecision({
 }
 
 /** Patients out of the room for ordered services or another doctor, and how far along they are. */
-function AwayList({ visits }: { visits: AwayVisit[] }) {
+export function AwayList({ visits }: { visits: AwayVisit[] }) {
   if (visits.length === 0) return null;
   return (
     <div className="flex flex-col gap-1.5">

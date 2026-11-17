@@ -105,6 +105,8 @@ export function permissionFor(
 ): string | null {
   if (!resource || UNGUARDED_RESOURCES.has(resource)) return null;
   if (resource === "revenue_report") return "invoices:report";
+  // A doctor's own queue: whoever opens encounters works it.
+  if (resource === "my_exam_queue") return "clinical_encounters:write";
   const suffix = ACTION_TO_PERMISSION[action];
   return suffix ? `${resource}:${suffix}` : null;
 }

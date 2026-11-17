@@ -110,6 +110,7 @@ import {
   ViewAsAllPatients,
   ViewAsFrontDesk,
   ExamRoomBoard,
+  MyExamQueue,
   MedicalServiceList,
   MedicalServiceShow,
   MedicalServiceCreate,
@@ -647,6 +648,18 @@ export function AppRoutes() {
           <Route index element={<MyPatientList />} />
           <Route path="show/:id" element={<MyPatientShow />} />
         </Route>
+        <Route
+          path="/my-queue"
+          element={
+            <CanAccess
+              resource="my_exam_queue"
+              action="list"
+              fallback={<Forbidden resource="my_exam_queue" />}
+            >
+              <MyExamQueue />
+            </CanAccess>
+          }
+        />
         <Route
           path="/view-as"
           element={
