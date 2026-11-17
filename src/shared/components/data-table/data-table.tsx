@@ -127,6 +127,23 @@ export function DataTable<TData extends BaseRecord>({
   const leafColumns = table.reactTable.getVisibleLeafColumns();
   const isLoading = tableQuery.isLoading;
 
+  // A table that filters in the browser (filters mode "off", or a search over a
+  // whole list fetched at once) holds every row; what the footer counts is the
+  // rows left after its filters, not what the API answered. Filtered on the
+  // server, the API's total is already the filtered one.
+  const filtersHere = table.reactTable.options.manualFiltering === false;
+  const filteredCount = filtersHere ? table.reactTable.getFilteredRowModel().rows.length : undefined;
+  const total = filteredCount ?? tableQuery.data?.total;
+  const shownPageCount =
+    filteredCount === undefined
+      ? pageCount
+      : table.reactTable.options.manualPagination
+        ? // Every row is on the one page the API answered: the filter only narrows it.
+          (tableQuery.data?.data?.length ?? 0) <= pageSize
+          ? 1
+          : pageCount
+        : Math.max(1, Math.ceil(filteredCount / pageSize));
+
   // Opt-in per table: `column.getCanResize()` defaults to true in TanStack, so
   // gating on the table option is what keeps tables that never asked for
   // resizing free of drag handles.
@@ -426,11 +443,11 @@ export function DataTable<TData extends BaseRecord>({
           >
             <DataTablePagination
               currentPage={currentPage}
-              pageCount={pageCount}
+              pageCount={shownPageCount}
               setCurrentPage={setCurrentPage}
               pageSize={pageSize}
               setPageSize={setPageSize}
-              total={tableQuery.data?.total}
+              total={total}
             />
           </div>
         )}
