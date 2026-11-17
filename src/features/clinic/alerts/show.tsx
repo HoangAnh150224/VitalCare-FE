@@ -44,7 +44,7 @@ import {
   type Metric,
 } from "@/domains/alerts/types";
 import { CallLogPanel } from "../sharing/call-log-panel";
-import { MonitorTrace, type TraceKind } from "./monitor-trace";
+import { MonitorTrace } from "./monitor-trace";
 
 type Step = "notes" | "resolve" | "dismiss";
 
@@ -83,9 +83,6 @@ type LiveReading = {
   skinTemperature: number | null;
 };
 
-/** A reading older than this is no longer "now": the cards' traces lie flat. */
-const FRESH_MS = 20_000;
-
 const beyond = (a: Alert, metric: Metric, v: number | null) =>
   a.metric === metric &&
   v != null &&
@@ -98,7 +95,7 @@ const beyond = (a: Alert, metric: Metric, v: number | null) =>
  * before it is taken up.
  */
 function LiveReadings({ alert, live }: { alert: Alert; live: boolean }) {
-  const { data, dataUpdatedAt } = useQuery({
+  const { data } = useQuery({
     queryKey: ["alerts", "live", alert.id],
     queryFn: () =>
       kyInstance.get(`alerts/${alert.id}/live`).json<LiveReading[]>(),
@@ -106,43 +103,33 @@ function LiveReadings({ alert, live }: { alert: Alert; live: boolean }) {
   });
   const rows = data ?? [];
   const latest = rows[0];
-  // Read at fetch time, not at render: the query's own clock says how old the newest reading is.
-  const fresh =
-    live &&
-    latest != null &&
-    dataUpdatedAt - new Date(latest.measuredAt).getTime() < FRESH_MS;
-  const bpm = fresh ? latest.heartRate ?? 0 : 0;
   const body = latest?.bodyTemperature ?? null;
   const cards: {
     label: string;
     metric: Metric;
-    value: number | null;
+    read: (r: LiveReading) => number | null;
     unit: string;
-    kind: TraceKind;
     color: string;
   }[] = [
     {
       label: "SpO₂",
       metric: "SPO2",
-      value: latest?.spo2 ?? null,
+      read: (r) => r.spo2,
       unit: "%",
-      kind: "pleth",
       color: "#1f6f8a",
     },
     {
       label: "Nhịp tim",
       metric: "HEART_RATE",
-      value: latest?.heartRate ?? null,
+      read: (r) => r.heartRate,
       unit: " bpm",
-      kind: "ecg",
       color: "#b23a48",
     },
     {
       label: body != null ? "Nhiệt độ cơ thể" : "Nhiệt độ da",
       metric: body != null ? "BODY_TEMPERATURE" : "SKIN_TEMPERATURE",
-      value: body ?? latest?.skinTemperature ?? null,
+      read: (r) => (body != null ? r.bodyTemperature : r.skinTemperature),
       unit: " °C",
-      kind: "ripple",
       color: "#8a5a12",
     },
   ];
@@ -168,26 +155,38 @@ function LiveReadings({ alert, live }: { alert: Alert; live: boolean }) {
         className="grid gap-3 border-b p-4 sm:grid-cols-3"
         data-testid="alert-live-cards"
       >
-        {cards.map((c) => (
-          <div key={c.label} className="rounded-xl border p-4">
-            <p className="text-muted-foreground text-sm">{c.label}</p>
-            <p
-              className={`mt-1 text-3xl font-bold tabular-nums ${
-                c.value != null && beyond(alert, c.metric, c.value)
-                  ? "text-destructive"
-                  : ""
-              }`}
-            >
-              {c.value == null ? "--" : Number(c.value)}
-              <span className="text-sm font-normal">{c.unit}</span>
-            </p>
-            <MonitorTrace
-              kind={c.kind}
-              bpm={c.value == null ? 0 : bpm}
-              color={c.color}
-            />
-          </div>
-        ))}
+        {cards.map((c) => {
+          const value = latest ? c.read(latest) : null;
+          return (
+            <div key={c.label} className="rounded-xl border p-4">
+              <p className="text-muted-foreground text-sm">{c.label}</p>
+              <p
+                className={`mt-1 text-3xl font-bold tabular-nums ${
+                  value != null && beyond(alert, c.metric, value)
+                    ? "text-destructive"
+                    : ""
+                }`}
+              >
+                {value == null ? "--" : Number(value)}
+                <span className="text-sm font-normal">{c.unit}</span>
+              </p>
+              <MonitorTrace
+                color={c.color}
+                points={rows.flatMap((r) => {
+                  const v = c.read(r);
+                  return v == null
+                    ? []
+                    : [
+                        {
+                          at: new Date(r.measuredAt).getTime(),
+                          value: Number(v),
+                        },
+                      ];
+                })}
+              />
+            </div>
+          );
+        })}
       </div>
       {rows.length ? (
         <div className="max-h-72 overflow-auto">

@@ -1,58 +1,36 @@
 import { useEffect, useRef } from "react";
 
-export type TraceKind = "ecg" | "pleth" | "ripple";
+export type TracePoint = { at: number; value: number };
 
-const bump = (x: number, center: number, width: number) =>
-  Math.exp(-(((x - center) / width) ** 2));
-
-/** Height (0..1) of the trace at `phase` (0..1) of one beat. */
-const height = (kind: TraceKind, phase: number) =>
-  kind === "ecg"
-    ? 0.12 * bump(phase, 0.18, 0.04) +
-      bump(phase, 0.34, 0.03) +
-      0.28 * bump(phase, 0.58, 0.06)
-    : kind === "pleth"
-    ? 0.9 * bump(phase, 0.25, 0.1) + 0.35 * bump(phase, 0.52, 0.11)
-    : 0.35 * bump(phase, 0.5, 0.22);
-
-const SPEED = 90; // pixels a second
-const PER_PIXEL = 2; // samples drawn per pixel
+const WINDOW_MS = 60_000;
+/** After this long without a reading the line stops: the band is no longer sending. */
+const GAP_MS = 20_000;
 
 /**
- * A bedside-monitor trace sweeping right to left, as the patient app draws it
- * while measuring: the baseline is zero and every beat rises above it, `bpm`
- * times a minute. With `bpm` 0 (no fresh reading) it lies flat.
- *
- * What has been drawn is kept and only shifted: a new pulse rate changes the
- * beats still to come, never the ones already on screen, so the trace does not
- * jump when the reading changes.
- * ponytail: drawn from the pulse rate, not the sensor's raw waveform (the band does not send it).
+ * The last minute of one measure, drawn as the readings came: the line runs
+ * level while the value holds, steps up when it rises and down when it falls,
+ * and slides left as time passes. With no reading in the minute it lies flat
+ * and faint along the bottom.
  */
 export function MonitorTrace({
-  kind,
-  bpm,
+  points,
   color,
 }: {
-  kind: TraceKind;
-  bpm: number;
+  points: TracePoint[];
   color: string;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const rate = useRef(bpm);
+  const data = useRef(points);
   useEffect(() => {
-    rate.current = bpm;
-  }, [bpm]);
+    data.current = points;
+  }, [points]);
 
   useEffect(() => {
     const canvas = ref.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
-    const samples: number[] = [];
-    let phase = 0;
-    let last: number | null = null;
-    let owed = 0;
     let frame = 0;
-    const draw = (ms: number) => {
+    const draw = () => {
       const ratio = window.devicePixelRatio || 1;
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
@@ -60,47 +38,61 @@ export function MonitorTrace({
         canvas.width = w * ratio;
         canvas.height = h * ratio;
       }
-      // New samples for the time since the last frame (capped: a hidden tab does not owe minutes of trace).
-      const seconds = last == null ? 0 : Math.min((ms - last) / 1000, 0.25);
-      last = ms;
-      owed += seconds * SPEED * PER_PIXEL;
-      const beating = rate.current > 0;
-      // The temperature swells slowly whatever the pulse.
-      const beats = kind === "ripple" ? 0.25 : rate.current / 60;
-      for (; owed >= 1; owed--) {
-        phase = (phase + beats / (SPEED * PER_PIXEL)) % 1;
-        samples.push(beating ? height(kind, phase) : 0);
-      }
-      const keep = w * PER_PIXEL;
-      if (samples.length > keep) samples.splice(0, samples.length - keep);
-
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       ctx.clearRect(0, 0, w, h);
+      const now = Date.now();
+      const shown = data.current
+        .filter((p) => now - p.at < WINDOW_MS + GAP_MS)
+        .sort((a, b) => a.at - b.at);
       const base = h - 5;
-      const top = 4;
+      const top = 6;
       ctx.strokeStyle = color;
-      ctx.globalAlpha = 0.15;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, base);
-      ctx.lineTo(w, base);
-      ctx.stroke();
-      ctx.globalAlpha = beating ? 1 : 0.35;
       ctx.lineWidth = 2;
       ctx.lineJoin = "round";
-      ctx.beginPath();
-      const start = w - samples.length / PER_PIXEL;
-      ctx.moveTo(0, base);
-      ctx.lineTo(Math.max(start, 0), base);
-      samples.forEach((s, i) =>
-        ctx.lineTo(start + i / PER_PIXEL, base - (base - top) * s)
-      );
-      ctx.stroke();
+      ctx.lineCap = "round";
+      if (!shown.length) {
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.moveTo(0, base);
+        ctx.lineTo(w, base);
+        ctx.stroke();
+      } else {
+        // A few units of room either way, so one step up or down shows without filling the card.
+        const values = shown.map((p) => p.value);
+        const low = Math.min(...values) - 3;
+        const high = Math.max(...values) + 3;
+        const x = (at: number) => w - ((now - at) / WINDOW_MS) * w;
+        const y = (v: number) =>
+          base - ((v - low) / (high - low)) * (base - top);
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        shown.forEach((p, i) => {
+          const prev = shown[i - 1];
+          if (!prev || p.at - prev.at > GAP_MS) {
+            ctx.moveTo(x(p.at), y(p.value));
+          } else {
+            // Level until the new reading, then a short ramp to it.
+            const ramp = Math.min(p.at - prev.at, 1_500);
+            ctx.lineTo(x(p.at - ramp), y(prev.value));
+            ctx.lineTo(x(p.at), y(p.value));
+          }
+        });
+        const last = shown[shown.length - 1];
+        const until = Math.min(now, last.at + GAP_MS);
+        ctx.lineTo(x(until), y(last.value));
+        ctx.stroke();
+        if (now - last.at < GAP_MS) {
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(x(until) - 3, y(last.value), 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
       frame = requestAnimationFrame(draw);
     };
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [kind, color]);
+  }, [color]);
 
   return <canvas ref={ref} className="h-16 w-full" aria-hidden />;
 }
