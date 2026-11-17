@@ -240,9 +240,18 @@ export const AlertShow = () => {
                       to={`/alert-rules/show/${a.ruleId}`}
                       className="hover:underline"
                     >
-                      {a.ruleName} (
-                      {condition(a.metric, a.operator, a.threshold)})
+                      {a.ruleName}
+                      {a.operator && a.threshold != null
+                        ? ` (${condition(a.metric, a.operator, a.threshold)})`
+                        : ""}
                     </Link>
+                  ) : a?.source === "DEVICE" ? (
+                    <>
+                      Thiết bị báo
+                      {a.operator && a.threshold != null
+                        ? ` (${condition(a.metric, a.operator, a.threshold)})`
+                        : ""}
+                    </>
                   ) : (
                     <EmptyValue />
                   )}

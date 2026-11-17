@@ -33,8 +33,9 @@ export type Alert = {
   deviceId: number | null;
   deviceCode: string | null;
   metric: Metric;
-  operator: Operator;
-  threshold: number;
+  /** Null when a device raised the alert without naming its threshold. */
+  operator: Operator | null;
+  threshold: number | null;
   measuredValue: number;
   lastValue: number;
   severity: Severity;
@@ -48,6 +49,8 @@ export type Alert = {
   dismissedAt: string | null;
   ruleId: number | null;
   ruleName: string | null;
+  /** DEVICE: raised by the device's own built-in thresholds; RULE: by a clinic or patient rule. */
+  source: "DEVICE" | "RULE";
 };
 
 export type AlertActionType =

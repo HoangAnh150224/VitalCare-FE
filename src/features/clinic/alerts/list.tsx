@@ -117,7 +117,9 @@ export const AlertList = () => {
               {valueWithUnit(row.original.metric, row.original.lastValue)}
             </span>
             <span className="text-muted-foreground text-xs">
-              {row.original.ruleName}
+              {row.original.source === "DEVICE"
+                ? "Thiết bị báo"
+                : row.original.ruleName}
             </span>
           </Link>
         ),

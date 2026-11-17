@@ -8,6 +8,7 @@ import { useState } from "react";
 
 import { API_URL } from "@/shared/api/constants";
 import { Button } from "@/shared/ui/button";
+import { Checkbox } from "@/shared/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -173,6 +174,7 @@ export function DeviceSimulatorButton({ device }: { device: Device }) {
   const [open, setOpen] = useState(false);
   const [scenario, setScenario] = useState("NORMAL");
   const [count, setCount] = useState("5");
+  const [deviceAlert, setDeviceAlert] = useState(false);
   const [result, setResult] = useState<SyncResult | null>(null);
   const { mutate, mutation } = useCustomMutation<SyncResult>();
   const invalidate = useInvalidate();
@@ -182,7 +184,12 @@ export function DeviceSimulatorButton({ device }: { device: Device }) {
       {
         url: `${API_URL}/devices/${device.id}/simulate`,
         method: "post",
-        values: { scenario, count: Number(count) || 5, intervalSeconds: 60 },
+        values: {
+          scenario,
+          count: Number(count) || 5,
+          intervalSeconds: 60,
+          deviceAlert,
+        },
         successNotification: false,
         config: { headers: { "Content-Type": "application/json" } },
       },
@@ -255,6 +262,21 @@ export function DeviceSimulatorButton({ device }: { device: Device }) {
               className="w-24"
             />
           </div>
+          <Label className="flex items-start gap-2 font-normal">
+            <Checkbox
+              checked={deviceAlert}
+              onCheckedChange={(v) => setDeviceAlert(v === true)}
+              className="mt-0.5"
+            />
+            <span className="flex flex-col">
+              <span className="font-medium">Thiết bị tự báo cảnh báo</span>
+              <span className="text-muted-foreground text-xs">
+                Số đo bất thường mang kèm cảnh báo theo ngưỡng đặt sẵn trên
+                thiết bị, nên vẫn sinh cảnh báo khi quy tắc của cơ sở đang tạm
+                ngưng.
+              </span>
+            </span>
+          </Label>
           {result && (
             <div
               className="bg-muted/40 rounded-md border p-3 text-sm"
