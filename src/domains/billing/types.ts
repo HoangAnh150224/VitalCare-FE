@@ -103,7 +103,10 @@ export type Invoice = {
   invoiceNumber: string;
   status: InvoiceStatus;
   kind: InvoiceKind;
-  /** The ordered service a `service` bill is for. */
+  /**
+   * Bills from when each service had its own: the order it was for. A visit's
+   * services now share one bill, a line each (see `items[].serviceOrderId`).
+   */
   serviceOrderId: number | null;
   patient: { id: number; customerCode: string; fullName: string; phone: string | null };
   clinic: { id: string; name: string } | null;
@@ -113,7 +116,15 @@ export type Invoice = {
   paidAt: string | null;
   subtotal: number;
   totalAmount: number;
-  items: { description: string; category: ServiceCategory | null; quantity: number; unitPrice: number; amount: number }[];
+  items: {
+    description: string;
+    category: ServiceCategory | null;
+    quantity: number;
+    unitPrice: number;
+    amount: number;
+    /** The ordered service this line bills; null for the examination. */
+    serviceOrderId?: number | null;
+  }[];
   payments: {
     id: number;
     method: PaymentMethod;
