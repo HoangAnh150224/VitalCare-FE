@@ -77,6 +77,12 @@ export function ReturnPanel({
     <DetailPanel title="Hẹn trả kết quả">
       <div className="flex flex-col gap-3 px-4 py-3 text-sm">
         {rows.length === 0 && <p className="text-muted-foreground">Chưa hẹn ngày trả kết quả.</p>}
+        {orderId != null && canWrite.can && !open && (
+          <p className="text-muted-foreground">
+            Hẹn giờ có kết quả để bệnh nhân quay lại phòng của bác sĩ khám. Kết quả tự gửi về phòng khám khi bạn trả
+            kết quả; bệnh nhân được báo giờ và phòng.
+          </p>
+        )}
         {rows.map((r) => (
           <div key={r.id} className="flex flex-wrap items-center gap-2">
             <span className="font-medium tabular-nums">{formatDateTime(r.scheduledAt)}</span>
@@ -87,12 +93,18 @@ export function ReturnPanel({
         {canWrite?.can && !open && (
           <div className="flex flex-wrap items-end gap-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="return-at">Thời điểm hẹn</Label>
+              <Label htmlFor="return-at">{orderId != null ? "Giờ có kết quả" : "Thời điểm hẹn"}</Label>
               <Input id="return-at" type="datetime-local" value={at} onChange={(e) => setAt(e.target.value)} />
             </div>
             <div className="flex min-w-48 flex-1 flex-col gap-1.5">
               <Label htmlFor="return-note">Ghi chú</Label>
-              <Input id="return-note" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
+              <Input
+                id="return-note"
+                value={note}
+                maxLength={500}
+                placeholder={orderId != null ? "Để trống: tự ghi phòng và bác sĩ khám" : undefined}
+                onChange={(e) => setNote(e.target.value)}
+              />
             </div>
             <Button size="sm" disabled={!at || schedule.isPending} onClick={() => schedule.mutate()}>
               Hẹn trả kết quả

@@ -196,11 +196,13 @@ const DOCTOR_HIDDEN = new Set(["medical_services", "exam_rooms", "first_aid_arti
  * Left out of the sidebar only, for a doctor and for the front desk. A doctor
  * reaches encounters and the services ordered in them from their patients
  * (Bệnh nhân của tôi) and their queue; the front desk does not examine or
- * order at all, and only follows a visit from its booking or bill. The screens
- * stay open — the patient's history, the visit, the bill and the order pages
- * link to them — but neither needs a menu entry. Technicians keep theirs.
+ * order at all, and only follows a visit from its booking or bill. Result
+ * returns are set by the technician who does the service, and the patient goes
+ * back to the doctor's room, where the results are sent: neither needs a list
+ * of them. The screens stay open — the visit, the bill and the order pages
+ * link to them. Technicians keep theirs.
  */
-const VISIT_SCREENS = new Set(["clinical_encounters", "service_orders"]);
+const VISIT_SCREENS = new Set(["clinical_encounters", "service_orders", "result_returns"]);
 
 /** Menu entries an account does not need, though their screens stay open to it (unlike {@link hiddenMenus}). */
 export function sidebarOnlyHidden(roles: readonly string[] | undefined): ReadonlySet<string> {

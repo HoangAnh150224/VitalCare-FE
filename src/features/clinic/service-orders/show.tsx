@@ -119,8 +119,10 @@ export const ServiceOrderShow = () => {
           </div>
         </DetailPanel>
 
-        {/* The result is in: whoever recorded it tells the patient when to come back for it. */}
-        {order?.appointmentId != null && (order.status === "result_ready" || order.status === "reviewed") && (
+        {/* From the moment it is taken on: whoever does it tells the patient when the result will be in,
+            and the patient comes back then to the doctor's room, where the result is sent. */}
+        {order?.appointmentId != null &&
+          (order.status === "in_progress" || order.status === "result_ready" || order.status === "reviewed") && (
           <div className="lg:col-start-1">
             <ReturnPanel appointmentId={order.appointmentId} orderId={order.id} />
           </div>

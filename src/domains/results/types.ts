@@ -88,6 +88,7 @@ export function resultsErrorText(body: unknown): string {
   if (/already came/.test(text)) return "Bệnh nhân đã đến nhận kết quả.";
   if (/already has a return/.test(text)) return "Lượt khám này đã có lịch hẹn; hãy đặt lại lịch thay vì hẹn mới.";
   if (/visit that was examined/.test(text)) return "Chỉ hẹn trả kết quả cho lượt khám đã khám xong.";
+  if (/Start the service before/.test(text)) return "Bắt đầu thực hiện dịch vụ rồi mới hẹn giờ trả kết quả.";
   if (/before the consultation/.test(text)) return "Hoàn tất lần khám trước khi ghi kết luận tư vấn.";
   if (/already gave feedback/.test(text)) return "Bạn đã góp ý cho lượt khám này; hãy sửa góp ý cũ.";
   if (/completed visit/.test(text)) return "Chỉ góp ý được cho lượt khám đã hoàn tất.";
