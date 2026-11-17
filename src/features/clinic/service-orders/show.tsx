@@ -16,14 +16,16 @@ import { formatDateTime, formatMoney } from "@/shared/lib/format";
 import { AttachFileButton, OrderFiles, OrderStatusBadge, useOrderActions } from "./order-parts";
 
 /**
- * One ordered service, from the side of whoever carries it out: start it,
+ * One ordered service, from the side of whoever carries it out — the service
+ * technician (Bác sĩ kỹ thuật), never the doctor who ordered it: start it,
  * write the result, attach the sheet or the image, hand it back to the doctor.
  * Correcting a result stays possible until the doctor has marked it read.
  */
 export const ServiceOrderShow = () => {
   const { result: order, query } = useShow<ServiceOrder>({ resource: "service_orders" });
   const invalidate = useInvalidate();
-  const { data: canWrite } = useCan({ resource: "service_orders", action: "edit" });
+  // service_orders:perform — the technician's; the examining doctor reads the result here.
+  const { data: canWrite } = useCan({ resource: "service_orders", action: "perform" });
   const refresh = () => {
     void query.refetch();
     invalidate({ resource: "service_orders", invalidates: ["list"] });

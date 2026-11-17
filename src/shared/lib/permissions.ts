@@ -39,7 +39,10 @@ export const ACTION_TO_PERMISSION: Record<
   | "review"
   | "export"
   | "transfer"
+  | "perform"
 > = {
+  // service_orders:perform — carrying an ordered service out; the service technician's.
+  perform: "perform",
   // customers:assign — putting a patient in somebody's care and on a device.
   assign: "assign",
   // customers:assign_staff — the care team; the clinic administrator's alone (SRS 3.1.3).

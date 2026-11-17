@@ -20,9 +20,10 @@ export type Employee = {
 
 /**
  * Each kind of staff holds the matching role (DOCTOR, MANAGER for the
- * front desk, CLINIC_ADMIN for the clinic's administrator).
+ * front desk, TECHNICIAN for the service technician who carries out what
+ * the doctor ordered, CLINIC_ADMIN for the clinic's administrator).
  */
-export type StaffType = "doctor" | "receptionist" | "clinic_admin";
+export type StaffType = "doctor" | "receptionist" | "technician" | "clinic_admin";
 
 /** Leaving is `inactive`, never a delete. */
 export type EmployeeStatus = "active" | "inactive";
@@ -30,6 +31,7 @@ export type EmployeeStatus = "active" | "inactive";
 export const STAFF_TYPE_LABELS: Record<StaffType, string> = {
   doctor: "Bác sĩ",
   receptionist: "Lễ tân",
+  technician: "Bác sĩ kỹ thuật",
   clinic_admin: "Quản trị phòng khám",
 };
 
@@ -40,6 +42,7 @@ export const isClinicalStaff = (staffType: StaffType) =>
 export const STAFF_TYPE_OPTIONS: { label: string; value: StaffType }[] = [
   { label: "Bác sĩ", value: "doctor" },
   { label: "Lễ tân", value: "receptionist" },
+  { label: "Bác sĩ kỹ thuật", value: "technician" },
   { label: "Quản trị phòng khám", value: "clinic_admin" },
 ];
 
