@@ -1,6 +1,7 @@
 import { useTable } from "@refinedev/react-table";
-import { createColumnHelper } from "@tanstack/react-table";
-import React from "react";
+import { createColumnHelper, getFilteredRowModel, type FilterFn } from "@tanstack/react-table";
+import { SearchIcon } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 
 import {
@@ -12,8 +13,41 @@ import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { ShowButton } from "@/shared/components/buttons/show";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { formatDate } from "@/shared/lib/format";
 import type { MyPatient } from "@/domains/assignment/types";
+import { GENDER_OPTIONS } from "@/domains/customer/types";
+
+/** "Nguyễn Văn Bình" is found by "nguyen van binh" too: accents dropped, case ignored. */
+const fold = (text: string) =>
+  text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .trim();
+
+type PatientFilter = { search: string; device: string; gender: string };
+const NO_FILTER: PatientFilter = { search: "", device: "all", gender: "all" };
+
+/**
+ * The caseload comes whole, so it is searched and narrowed here: by name,
+ * phone or patient code, whether a device is worn, and gender. Run once per
+ * column by TanStack; it reads the row, so any column answering is all of them.
+ */
+const matchesPatient: FilterFn<MyPatient> = (row, _columnId, filter: PatientFilter) => {
+  const patient = row.original;
+  const term = fold(filter.search);
+  if (term && ![patient.fullName, patient.phone ?? "", patient.customerCode].some((v) => fold(v).includes(term))) {
+    return false;
+  }
+  if (filter.device === "wearing" && !patient.device) return false;
+  if (filter.device === "none" && patient.device) return false;
+  if (filter.gender !== "all" && patient.gender !== filter.gender) return false;
+  return true;
+};
 
 /**
  * The patients the signed-in doctor or nurse is following. The API answers it
@@ -115,6 +149,11 @@ export const MyPatientList = ({
     defaultColumn: RESIZABLE_COLUMN_DEFAULTS,
     // The API answers with the whole caseload at once; paging it here would
     // show page one's rows again on every page.
+    // Filtered here, over the whole caseload (see matchesPatient), never sent to the API.
+    getFilteredRowModel: getFilteredRowModel(),
+    manualFiltering: false,
+    globalFilterFn: matchesPatient,
+    getColumnCanGlobalFilter: (column) => column.id === "fullName",
     refineCoreProps: {
       resource,
       syncWithLocation: !resource,
@@ -125,10 +164,66 @@ export const MyPatientList = ({
     },
   });
 
+  const [filter, setFilter] = useState<PatientFilter>(NO_FILTER);
+  const { setGlobalFilter } = table.reactTable;
+  useEffect(() => setGlobalFilter(filter), [filter, setGlobalFilter]);
+  const filtered = filter.search.trim() !== "" || filter.device !== "all" || filter.gender !== "all";
+  const total = table.reactTable.getCoreRowModel().rows.length;
+  const shown = table.reactTable.getFilteredRowModel().rows.length;
+
   return (
     <ListView>
       <ListViewHeader title={title} description={description} />
-      <DataTable table={table} />
+      <DataTable
+        table={table}
+        toolbar={
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full max-w-sm">
+              <SearchIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
+              <Input
+                aria-label="Tìm bệnh nhân"
+                placeholder="Tìm theo tên, số điện thoại, mã bệnh nhân..."
+                className="pl-8"
+                value={filter.search}
+                onChange={(event) => setFilter((current) => ({ ...current, search: event.target.value }))}
+              />
+            </div>
+            <Select value={filter.device} onValueChange={(device) => setFilter((current) => ({ ...current, device }))}>
+              <SelectTrigger className="w-44" aria-label="Lọc thiết bị">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả thiết bị</SelectItem>
+                <SelectItem value="wearing">Đang đeo thiết bị</SelectItem>
+                <SelectItem value="none">Chưa đeo thiết bị</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filter.gender} onValueChange={(gender) => setFilter((current) => ({ ...current, gender }))}>
+              <SelectTrigger className="w-36" aria-label="Lọc giới tính">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả giới tính</SelectItem>
+                {GENDER_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {filtered && (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => setFilter(NO_FILTER)}>
+                  Xóa bộ lọc
+                </Button>
+                <span className="text-muted-foreground text-sm" role="status">
+                  {shown} / {total} bệnh nhân
+                </span>
+              </>
+            )}
+          </div>
+        }
+      />
     </ListView>
   );
 };
