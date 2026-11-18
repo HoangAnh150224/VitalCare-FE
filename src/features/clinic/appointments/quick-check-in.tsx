@@ -96,6 +96,7 @@ export const QuickCheckIn = () => {
     <ListView>
       <ListViewHeader
         title="Tiếp nhận nhanh"
+        backTo="/appointments"
         canCreate={false}
         description="Quét hoặc nhập mã trên phiếu khám; không có phiếu thì nhập số điện thoại, CCCD hoặc họ tên. Máy quét cầm tay dùng được ngay tại ô nhập."
       />

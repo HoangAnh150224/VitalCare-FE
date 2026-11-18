@@ -109,6 +109,7 @@ export const AppointmentCalendar = () => {
       <ListViewHeader
         resource="appointments"
         title="Lịch đăng ký khám"
+        backTo="/appointments"
         canCreate={false}
         description="Số lượt đăng ký khám theo ngày. Chọn bác sĩ để xem ngày làm việc của bác sĩ đó."
       />

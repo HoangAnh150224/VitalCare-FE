@@ -4,6 +4,8 @@ import type { PropsWithChildren, ReactNode } from "react";
 
 import type { BaseRecord, HttpError } from "@refinedev/core";
 import { useResourceParams, useUserFriendlyName } from "@refinedev/core";
+import { ArrowLeftIcon } from "lucide-react";
+import { Link } from "react-router";
 import type { UseTableReturnType } from "@refinedev/react-table";
 import {
   DataTableColumnToggle,
@@ -11,6 +13,7 @@ import {
   DataTableRefresh,
 } from "@/shared/components/data-table/data-table-actions";
 import { CreateButton } from "@/shared/components/buttons/create";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
 type ListViewProps = PropsWithChildren<{
@@ -55,6 +58,12 @@ type ListHeaderProps = PropsWithChildren<{
   actions?: ReactNode;
   headerClassName?: string;
   wrapperClassName?: string;
+  /**
+   * Where the back arrow beside the title leads, for a screen opened from another
+   * one (a calendar or a desk tool reached from its list). A path rather than
+   * history: the screen may have been opened from a link or a bookmark.
+   */
+  backTo?: string;
 }>;
 
 export const ListViewHeader = ({
@@ -66,6 +75,7 @@ export const ListViewHeader = ({
   actions,
   wrapperClassName,
   headerClassName,
+  backTo,
 }: ListHeaderProps) => {
   const getUserFriendlyName = useUserFriendlyName();
 
@@ -105,9 +115,18 @@ export const ListViewHeader = ({
         )}
       >
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-3xl font-bold leading-9 tracking-tight">
-            {title}
-          </h1>
+          <div className={cn("flex items-center gap-1", backTo && "-ml-2.5")}>
+            {backTo && (
+              <Button data-print="hide" variant="ghost" size="icon" asChild>
+                <Link to={backTo} aria-label="Quay lại">
+                  <ArrowLeftIcon className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+            <h1 className="min-w-0 truncate text-3xl font-bold leading-9 tracking-tight">
+              {title}
+            </h1>
+          </div>
           {description && (
             <p className="text-muted-foreground mt-1.5 max-w-3xl text-sm">
               {description}
