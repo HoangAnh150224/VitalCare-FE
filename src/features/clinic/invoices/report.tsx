@@ -1,5 +1,5 @@
 import { useCustom } from "@refinedev/core";
-import { DownloadIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { API_URL } from "@/shared/api/constants";
@@ -16,6 +16,9 @@ import { clinicToday } from "../appointments/clinic-day";
 import { customResult } from "@/shared/hooks/use-custom-result";
 import type { RevenueReport } from "@/domains/billing/types";
 import { formatLocalDate, formatMoney } from "@/shared/lib/format";
+
+/** Days shown per page of the table. */
+const PAGE_SIZES = [10, 20, 31];
 
 /** `YYYY-MM-DD` in the browser's own day, which is the clinic's. */
 const isoDay = (date: Date) => date.toLocaleDateString("sv-SE");
@@ -46,6 +49,14 @@ export const RevenueReportPage = () => {
     queryOptions: { enabled: valid },
   });
   const report = customResult(result?.data, "total");
+  const days = report?.days ?? [];
+  const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+  const [page, setPage] = useState(0);
+  const pages = Math.max(1, Math.ceil(days.length / pageSize));
+  // A new period or page size starts again from its first page.
+  useEffect(() => setPage(0), [from, to, pageSize]);
+  const current = Math.min(page, pages - 1);
+  const shown = days.slice(current * pageSize, (current + 1) * pageSize);
 
   const [exporting, setExporting] = useState(false);
   const [downloadFile, setDownloadFile] = useState<{ url: string; name: string; from: string; to: string } | null>(null);
@@ -73,7 +84,11 @@ export const RevenueReportPage = () => {
     }
   };
   return (
-    <ListView>
+    // On a screen tall enough, the page is exactly one screen high: title, filters and the period
+    // totals stay where they are and only the days scroll, inside their own panel, under a fixed
+    // column header. On small or short screens everything scrolls with the page as usual.
+    <ListView className="[@media(min-width:768px)_and_(min-height:640px)]:h-[calc(100dvh_-_4rem_-_2*var(--shell-gutter-y))]">
+      <div className="flex shrink-0 flex-col gap-4">
       <ListViewHeader
         resource="invoices"
         title="Báo cáo doanh thu"
@@ -161,25 +176,28 @@ export const RevenueReportPage = () => {
         {!valid && <p className="text-destructive px-6 pt-2 text-sm">{period === "custom" ? "Vui lòng chọn khoảng ngày hợp lệ, ngày bắt đầu không sau ngày kết thúc." : "Nhập năm hợp lệ từ 1900 đến 9999."}</p>}
       </Card>
 
-      <LoadingOverlay loading={query.isLoading}>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Figure label="Tổng đã thu" value={formatMoney(report?.total.totalRevenue)} note={`${report?.total.paidInvoices ?? 0} hóa đơn`} />
-          <Figure label="Phí khám" value={formatMoney(report?.total.consultationRevenue)} />
-          <Figure label="Phí dịch vụ" value={formatMoney(report?.total.serviceRevenue)} />
-          <Figure
-            label="Chưa thu"
-            value={formatMoney(report?.total.unpaidAmount)}
-            note={`${report?.total.unpaidInvoices ?? 0} hóa đơn`}
-          />
-        </div>
-      </LoadingOverlay>
+        <LoadingOverlay loading={query.isLoading}>
+          <Card className="border-primary/30 gap-0 py-0">
+            <div className="text-muted-foreground border-b px-5 py-2 text-xs font-semibold uppercase tracking-wide">
+              Tổng hợp {valid ? `· ${formatLocalDate(from)} – ${formatLocalDate(to)}` : ""}
+            </div>
+            <div className="grid grid-cols-2 divide-y sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
+              <Figure label="Tổng đã thu" value={formatMoney(report?.total.totalRevenue)} note={`${report?.total.paidInvoices ?? 0} hóa đơn`} strong />
+              <Figure label="Phí khám" value={formatMoney(report?.total.consultationRevenue)} />
+              <Figure label="Phí dịch vụ" value={formatMoney(report?.total.serviceRevenue)} />
+              <Figure label="Chưa thu" value={formatMoney(report?.total.unpaidAmount)} note={`${report?.total.unpaidInvoices ?? 0} hóa đơn`} />
+            </div>
+          </Card>
+        </LoadingOverlay>
+      </div>
 
-      <DetailPanel title="Theo ngày">
-        {report && report.days.length > 0 ? (
-          <div className="overflow-x-auto">
+      <DetailPanel title="Theo ngày" className="[@media(min-width:768px)_and_(min-height:640px)]:min-h-0 [@media(min-width:768px)_and_(min-height:640px)]:flex-1" bodyClassName="[@media(min-width:768px)_and_(min-height:640px)]:flex [@media(min-width:768px)_and_(min-height:640px)]:min-h-0 [@media(min-width:768px)_and_(min-height:640px)]:flex-1 [@media(min-width:768px)_and_(min-height:640px)]:flex-col">
+        {report && days.length > 0 ? (
+          <>
+          <div className="overflow-x-auto [@media(min-width:768px)_and_(min-height:640px)]:min-h-0 [@media(min-width:768px)_and_(min-height:640px)]:flex-1 [@media(min-width:768px)_and_(min-height:640px)]:overflow-y-auto">
             <table className="w-full min-w-[40rem] text-sm">
               <thead>
-                <tr className="text-muted-foreground border-b text-left">
+                <tr className="text-muted-foreground bg-card sticky top-0 z-10 text-left shadow-[inset_0_-1px_0_var(--border)]">
                   <th className="px-4 py-2 font-medium">Ngày</th>
                   <th className="px-4 py-2 text-right font-medium">Hóa đơn</th>
                   <th className="px-4 py-2 text-right font-medium">Phí khám</th>
@@ -189,7 +207,7 @@ export const RevenueReportPage = () => {
                 </tr>
               </thead>
               <tbody className="tabular-nums">
-                {report.days.map((day) => (
+                {shown.map((day) => (
                   <tr key={day.date} className="border-b last:border-0">
                     <td className="px-4 py-2">{formatLocalDate(day.date)}</td>
                     <td className="px-4 py-2 text-right">
@@ -204,6 +222,28 @@ export const RevenueReportPage = () => {
               </tbody>
             </table>
           </div>
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm">
+            <span className="text-muted-foreground tabular-nums">
+              Hiển thị {current * pageSize + 1}–{current * pageSize + shown.length} trên {days.length} ngày
+            </span>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="report-page-size" className="text-muted-foreground font-normal">Số dòng</Label>
+              <Select value={String(pageSize)} onValueChange={(value) => setPageSize(Number(value))}>
+                <SelectTrigger id="report-page-size" size="sm" className="w-20"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZES.map((size) => <SelectItem key={size} value={String(size)}>{size}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="icon" className="size-8" aria-label="Trang trước" disabled={current === 0} onClick={() => setPage(current - 1)}>
+                <ChevronLeftIcon />
+              </Button>
+              <span className="tabular-nums">Trang {current + 1}/{pages}</span>
+              <Button variant="outline" size="icon" className="size-8" aria-label="Trang sau" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>
+                <ChevronRightIcon />
+              </Button>
+            </div>
+          </div>
+          </>
         ) : (
           <p className="text-muted-foreground px-4 py-6 text-sm">Không có hóa đơn nào trong khoảng ngày này.</p>
         )}
@@ -212,12 +252,12 @@ export const RevenueReportPage = () => {
   );
 };
 
-function Figure({ label, value, note }: { label: string; value: string; note?: string }) {
+function Figure({ label, value, note, strong }: { label: string; value: string; note?: string; strong?: boolean }) {
   return (
-    <Card className="gap-1 px-5 py-4">
+    <div className="flex flex-col gap-0.5 px-5 py-3">
       <span className="text-muted-foreground text-sm">{label}</span>
-      <span className="text-2xl font-semibold tabular-nums">{value}</span>
+      <span className={strong ? "text-primary text-2xl font-semibold tabular-nums" : "text-xl font-semibold tabular-nums"}>{value}</span>
       {note && <span className="text-muted-foreground text-xs">{note}</span>}
-    </Card>
+    </div>
   );
 }
