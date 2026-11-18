@@ -274,9 +274,9 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
             title="Chẩn đoán và hướng xử trí"
             description="Chẩn đoán do bác sĩ ghi; bác sĩ hoàn tất lần khám là xác nhận phiếu."
           >
-            {textField("diagnosis", "Chẩn đoán", 3, 5000, {
+            {textField("diagnosis", "Chẩn đoán sơ bộ", 3, 5000, {
               readOnly: !writesDiagnosis,
-              placeholder: writesDiagnosis ? "Chẩn đoán chính, bệnh kèm theo nếu có" : undefined,
+              placeholder: writesDiagnosis ? "Nhận định ban đầu khi khám; chẩn đoán bệnh ghi khi có kết quả dịch vụ" : undefined,
               description: writesDiagnosis ? undefined : "Bác sĩ ghi chẩn đoán.",
             })}
             {textField("followUp", "Hướng dẫn theo dõi / tái khám", 3, 5000)}

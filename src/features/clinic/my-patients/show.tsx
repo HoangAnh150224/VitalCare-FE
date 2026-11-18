@@ -40,6 +40,8 @@ export const MyPatientShow = ({
   title,
 }: MyPatientShowProps = {}) => {
   const { result: record, query } = useShow<MyPatient>({ resource, id });
+  // Examined but not followed — a new patient: their visits and results, none of the home monitoring.
+  const followed = record?.followingSince != null;
 
   // No "Tạo lần khám" here: a visit is opened from the patient's checked-in
   // booking, so its result reaches them in the portal.
@@ -60,7 +62,7 @@ export const MyPatientShow = ({
             </div>
             <MetaStrip className="shrink-0">
               <MetaItem label="Theo dõi từ">
-                {formatDate(record?.followingSince)}
+                {followed ? formatDate(record?.followingSince) : "Bệnh nhân khám tại phòng"}
               </MetaItem>
               <MetaItem label="Thiết bị">
                 {record?.device ? (
@@ -118,7 +120,7 @@ export const MyPatientShow = ({
         </DetailPanel>
       </div>
 
-      {record && <MonitoringSummaryPanel customerId={record.id} />}
+      {record && followed && <MonitoringSummaryPanel customerId={record.id} />}
       {record && <MonitoringOrdersPanel customerId={record.id} />}
 
       {/* The visits and their results, a timeline like the patient's own health record. */}
@@ -127,10 +129,12 @@ export const MyPatientShow = ({
       {record && (
         <div className="grid min-w-0 gap-4 lg:grid-cols-2">
           <MedicalRecordPanel key={record.id} customerId={record.id} />
-          <MonitoringNotesPanel
-            key={`notes-${record.id}`}
-            customerId={record.id}
-          />
+          {followed && (
+            <MonitoringNotesPanel
+              key={`notes-${record.id}`}
+              customerId={record.id}
+            />
+          )}
         </div>
       )}
     </ShowView>

@@ -36,7 +36,6 @@ import { EncounterOrdersPanel, useEncounterOrders } from "../service-orders/enco
 import { VisitPanel } from "./visit-panel";
 import { MonitoringOrdersPanel } from "../monitoring/monitoring-orders-panel";
 import { ConsultationPanel } from "../results/consultation-panel";
-import { ReturnPanel } from "../results/return-panel";
 
 /** One encounter: what was recorded at the visit, and the step that closes it. */
 export const EncounterShow = () => {
@@ -53,7 +52,10 @@ export const EncounterShow = () => {
   const { data: canReadOrders } = useCan({ resource: "service_orders", action: "list" });
   const readsOrders = canReadOrders?.can ?? false;
   // Report 1 FE-22: the visit is concluded once every ordered result has been read.
-  const { outstanding } = useEncounterOrders(record?.id, readsOrders);
+  const { outstanding, orders } = useEncounterOrders(record?.id, readsOrders);
+  // Services were ordered: the patient comes back with their results, and the
+  // doctor's conclusion on them is what ends the visit (below), not a diagnosis.
+  const withResults = orders.some((order) => order.status !== "cancelled");
   // The permission, and the row's own flag: false there means this encounter
   // is outside the caller's write scope.
   const showComplete =
@@ -87,7 +89,8 @@ export const EncounterShow = () => {
 
   return (
     <ShowView>
-      <ShowViewHeader resource="clinical_encounters" canEdit={!locked} />
+      {/* Services ordered: the examination is done and the conclusion is written below, not in the exam form. */}
+      <ShowViewHeader resource="clinical_encounters" canEdit={!locked && !withResults} />
 
       <Card className="py-4">
         <LoadingOverlay loading={query.isLoading}>
@@ -109,7 +112,14 @@ export const EncounterShow = () => {
                     : `Còn sửa được đến ${formatDateTime(record.editableUntil)}.`}
                 </p>
               )}
-              {showComplete && (
+              {showComplete && withResults && (
+                <p className="text-muted-foreground text-sm">
+                  {outstanding > 0
+                    ? `Còn ${outstanding} dịch vụ chưa có kết quả hoặc chưa xem. Xem hết kết quả rồi ghi kết luận để kết thúc lần khám.`
+                    : "Đã xem hết kết quả: ghi kết luận ở mục Tư vấn kết quả bên dưới để kết thúc lần khám."}
+                </p>
+              )}
+              {showComplete && !withResults && (
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
                     onClick={() => setConfirming(true)}
@@ -160,7 +170,7 @@ export const EncounterShow = () => {
             <DetailRow label="Ghi chú lâm sàng">
               {record?.clinicalNote ? <span className="whitespace-pre-wrap">{record.clinicalNote}</span> : <EmptyValue />}
             </DetailRow>
-            <DetailRow label="Chẩn đoán">
+            <DetailRow label="Chẩn đoán sơ bộ">
               {record?.diagnosis ? <span className="whitespace-pre-wrap">{record.diagnosis}</span> : <EmptyValue />}
             </DetailRow>
             <DetailRow label="Theo dõi / tái khám">
@@ -240,8 +250,13 @@ export const EncounterShow = () => {
         <EncounterOrdersPanel encounterId={record.id} open={record.status === "in_progress"} />
       )}
 
-      {record && <ConsultationPanel key={`${record.id}-${record.consultedAt ?? ""}`} encounter={record} />}
-      {record?.appointmentId && <ReturnPanel appointmentId={record.appointmentId} encounterId={record.id} />}
+      {record && (
+        <ConsultationPanel
+          key={`${record.id}-${record.consultedAt ?? ""}`}
+          encounter={record}
+          finishing={showComplete && withResults && outstanding === 0}
+        />
+      )}
 
       {record?.patient && <MonitoringOrdersPanel customerId={record.patient.id} />}
 

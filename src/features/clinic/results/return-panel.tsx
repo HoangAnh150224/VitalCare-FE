@@ -18,28 +18,15 @@ import {
 import { refusal, send, vnLocal } from "./send";
 
 /**
- * BF-07 on a visit: when the patient comes back for their results; the
- * patient is told when it is set. It is set by the service technician who
- * records a result, from the order (`orderId`); on the visit's page the
- * doctor may set it too, and the front desk only sees it.
+ * BF-07 on an ordered service: when its result will be in, so the patient
+ * comes back then to the examining doctor's room, where the result is sent.
+ * Set only by the service technician who carries it out, from the order; the
+ * doctor's visit page does not show it.
  */
-export function ReturnPanel({
-  appointmentId,
-  encounterId,
-  orderId,
-}: {
-  appointmentId: number;
-  encounterId?: number;
-  orderId?: number;
-}) {
+export function ReturnPanel({ appointmentId, orderId }: { appointmentId: number; orderId: number }) {
   const { data: canRead } = useCan({ resource: "result_returns", action: "list" });
-  const { data: canSchedule } = useCan({ resource: "result_returns", action: "create" });
-  // From an order: whoever carries it out. From the visit: the doctor, not the front desk.
   const { data: canPerform } = useCan({ resource: "service_orders", action: "perform" });
-  const { data: canConclude } = useCan({ resource: "clinical_encounters", action: "conclude" });
-  const canWrite = {
-    can: orderId != null ? (canPerform?.can ?? false) : (canSchedule?.can ?? false) && (canConclude?.can ?? false),
-  };
+  const canWrite = { can: canPerform?.can ?? false };
   const queryClient = useQueryClient();
   const { open: notify } = useNotification();
   const [at, setAt] = useState("");
@@ -55,10 +42,7 @@ export function ReturnPanel({
     enabled: Boolean(canRead?.can),
   });
   const schedule = useMutation({
-    mutationFn: () =>
-      orderId != null
-        ? send("post", `service_orders/${orderId}/result_return`, { scheduledAt: vnLocal(at), note })
-        : send("post", "result_returns", { encounterId, scheduledAt: vnLocal(at), note }),
+    mutationFn: () => send("post", `service_orders/${orderId}/result_return`, { scheduledAt: vnLocal(at), note }),
     onSuccess: () => {
       setAt("");
       setNote("");
@@ -77,7 +61,7 @@ export function ReturnPanel({
     <DetailPanel title="Hẹn trả kết quả">
       <div className="flex flex-col gap-3 px-4 py-3 text-sm">
         {rows.length === 0 && <p className="text-muted-foreground">Chưa hẹn ngày trả kết quả.</p>}
-        {orderId != null && canWrite.can && !open && (
+        {canWrite.can && !open && (
           <p className="text-muted-foreground">
             Hẹn giờ có kết quả để bệnh nhân quay lại phòng của bác sĩ khám. Kết quả tự gửi về phòng khám khi bạn trả
             kết quả; bệnh nhân được báo giờ và phòng.
@@ -93,7 +77,7 @@ export function ReturnPanel({
         {canWrite?.can && !open && (
           <div className="flex flex-wrap items-end gap-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="return-at">{orderId != null ? "Giờ có kết quả" : "Thời điểm hẹn"}</Label>
+              <Label htmlFor="return-at">Giờ có kết quả</Label>
               <Input id="return-at" type="datetime-local" value={at} onChange={(e) => setAt(e.target.value)} />
             </div>
             <div className="flex min-w-48 flex-1 flex-col gap-1.5">
@@ -102,7 +86,7 @@ export function ReturnPanel({
                 id="return-note"
                 value={note}
                 maxLength={500}
-                placeholder={orderId != null ? "Để trống: tự ghi phòng và bác sĩ khám" : undefined}
+                placeholder="Để trống: tự ghi phòng và bác sĩ khám"
                 onChange={(e) => setNote(e.target.value)}
               />
             </div>

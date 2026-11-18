@@ -26,7 +26,11 @@ type Decision = "ACCEPTED" | "DECLINED";
  * monitoring with a wearable and record whether the patient accepted. Optional,
  * and not offered while the patient is already being monitored.
  */
-export function ConsultationPanel({ encounter }: { encounter: Encounter }) {
+/**
+ * `finishing`: the visit is still open, every ordered result is in and read —
+ * the conclusion written now is what ends it.
+ */
+export function ConsultationPanel({ encounter, finishing = false }: { encounter: Encounter; finishing?: boolean }) {
   const { data: canConclude } = useCan({ resource: "clinical_encounters", action: "conclude" });
   const { data: canOrder } = useCan({ resource: "monitoring_orders", action: "create" });
   const invalidate = useInvalidate();
@@ -40,7 +44,8 @@ export function ConsultationPanel({ encounter }: { encounter: Encounter }) {
   const [decision, setDecision] = useState<Decision | null>(null);
   const [consentNote, setConsentNote] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const writable = (canConclude?.can ?? false) && encounter._can?.write !== false && encounter.status === "completed";
+  const writable =
+    (canConclude?.can ?? false) && encounter._can?.write !== false && (encounter.status === "completed" || finishing);
 
   const customerId = encounter.patient.id;
   const { data: orders } = useMonitoringOrders(customerId, writable && (canOrder?.can ?? false));
@@ -78,7 +83,7 @@ export function ConsultationPanel({ encounter }: { encounter: Encounter }) {
       setReason("");
       setDecision(null);
       setConsentNote("");
-      notify?.({ type: "success", message: "Đã lưu kết luận tư vấn" });
+      notify?.({ type: "success", message: finishing ? "Đã kết luận và kết thúc lần khám" : "Đã lưu kết luận tư vấn" });
       if (monitoring === "failed") {
         notify?.({
           type: "error",
@@ -86,7 +91,8 @@ export function ConsultationPanel({ encounter }: { encounter: Encounter }) {
           description: "Bệnh nhân có thể đang có chỉ định theo dõi khác.",
         });
       }
-      void invalidate({ resource: "clinical_encounters", invalidates: ["detail"], id: encounter.id });
+      void invalidate({ resource: "clinical_encounters", invalidates: ["detail", "list"], id: encounter.id });
+      if (finishing) void invalidate({ resource: "invoices", invalidates: ["list"] });
       void queryClient.invalidateQueries({ queryKey: monitoringOrdersKey(customerId) });
     },
     onError: (e) => setError(resultsErrorText(refusal(e))),
@@ -100,17 +106,17 @@ export function ConsultationPanel({ encounter }: { encounter: Encounter }) {
     save.mutate();
   };
 
-  if (encounter.status !== "completed" && !encounter.finalConclusion) return null;
+  if (encounter.status !== "completed" && !encounter.finalConclusion && !finishing) return null;
   return (
     <DetailPanel title="Tư vấn kết quả">
       {editing ? (
         <div className="flex flex-col gap-3 px-4 py-3">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="final-conclusion">Kết luận cuối cùng</Label>
+            <Label htmlFor="final-conclusion">Chẩn đoán bệnh (kết luận sau khi có kết quả)</Label>
             <Textarea id="final-conclusion" value={conclusion} onChange={(e) => setConclusion(e.target.value)} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="consultation-notes">Nội dung tư vấn</Label>
+            <Label htmlFor="consultation-notes">Tư vấn điều trị</Label>
             <Textarea id="consultation-notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
@@ -178,7 +184,7 @@ export function ConsultationPanel({ encounter }: { encounter: Encounter }) {
           )}
           <div className="flex gap-2">
             <Button size="sm" disabled={save.isPending} onClick={submit}>
-              Lưu kết luận
+              {finishing ? "Lưu kết luận và kết thúc lần khám" : "Lưu kết luận"}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
               Huỷ
