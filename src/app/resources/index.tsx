@@ -182,6 +182,14 @@ export const resources: ResourceProps[] = [
       icon: <Stethoscope className="h-4 w-4" />,
     },
   },
+  {
+    name: "my_active_visits",
+    list: "/my-active-visits",
+    meta: {
+      label: "Đang khám",
+      icon: <ClipboardList className="h-4 w-4" />,
+    },
+  },
 
   // An administrator looking at a customer's or a member of staff's own
   // screens, read-only. Only ADMIN holds `view_as:read`.
@@ -245,7 +253,7 @@ export const resources: ResourceProps[] = [
     edit: "/clinical-encounters/edit/:id",
     show: "/clinical-encounters/show/:id",
     meta: {
-      label: "Lần khám",
+      label: "Theo dõi khám",
       icon: <Stethoscope className="h-4 w-4" />,
       parent: "clinic",
     },
