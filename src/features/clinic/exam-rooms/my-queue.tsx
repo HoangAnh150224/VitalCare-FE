@@ -40,7 +40,7 @@ const clockTime = (value: string | null) =>
  * only the doctor knows. Kept current like the clinic's board: a push on
  * `/topic/exam_rooms/{clinicId}`, a slow poll behind it.
  */
-export function MyExamQueue() {
+export function MyExamQueue({ mode = "waiting" }: { mode?: "waiting" | "active" }) {
   const { result, query } = useCustom<RoomBoard>({
     url: `${API_URL}/exam_rooms/mine`,
     method: "get",
@@ -86,6 +86,14 @@ export function MyExamQueue() {
   const withoutRoom = board?.withoutRoom ?? [];
   const unpaid = board?.awaitingPayment ?? [];
   const shared = board?.sharedQueue ?? [];
+  const returnedToDoctor = [
+    ...rooms.flatMap((room) => room.waiting.filter((visit) => visit.returned)),
+    ...withoutRoom.flatMap((queue) => queue.waiting.filter((visit) => visit.returned)),
+  ];
+  const waitingForFirstCall = (visits: BoardVisit[]) => visits.filter((visit) => !visit.returned);
+  const activeCount = rooms.reduce((count, room) => count + (room.current ? 1 : 0) + (room.away?.length ?? 0), 0)
+    + withoutRoom.reduce((count, queue) => count + (queue.away?.length ?? 0), 0)
+    + returnedToDoctor.length;
 
   // The question was about whoever was inside when it was asked.
   const liveOccupant = asking ? rooms.find((r) => r.id === asking.room.id)?.current?.appointmentId : undefined;
@@ -97,9 +105,11 @@ export function MyExamQueue() {
   return (
     <ListView>
       <ListViewHeader
-        title="Hàng chờ khám của tôi"
+        title={mode === "waiting" ? "Hàng chờ khám của tôi" : "Đang khám"}
         canCreate={false}
-        description="Bệnh nhân đã đặt lịch, được tiếp nhận và trả phí khám, đang chờ hoặc đang ở phòng của bạn. Bảng tự cập nhật."
+        description={mode === "waiting"
+          ? "Bệnh nhân đã được tiếp nhận và đang chờ bạn gọi vào khám. Bảng tự cập nhật."
+          : "Bệnh nhân đang khám, đang làm chỉ định hoặc đã quay lại sau chỉ định và chờ khám tiếp. Bảng tự cập nhật."}
       />
 
       {board && (
@@ -115,53 +125,54 @@ export function MyExamQueue() {
         </Card>
       )}
 
-      {rooms.map((room) => (
-        <MyRoom
-          key={room.id}
-          room={room}
-          // The shared line is called into a free room of its department too.
-          sharedWaiting={shared.filter((v) => !v.department || !room.department || v.department === room.department).length}
-          canOperate={canOperate?.can ?? false}
-          pending={pending}
-          onAction={(action) =>
-            action === "finish" || action === "pass-over" || action === "no-show"
-              ? setAsking({ room, action })
-              : act(room, action)
-          }
-        />
-      ))}
-
-      {withoutRoom.map((queue) => (
-        <Card key={queue.doctor.id} className="flex flex-col gap-3 p-5">
-          <div>
-            <h3 className="font-semibold">Đang chờ bạn nhưng chưa có phòng ({queue.waiting.length})</h3>
-            <p className="text-muted-foreground text-sm">
-              Bạn chưa có buổi làm việc xếp phòng vào lúc này, nên người chờ chưa được gọi vào.
-            </p>
-          </div>
-          <WaitingList visits={queue.waiting} />
-          <AwayList visits={queue.away ?? []} />
-        </Card>
-      ))}
-
-      {unpaid.length > 0 && (
-        <Card className="flex flex-col gap-3 p-5">
-          <div>
+      {mode === "waiting" ? (
+        <div className="flex flex-col gap-4">
+          {rooms.filter((room) => waitingForFirstCall(room.waiting).length > 0 || !room.current).map((room) => (
+            <MyRoom key={room.id} room={room} view="waiting"
+              sharedWaiting={shared.filter((v) => !v.department || !room.department || v.department === room.department).length}
+              canOperate={canOperate?.can ?? false} pending={pending}
+              onAction={(action) => action === "finish" || action === "pass-over" || action === "no-show"
+                ? setAsking({ room, action }) : act(room, action)} />
+          ))}
+          {withoutRoom.map((queue) => (
+            <Card key={queue.doctor.id} className="flex flex-col gap-3 p-5">
+              <h3 className="font-semibold">Đang chờ bạn nhưng chưa có phòng ({waitingForFirstCall(queue.waiting).length})</h3>
+              <p className="text-muted-foreground text-sm">Bạn chưa có buổi làm việc xếp phòng vào lúc này, nên người chờ chưa được gọi vào.</p>
+              <WaitingList visits={waitingForFirstCall(queue.waiting)} />
+            </Card>
+          ))}
+          {unpaid.length > 0 && <Card className="flex flex-col gap-3 p-5">
             <h3 className="font-semibold">Chờ thanh toán phí khám ({unpaid.length})</h3>
             <p className="text-muted-foreground text-sm">Vào hàng chờ của bạn sau khi trả phí khám ở quầy.</p>
-          </div>
-          <WaitingList visits={unpaid.map(({ visit }) => visit)} />
-        </Card>
-      )}
-
-      {shared.length > 0 && (
-        <Card className="flex flex-col gap-2 p-5" data-testid="my-queue-shared">
-          <h3 className="font-semibold">Hàng chờ chung của phòng khám ({shared.length})</h3>
-          <p className="text-muted-foreground text-sm">
-            Chưa có bác sĩ: phòng nào trống sẽ tự gọi người đầu hàng, có thể là phòng của bạn.
-          </p>
-          <SharedLine visits={shared} />
-        </Card>
+            <WaitingList visits={unpaid.map(({ visit }) => visit)} />
+          </Card>}
+          {shared.length > 0 && <Card className="flex flex-col gap-2 p-5" data-testid="my-queue-shared">
+            <h3 className="font-semibold">Hàng chờ chung của phòng khám ({shared.length})</h3>
+            <p className="text-muted-foreground text-sm">Chưa có bác sĩ: phòng nào trống sẽ tự gọi người đầu hàng, có thể là phòng của bạn.</p>
+            <SharedLine visits={shared} />
+          </Card>}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {rooms.filter((room) => room.current || (room.away?.length ?? 0) > 0).map((room) => (
+            <MyRoom key={room.id} room={room} view="active" sharedWaiting={0}
+              canOperate={canOperate?.can ?? false} pending={pending}
+              onAction={(action) => action === "finish" || action === "pass-over" || action === "no-show"
+                ? setAsking({ room, action }) : act(room, action)} />
+          ))}
+          {withoutRoom.filter((queue) => (queue.away?.length ?? 0) > 0).map((queue) => (
+            <Card key={queue.doctor.id} className="flex flex-col gap-3 p-5">
+              <h3 className="font-semibold">Đang làm chỉ định · {queue.doctor.fullName}</h3>
+              <AwayList visits={queue.away ?? []} />
+            </Card>
+          ))}
+          {returnedToDoctor.length > 0 && <Card className="flex flex-col gap-3 p-5">
+            <h3 className="font-semibold">Đã xong chỉ định · chờ khám tiếp ({returnedToDoctor.length})</h3>
+            <p className="text-muted-foreground text-sm">Các bệnh nhân này đã quay lại hàng chờ của bạn; lần khám vẫn đang mở.</p>
+            <WaitingList visits={returnedToDoctor} />
+          </Card>}
+          {activeCount === 0 && <Card className="p-5 text-sm text-muted-foreground">Hiện không có bệnh nhân nào đang khám hoặc đi làm chỉ định.</Card>}
+        </div>
       )}
 
       <ConfirmDecision
@@ -194,12 +205,14 @@ function SharedLine({ visits }: { visits: BoardVisit[] }) {
 /** The doctor's room now: who is inside, how to start or reopen their visit, and who is next. */
 function MyRoom({
   room,
+  view,
   sharedWaiting,
   canOperate,
   pending,
   onAction,
 }: {
   room: Room;
+  view: "waiting" | "active";
   sharedWaiting: number;
   canOperate: boolean;
   pending: RoomAction | null;
@@ -223,11 +236,13 @@ function MyRoom({
         </Badge>
       </div>
 
-      {current ? (
+      {view === "active" && current ? (
         <CurrentPatient visit={current} />
       ) : (
         <div className="bg-muted/40 text-muted-foreground flex min-h-24 items-center rounded-lg px-4 py-3 text-sm">
-          {room.status === "paused"
+          {view === "waiting" && current
+            ? "Bệnh nhân đang khám được hiển thị trong tab Đang khám / làm chỉ định."
+            : room.status === "paused"
             ? "Phòng đang tạm ngưng."
             : !anyoneWaiting
               ? "Chưa có ai chờ bạn."
@@ -237,7 +252,7 @@ function MyRoom({
 
       {canOperate && (
         <div className="flex flex-wrap gap-2">
-          {current && (
+          {view === "active" && current && (
             <>
               <Button size="sm" variant="outline" disabled={busy} onClick={() => onAction("finish")}>
                 <CheckIcon />
@@ -253,13 +268,13 @@ function MyRoom({
               </Button>
             </>
           )}
-          {!current && room.status === "available" && anyoneWaiting && (
+          {view === "waiting" && !current && room.status === "available" && anyoneWaiting && (
             <Button size="sm" disabled={busy} onClick={() => onAction("call-next")}>
               <PhoneCallIcon />
               {pending === "call-next" ? "Đang gọi…" : "Gọi người tiếp theo"}
             </Button>
           )}
-          {room.status === "paused" ? (
+          {view === "waiting" && (room.status === "paused" ? (
             <Button size="sm" variant="outline" disabled={busy} onClick={() => onAction("resume")}>
               <PlayIcon />
               Mở lại phòng
@@ -269,15 +284,15 @@ function MyRoom({
               <PauseIcon />
               Tạm ngưng
             </Button>
-          )}
+          ))}
         </div>
       )}
 
-      <div className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-xs font-medium">Đang chờ ({room.waiting.length})</span>
-        <WaitingList visits={room.waiting} />
-      </div>
-      <AwayList visits={room.away ?? []} />
+      {view === "waiting" && <div className="flex flex-col gap-1.5">
+        <span className="text-muted-foreground text-xs font-medium">Đang chờ ({room.waiting.filter((visit) => !visit.returned).length})</span>
+        <WaitingList visits={room.waiting.filter((visit) => !visit.returned)} />
+      </div>}
+      {view === "active" && <AwayList visits={room.away ?? []} />}
     </Card>
   );
 }
@@ -306,7 +321,10 @@ function CurrentPatient({ visit }: { visit: BoardVisit }) {
     <div className="bg-primary/5 border-primary/30 flex flex-wrap items-center gap-4 rounded-lg border px-4 py-3">
       <span className="text-primary text-4xl font-bold tabular-nums">{formatQueueNumber(visit.queueNumber)}</span>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{visit.patientName}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="truncate font-medium">{visit.patientName}</p>
+          <Badge variant="default">Đang khám trong phòng</Badge>
+        </div>
         <p className="text-muted-foreground text-sm">
           {visit.customerCode ? `${visit.customerCode} · ` : ""}Vào phòng lúc {clockTime(visit.calledAt)}
           {visit.returned ? " · quay lại đọc kết quả" : ""}

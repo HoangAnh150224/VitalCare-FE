@@ -661,6 +661,18 @@ export function AppRoutes() {
           }
         />
         <Route
+          path="/my-active-visits"
+          element={
+            <CanAccess
+              resource="my_active_visits"
+              action="list"
+              fallback={<Forbidden resource="my_active_visits" />}
+            >
+              <MyExamQueue mode="active" />
+            </CanAccess>
+          }
+        />
+        <Route
           path="/view-as"
           element={
             <CanAccess

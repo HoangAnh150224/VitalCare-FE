@@ -422,7 +422,7 @@ export function WaitingList({ visits }: { visits: BoardVisit[] }) {
           <span className="min-w-0 flex-1 truncate">{visit.patientName}</span>
           {visit.returned ? (
             <span className="text-info-text text-xs font-medium">
-              {visit.referredBy ? `Chuyển từ ${visit.referredBy}` : "Quay lại đọc kết quả"}
+              {visit.referredBy ? `Chuyển từ ${visit.referredBy}` : "Đã quay lại · chờ khám tiếp"}
             </span>
           ) : visit.passedOver ? (
             <span className="text-warning-text text-xs">Đã gọi, vắng</span>
