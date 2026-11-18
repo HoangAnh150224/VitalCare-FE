@@ -90,7 +90,7 @@ export const PortalAppointments = () => {
         <EmptyState
           icon={tab === "upcoming" ? CalendarCheck2Icon : HistoryIcon}
           title={tab === "upcoming" ? "Chưa có lượt khám nào sắp tới" : "Chưa có lượt khám nào đã qua"}
-          text={tab === "upcoming" ? "Bấm “Đăng ký khám” để chọn bác sĩ, ngày khám và nhận số." : undefined}
+          text={tab === "upcoming" ? "Bấm “Đăng ký khám” để chọn khoa, ngày khám và nhận số." : undefined}
         />
       ) : (
         <div className="flex flex-col gap-4">
