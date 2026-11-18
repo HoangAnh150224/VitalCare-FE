@@ -390,18 +390,21 @@
 |---|---|---|
 | 01 Main | Applicable | CP-100 |
 | 03 Exception | Applicable | CP-101 chưa có bệnh nhân |
-| 24, 31 | Applicable | CP-102 chỉ thấy người mình đang theo dõi |
+| 24, 31 | Applicable | CP-102 không mở được người mình không theo dõi và chưa từng khám; CP-105 mở được người mình đã khám |
 | 30, 32 | Applicable | CP-103 |
 | 34 | Applicable | CP-104 |
-| 02, 04–23, 25–29, 33, 35–39 | Not Applicable / Not Tested | Màn chỉ đọc, không tìm, không phân trang. RULE-29/33 đã có ở UC-27 |
+| 05–08 | Applicable | CP-106 tìm theo tên, SĐT, mã; lọc thiết bị, giới tính (lọc trên trình duyệt) |
+| 02, 04, 09–23, 25–29, 33, 35–39 | Not Applicable / Not Tested | Màn chỉ đọc, không phân trang. RULE-29/33 đã có ở UC-27 |
 
 | ID | Bước | Kết quả mong đợi |
 |---|---|---|
 | CP-100 | Bác sĩ 0900000011 mở `/my-patients` rồi mở một bệnh nhân | Thấy danh sách phân công đang hiệu lực, thiết bị, "Theo dõi từ"; chi tiết có nhóm chăm sóc và các panel y tế |
 | CP-101 | Bác sĩ 0900000022 chưa có phân công | Trạng thái rỗng tiếng Việt |
-| CP-102 | Bác sĩ 0900000011 gọi `GET /api/my_patients/{id}` của bệnh nhân không theo dõi; của KH-A sau CP-92 | 404 cả hai |
+| CP-102 | Bác sĩ 0900000011 gọi `GET /api/my_patients/{id}` của bệnh nhân **không theo dõi và chưa từng khám với bác sĩ này**; của KH-A sau CP-92 (nếu bác sĩ chưa khám KH-A) | 404 cả hai |
 | CP-103 | Lễ tân và khách GUEST mở `/my-patients` | Trang Forbidden; API 403 |
 | CP-104 | Bệnh nhân có nhóm chăm sóc rỗng | Có câu báo rỗng, không phải khung trống (N9) |
+| CP-105 | Bác sĩ mở hồ sơ bệnh nhân **mình đã khám** nhưng không theo dõi (bệnh nhân mới, từ nút "Mở hồ sơ bệnh nhân" ở Đang khám) | 200; "Theo dõi từ" ghi "Bệnh nhân khám tại phòng"; không có panel sinh hiệu IoMT và ghi chú theo dõi; có Hồ sơ sức khoẻ với các lần khám (đổi từ 18/11/2026: trước đó 404) |
+| CP-106 | Ở `/my-patients` gõ "lanh" (không dấu), rồi lọc "Đang đeo thiết bị", giới tính "Nữ", rồi "Xóa bộ lọc" | Ra đúng bệnh nhân; chân bảng đếm theo kết quả lọc; xoá lọc về đủ danh sách |
 
 ## Hồ sơ và người thân trên portal (S8)
 

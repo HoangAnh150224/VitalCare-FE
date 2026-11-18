@@ -98,7 +98,7 @@ export function resultsErrorText(body: unknown): string {
   if (/expire after/.test(text)) return "Ngày hết hạn phải sau ngày cấp.";
   if (/Only PDF, PNG or JPEG/.test(text)) return "Chỉ nhận file PDF, PNG hoặc JPEG.";
   if (/10 MB/.test(text)) return "File tối đa 10 MB.";
-  if (/final conclusion/.test(text)) return "Hãy nhập kết luận cuối cùng.";
+  if (/final conclusion/.test(text)) return "Hãy nhập chẩn đoán bệnh.";
   if (/Enter|Name it|Choose/.test(text)) return "Điền đủ các trường bắt buộc.";
   return "Không lưu được. Thử lại sau.";
 }
