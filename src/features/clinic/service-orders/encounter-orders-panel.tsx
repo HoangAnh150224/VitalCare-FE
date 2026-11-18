@@ -1,5 +1,5 @@
 import { useCan, useCustom, useCustomMutation, useList, useNotification } from "@refinedev/core";
-import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
+import { ChevronRightIcon, EyeIcon, PlusIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
@@ -21,7 +21,7 @@ import { isOrderOutstanding, SERVICE_CATEGORY_LABELS } from "@/domains/billing/t
 import { formatDateTime, formatMoney } from "@/shared/lib/format";
 import { billingErrorNotification } from "@/domains/billing/messages";
 import { Badge } from "@/shared/ui/badge";
-import { CancelOrderDialog, OrderFiles, OrderStatusBadge, useOrderActions } from "./order-parts";
+import { CancelOrderDialog, OrderStatusBadge, useOrderActions } from "./order-parts";
 import { ServicePicker } from "./service-picker";
 
 /**
@@ -84,20 +84,26 @@ export function EncounterOrdersPanel({ encounterId, open: encounterOpen }: { enc
               {(order.status === "ordered" || order.status === "in_progress") && (
                 <p className="text-muted-foreground text-xs">Dự kiến có kết quả {formatDateTime(order.expectedResultAt)}</p>
               )}
+              {/* A glimpse only: the doctor reads the whole result, and its files, on the order's own page. */}
               {order.resultText && (
-                <p className="bg-surface-subtle rounded-md px-3 py-2 text-sm whitespace-pre-wrap">{order.resultText}</p>
+                <p className="bg-surface-subtle rounded-md px-3 py-2 text-sm whitespace-pre-wrap">
+                  {glimpse(order.resultText)}
+                </p>
               )}
-              <OrderFiles order={order} />
               {order.cancelReason && <p className="text-muted-foreground text-xs">Lý do huỷ: {order.cancelReason}</p>}
-              {writable && (order.status === "result_ready" || order.status === "ordered" || order.status === "in_progress") && (
+              {(order.status === "result_ready" || order.status === "reviewed" || (writable && order.status !== "cancelled")) && (
                 <div className="flex flex-wrap gap-2">
-                  {order.status === "result_ready" && (
-                    <Button size="sm" onClick={() => actions.review(order.id)} disabled={actions.pending}>
-                      <CheckIcon />
-                      Đã xem kết quả
+                  {(order.status === "result_ready" || order.status === "reviewed") && (
+                    <Button asChild size="sm" variant={order.status === "result_ready" ? "default" : "outline"}>
+                      <Link to={`/service-orders/show/${order.id}`}>
+                        <EyeIcon />
+                        {order.status === "result_ready" ? "Xem kết quả" : "Xem lại kết quả"}
+                        {order.files.length > 0 && ` · ${order.files.length} file`}
+                        <ChevronRightIcon />
+                      </Link>
                     </Button>
                   )}
-                  {order.status !== "result_ready" && (
+                  {writable && (order.status === "ordered" || order.status === "in_progress") && (
                     <Button size="sm" variant="ghost" onClick={() => setCancelling(order)} disabled={actions.pending}>
                       <XIcon />
                       Huỷ
@@ -131,6 +137,12 @@ export function EncounterOrdersPanel({ encounterId, open: encounterOpen }: { enc
     </DetailPanel>
   );
 }
+
+/** The first two lines of a result, whole, and a "…" when there is more. */
+const glimpse = (text: string) => {
+  const lines = text.split("\n");
+  return lines.length > 2 ? lines.slice(0, 2).join("\n") + " …" : text;
+};
 
 /** Picking a service from the catalogue; the examination fee itself is not ordered, it is on every bill. */
 function OrderDialog({

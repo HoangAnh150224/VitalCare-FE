@@ -297,6 +297,10 @@ function CurrentPatient({ visit }: { visit: BoardVisit }) {
     queryOptions: { retry: false },
   });
   const encounter = result?.data?.[0];
+  // The patient's record — results by tab, the conclusion — is where the doctor works,
+  // for a patient they follow and a new one they examine alike; not the visit's page.
+  const { data: canSeeCaseload } = useCan({ resource: "my_patients", action: "list" });
+  const followed = canSeeCaseload?.can ?? false;
 
   return (
     <div className="bg-primary/5 border-primary/30 flex flex-wrap items-center gap-4 rounded-lg border px-4 py-3">
@@ -315,9 +319,9 @@ function CurrentPatient({ visit }: { visit: BoardVisit }) {
       </div>
       {query.isLoading ? null : encounter ? (
         <Button asChild>
-          <Link to={`/clinical-encounters/show/${encounter.id}`}>
+          <Link to={followed ? `/my-patients/show/${visit.customerId}` : `/clinical-encounters/show/${encounter.id}`}>
             <FileTextIcon />
-            Mở lần khám
+            {followed ? "Mở hồ sơ bệnh nhân" : "Mở lần khám"}
           </Link>
         </Button>
       ) : (

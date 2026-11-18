@@ -1,7 +1,7 @@
 import { useCan, useInvalidate, useShow } from "@refinedev/core";
-import { PlayIcon, SendIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, PlayIcon, SendIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
@@ -27,6 +27,9 @@ export const ServiceOrderShow = () => {
   const invalidate = useInvalidate();
   // service_orders:perform — the technician's; the examining doctor reads the result here.
   const { data: canWrite } = useCan({ resource: "service_orders", action: "perform" });
+  // The ordering doctor's: they read the result here, then mark it read and go back to the visit.
+  const { data: canReview } = useCan({ resource: "service_orders", action: "create" });
+  const navigate = useNavigate();
   const refresh = () => {
     void query.refetch();
     invalidate({ resource: "service_orders", invalidates: ["list"] });
@@ -58,6 +61,28 @@ export const ServiceOrderShow = () => {
                 <span className="ml-2 font-mono">{order?.patient.customerCode}</span>
               </p>
             </div>
+            {(canReview?.can ?? false) && order?.status === "result_ready" && (
+              <div className="flex flex-col items-end gap-1">
+                <Button
+                  onClick={async () => {
+                    if (await actions.review(order.id)) navigate(`/clinical-encounters/show/${order.encounterId}`);
+                  }}
+                  disabled={actions.pending}
+                >
+                  <CheckIcon />
+                  Đã xem kết quả
+                </Button>
+                <span className="text-muted-foreground text-xs">Đánh dấu đã đọc rồi quay lại lần khám.</span>
+              </div>
+            )}
+            {(canReview?.can ?? false) && order?.status === "reviewed" && (
+              <Button variant="outline" asChild>
+                <Link to={`/clinical-encounters/show/${order.encounterId}`}>
+                  <ArrowLeftIcon />
+                  Về lần khám
+                </Link>
+              </Button>
+            )}
             {writable && order?.status === "ordered" && (
               <div className="flex flex-col items-end gap-1">
                 <Button onClick={() => actions.start(order.id)} disabled={actions.pending || !order.paid}>

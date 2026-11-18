@@ -42,7 +42,8 @@ export type MyPatient = {
   gender: string | null;
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
-  followingSince: string;
+  /** Null for a patient the doctor examined but does not follow (a new patient in their room). */
+  followingSince: string | null;
   device: { id: number; deviceCode: string; model: string | null } | null;
   /** The whole current care team; only on the single-patient answer. */
   careTeam: CareTeamMember[] | null;

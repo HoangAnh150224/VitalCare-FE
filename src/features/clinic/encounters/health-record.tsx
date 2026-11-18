@@ -1,7 +1,6 @@
 import { useCan, useList } from "@refinedev/core";
-import { ExternalLinkIcon, FileTextIcon, FlaskConicalIcon, StethoscopeIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, FileTextIcon, FlaskConicalIcon, ScanLineIcon, StethoscopeIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { Link } from "react-router";
 
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -12,10 +11,12 @@ import { cn } from "@/shared/lib/utils";
 import { formatDateTime } from "@/shared/lib/format";
 import type { Encounter } from "@/domains/encounter/types";
 import { ENCOUNTER_STATUS_LABELS, VITAL_FIELDS } from "@/domains/encounter/types";
-import type { ServiceCategory, ServiceOrder } from "@/domains/billing/types";
+import type { ServiceOrder } from "@/domains/billing/types";
 import { isOrderOutstanding, SERVICE_CATEGORY_LABELS } from "@/domains/billing/types";
+import { parseResult } from "@/domains/billing/result-text";
 import { ENCOUNTER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
-import { OrderFiles, OrderStatusBadge } from "../service-orders/order-parts";
+import { OrderFiles, OrderStatusBadge, useOrderActions } from "../service-orders/order-parts";
+import { ConsultationPanel } from "../results/consultation-panel";
 import { useEncounterOrders } from "../service-orders/encounter-orders-panel";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -118,21 +119,6 @@ export function HealthRecord({ customerId }: { customerId: number }) {
   );
 }
 
-function Section({ icon, title, action, children }: { icon: ReactNode; title: string; action?: ReactNode; children: ReactNode }) {
-  return (
-    <section className="flex min-w-0 flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-primary flex items-center gap-2 text-sm font-semibold">
-          {icon}
-          {title}
-        </h3>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid gap-1 text-sm sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-3">
@@ -142,134 +128,290 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-/** One visit's results: the examination and conclusion, the services by category, the files. */
+/**
+ * One visit's results, laid out as a hospital's patient record reads, a tab
+ * per part so the doctor reads one at a time: the examination and its
+ * conclusion (preliminary diagnosis at the visit; the diagnosis and advice once
+ * the results were read), the lab results as tables of indicators — a tab per
+ * test —, the imaging and function tests each with its description and
+ * conclusion, and every result file.
+ */
 function VisitResult({ visit }: { visit: Encounter }) {
   const { data: canReadOrders } = useCan({ resource: "service_orders", action: "list" });
-  const { orders, loading } = useEncounterOrders(visit.id, canReadOrders?.can ?? false);
+  const { orders, loading, refetch } = useEncounterOrders(visit.id, canReadOrders?.can ?? false);
+  // The doctor reads each result here and marks it read; then concludes, here too.
+  const { data: canReview } = useCan({ resource: "service_orders", action: "create" });
+  const { data: canConclude } = useCan({ resource: "clinical_encounters", action: "conclude" });
+  const actions = useOrderActions(() => void refetch());
+  const review = (canReview?.can ?? false) && visit.status === "in_progress" ? (id: number) => actions.review(id) : undefined;
   const done = orders.filter((o) => o.status !== "cancelled");
-  const categories = [...new Set(done.map((o) => o.service.category))] as ServiceCategory[];
+  const labs = done.filter((o) => o.service.category === "lab");
+  const studies = done.filter((o) => o.service.category !== "lab");
   const waiting = done.filter(isOrderOutstanding).length;
+  const toRead = done.filter((o) => o.status === "result_ready").length;
+  // Every result is in and read: the conclusion written now ends the visit.
+  const finishing =
+    visit.status === "in_progress" && done.length > 0 && waiting === 0 && (canConclude?.can ?? false);
   const withFiles = done.filter((o) => o.files.length > 0);
+  const fileCount = withFiles.reduce((sum, o) => sum + o.files.length, 0);
   const vitals = visit.vitals
     ? VITAL_FIELDS.filter((f) => visit.vitals?.[f.name] != null)
         .map((f) => `${f.label} ${visit.vitals?.[f.name]} ${f.unit}`)
         .join(" · ")
     : "";
 
+  const tabs = [
+    { value: "exam", label: "Khám bệnh", count: null as number | null },
+    ...(canReadOrders?.can && labs.length > 0 ? [{ value: "lab", label: "Xét nghiệm", count: labs.length }] : []),
+    ...(canReadOrders?.can && studies.length > 0
+      ? [{ value: "study", label: "CĐHA & thăm dò chức năng", count: studies.length }]
+      : []),
+    ...(canReadOrders?.can ? [{ value: "files", label: "File kết quả", count: fileCount }] : []),
+  ];
+
   return (
-    <div className="flex min-w-0 flex-col gap-6 p-4">
-      <Section
-        icon={<StethoscopeIcon className="size-4" />}
-        title="Kết quả khám bệnh"
-        action={
-          <Button asChild size="sm" variant="outline">
-            <Link to={`/clinical-encounters/show/${visit.id}`}>
-              <ExternalLinkIcon />
-              {visit.status === "in_progress" ? "Mở lần khám để kết luận" : "Mở lần khám"}
-            </Link>
-          </Button>
-        }
-      >
-        <div className="flex flex-wrap gap-x-8 gap-y-2 border-b pb-3 text-sm">
-          <div>
-            <p className="text-muted-foreground text-xs">Bác sĩ</p>
-            <p className="font-medium">{visit.clinician?.fullName ?? "—"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground text-xs">Thời gian khám</p>
-            <p className="font-medium">{formatDateTime(visit.startedAt)}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground text-xs">Trạng thái</p>
-            <Badge variant={ENCOUNTER_STATUS_VARIANTS[visit.status] ?? "secondary"}>
-              {ENCOUNTER_STATUS_LABELS[visit.status]}
-            </Badge>
-          </div>
-        </div>
-        <dl className="flex flex-col gap-2">
-          <Field label="Lý do khám">{visit.chiefComplaint}</Field>
-          {vitals && <Field label="Chỉ số sinh tồn">{vitals}</Field>}
-          <Field label="Chẩn đoán sơ bộ">{visit.diagnosis}</Field>
-          <Field label="Kết luận">{visit.finalConclusion}</Field>
-          <Field label="Tư vấn điều trị">{visit.consultationNotes}</Field>
-          <Field label="Theo dõi / tái khám">{visit.followUp}</Field>
-        </dl>
-      </Section>
+    <div className="flex min-w-0 flex-col gap-3 p-4">
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-2 rounded-lg border px-4 py-3 text-sm">
+        <Meta label="Bác sĩ">{visit.clinician?.fullName ?? "—"}</Meta>
+        <Meta label="Thời gian khám">{formatDateTime(visit.startedAt)}</Meta>
+        <Meta label="Trạng thái">
+          <Badge variant={ENCOUNTER_STATUS_VARIANTS[visit.status] ?? "secondary"}>
+            {ENCOUNTER_STATUS_LABELS[visit.status]}
+          </Badge>
+        </Meta>
+        {waiting > 0 && <Badge variant="warning">{waiting} dịch vụ chưa xong / chờ bác sĩ xem</Badge>}
+        {review && toRead > 0 && <Badge variant="info">{toRead} kết quả mới chờ bác sĩ xem</Badge>}
+      </div>
 
-      {canReadOrders?.can && (
-        <Section
-          icon={<FlaskConicalIcon className="size-4" />}
-          title="Kết quả dịch vụ"
-          action={waiting > 0 ? <Badge variant="warning">{waiting} chưa xong / chờ bác sĩ xem</Badge> : undefined}
-        >
-          {done.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              {loading ? "Đang tải..." : "Lần khám này không chỉ định dịch vụ nào."}
-            </p>
-          ) : (
-            <Tabs defaultValue={categories[0]}>
-              <TabsList className="max-w-full flex-wrap">
-                {categories.map((c) => (
-                  <TabsTrigger key={c} value={c}>
-                    {SERVICE_CATEGORY_LABELS[c]}
-                  </TabsTrigger>
+      <Tabs defaultValue="exam" className="min-w-0">
+        <TabsList className="max-w-full flex-wrap">
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.label}
+              {tab.count != null && <span className="text-muted-foreground ms-1 text-xs tabular-nums">({tab.count})</span>}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <TabsContent value="exam">
+          <Block icon={<StethoscopeIcon className="size-4" />} title="Kết quả khám bệnh">
+            <Divider>Khám lâm sàng</Divider>
+            <dl className="flex flex-col gap-2">
+              <Field label="Lý do khám">{visit.chiefComplaint}</Field>
+              {visit.examinationFindings && <Field label="Khám thấy">{visit.examinationFindings}</Field>}
+              {vitals && <Field label="Chỉ số sinh tồn">{vitals}</Field>}
+            </dl>
+            <Divider>Kết luận</Divider>
+            <dl className="flex flex-col gap-2">
+              <Field label="Chẩn đoán sơ bộ">{visit.diagnosis}</Field>
+            </dl>
+            {finishing ? (
+              <ConsultationPanel key={`${visit.id}-finishing`} encounter={visit} finishing />
+            ) : (
+            <dl className="flex flex-col gap-2">
+              <Field label="Chẩn đoán bệnh">
+                {visit.finalConclusion ??
+                  (waiting > 0 ? (
+                    <span className="text-muted-foreground">Chờ kết quả dịch vụ ({waiting} chưa xong)</span>
+                  ) : null)}
+              </Field>
+              <Field label="Tư vấn điều trị">{visit.consultationNotes}</Field>
+              <Field label="Lời dặn">{visit.followUp}</Field>
+            </dl>
+            )}
+            {visit.status === "in_progress" && waiting > 0 && (
+              <p className="text-muted-foreground text-sm">
+                Xem kết quả ở các tab dịch vụ và bấm “Đã xem kết quả”; xem hết thì ghi chẩn đoán bệnh tại đây để kết thúc lần khám.
+              </p>
+            )}
+          </Block>
+        </TabsContent>
+
+        {labs.length > 0 && (
+          <TabsContent value="lab">
+            <Block icon={<FlaskConicalIcon className="size-4" />} title="Kết quả xét nghiệm">
+              <Tabs defaultValue={String(labs[0].id)}>
+                <TabsList className="max-w-full flex-wrap">
+                  {labs.map((order) => (
+                    <TabsTrigger key={order.id} value={String(order.id)}>
+                      {order.service.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {labs.map((order) => (
+                  <TabsContent key={order.id} value={String(order.id)} className="flex flex-col gap-3">
+                    <OrderResult order={order} onReview={review} pending={actions.pending} />
+                  </TabsContent>
                 ))}
-              </TabsList>
-              {categories.map((c) => (
-                <TabsContent key={c} value={c} className="overflow-x-auto rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Dịch vụ</TableHead>
-                        <TableHead>Kết quả</TableHead>
-                        <TableHead className="w-36">Trạng thái</TableHead>
-                        <TableHead className="w-40">Có kết quả lúc</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {done
-                        .filter((o) => o.service.category === c)
-                        .map((order) => (
-                          <ResultRow key={order.id} order={order} />
-                        ))}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
-              ))}
-            </Tabs>
-          )}
-        </Section>
-      )}
+              </Tabs>
+            </Block>
+          </TabsContent>
+        )}
 
-      {withFiles.length > 0 && (
-        <Section icon={<FileTextIcon className="size-4" />} title="File kết quả">
-          <ul className="flex flex-col gap-3">
-            {withFiles.map((order) => (
-              <li key={order.id} className="flex flex-col gap-2 rounded-lg border p-3">
-                <span className="text-sm font-medium">Kết quả {order.service.name}</span>
-                <OrderFiles order={order} />
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
+        {studies.length > 0 && (
+          <TabsContent value="study">
+            <Block icon={<ScanLineIcon className="size-4" />} title="Kết quả chẩn đoán hình ảnh và thăm dò chức năng">
+              <div className="flex flex-col divide-y">
+                {studies.map((order) => (
+                  <article key={order.id} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-primary text-sm font-semibold uppercase">{order.service.name}</h4>
+                      <OrderStatusBadge status={order.status} />
+                      <span className="text-muted-foreground text-xs">
+                        {SERVICE_CATEGORY_LABELS[order.service.category]}
+                      </span>
+                    </div>
+                    <OrderResult order={order} onReview={review} pending={actions.pending} />
+                  </article>
+                ))}
+              </div>
+            </Block>
+          </TabsContent>
+        )}
+
+        <TabsContent value="files">
+          <Block icon={<FileTextIcon className="size-4" />} title="File kết quả">
+            {withFiles.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                {loading ? "Đang tải..." : "Chưa có file kết quả."}
+              </p>
+            ) : (
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {withFiles.map((order) => (
+                  <li key={order.id} className="flex flex-col gap-2 rounded-lg border p-3">
+                    <span className="flex items-center gap-2 text-sm font-medium">
+                      <FileTextIcon className="text-destructive size-4 shrink-0" />
+                      {order.service.name}
+                    </span>
+                    <OrderFiles order={order} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Block>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
-function ResultRow({ order }: { order: ServiceOrder }) {
+/** A collapsible block, open to begin with, as the record's sections are. */
+function Block({ icon, title, action, children }: { icon: ReactNode; title: string; action?: ReactNode; children: ReactNode }) {
+  const [open, setOpen] = useState(true);
   return (
-    <TableRow className="align-top">
-      <TableCell className="font-medium whitespace-normal">{order.service.name}</TableCell>
-      <TableCell className="min-w-56 whitespace-pre-wrap">
-        {order.resultText ?? <span className="text-muted-foreground">Chưa có kết quả</span>}
-      </TableCell>
-      <TableCell>
-        <OrderStatusBadge status={order.status} />
-      </TableCell>
-      <TableCell className="text-muted-foreground text-xs tabular-nums">
-        {order.resultAt ? formatDateTime(order.resultAt) : "—"}
-      </TableCell>
-    </TableRow>
+    <section className="bg-background min-w-0 overflow-hidden rounded-lg border">
+      <div className="bg-surface-subtle flex items-center justify-between gap-2 border-b px-4 py-2.5">
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          className="text-primary flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-semibold"
+        >
+          {icon}
+          <span className="truncate">{title}</span>
+          <ChevronDownIcon className={cn("ms-auto size-4 shrink-0 transition-transform", open && "rotate-180")} />
+        </button>
+        {action}
+      </div>
+      {open && <div className="flex min-w-0 flex-col gap-3 p-4">{children}</div>}
+    </section>
+  );
+}
+
+function Meta({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-muted-foreground text-xs">{label}</span>
+      <span className="font-medium">{children}</span>
+    </div>
+  );
+}
+
+function Divider({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 pt-1">
+      <span className="text-sm font-semibold">{children}</span>
+      <span className="bg-border h-px flex-1" />
+    </div>
+  );
+}
+
+/** A service's result in its parts: the files, description, the indicators' table, the conclusion. */
+function OrderResult({
+  order,
+  onReview,
+  pending = false,
+}: {
+  order: ServiceOrder;
+  /** The doctor's, while the visit is open: marks this result read. */
+  onReview?: (id: number) => void;
+  pending?: boolean;
+}) {
+  if (!order.resultText) {
+    return (
+      <p className="text-muted-foreground text-sm">
+        {order.status === "ordered" || order.status === "in_progress" ? "Chưa có kết quả." : "—"}
+      </p>
+    );
+  }
+  const { description, indicators, conclusion } = parseResult(order.resultText);
+  return (
+    <div className="flex min-w-0 flex-col gap-3">
+      {order.files.length > 0 && <OrderFiles order={order} />}
+      {description.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <span className="text-sm font-semibold">Mô tả</span>
+          <p className="text-sm whitespace-pre-wrap">{description.join("\n")}</p>
+        </div>
+      )}
+      {indicators.length > 0 && (
+        <div className="overflow-x-auto rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tên chỉ số</TableHead>
+                <TableHead className="w-28 text-center">Kết quả</TableHead>
+                <TableHead className="w-24 text-center">Đơn vị</TableHead>
+                <TableHead className="w-40 text-center">Giá trị tham chiếu</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {indicators.map((row, at) => (
+                <TableRow key={at} className="even:bg-surface-subtle/60">
+                  <TableCell className="whitespace-normal">{row.name}</TableCell>
+                  <TableCell className={cn("text-center tabular-nums", row.flag && "text-destructive font-semibold")}>
+                    {row.value}
+                    {row.flag === "high" ? " ↑" : row.flag === "low" ? " ↓" : ""}
+                  </TableCell>
+                  <TableCell className="text-center">{row.unit || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground text-center tabular-nums">
+                    {row.reference ? `( ${row.reference} )` : ""}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      {conclusion && (
+        <div className="flex flex-col gap-1">
+          <Divider>
+            <span className="text-primary uppercase">Kết luận</span>
+          </Divider>
+          <p className="text-sm font-semibold">{conclusion}</p>
+        </div>
+      )}
+      <p className="text-muted-foreground text-xs">
+        {order.performedBy ? `Thực hiện: ${order.performedBy}` : ""}
+        {order.resultAt ? ` · Có kết quả ${formatDateTime(order.resultAt)}` : ""}
+        {order.reviewedBy ? " · Bác sĩ đã xem" : ""}
+      </p>
+      {onReview && order.status === "result_ready" && (
+        <Button size="sm" className="w-fit" onClick={() => onReview(order.id)} disabled={pending}>
+          <CheckIcon />
+          Đã xem kết quả
+        </Button>
+      )}
+    </div>
   );
 }
