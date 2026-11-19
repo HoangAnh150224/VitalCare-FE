@@ -20,6 +20,7 @@ import {
   ListViewHeader,
 } from "@/shared/components/views/list-view";
 import { ShowButton } from "@/shared/components/buttons/show";
+import { ExcelTableExport } from "@/shared/components/data-table/excel-export";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { formatDateTime } from "@/shared/lib/format";
@@ -196,6 +197,49 @@ export const AlertList = () => {
               search={<DataTableQuickFilter table={table} placeholder="Tìm theo tên bệnh nhân hoặc nội dung cảnh báo..." />}
               filters={
                 <DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />
+              }
+              exportAction={
+                <ExcelTableExport<Alert>
+                  table={table}
+                  resource="alerts"
+                  title="Danh sách cảnh báo"
+                  columns={[
+                    {
+                      id: "triggeredAt",
+                      label: "Phát sinh",
+                      width: 32,
+                      value: (alert) =>
+                        alert.occurrences > 1
+                          ? `${formatDateTime(alert.triggeredAt)}\n${alert.occurrences} lần · gần nhất ${formatDateTime(alert.lastTriggeredAt)}`
+                          : formatDateTime(alert.triggeredAt),
+                    },
+                    {
+                      id: "patient",
+                      label: "Bệnh nhân",
+                      width: 28,
+                      value: (alert) => alert.patient?.fullName ?? "—",
+                    },
+                    {
+                      id: "metric",
+                      label: "Chỉ số",
+                      width: 30,
+                      value: (alert) =>
+                        `${METRIC_LABELS[alert.metric]} ${valueWithUnit(alert.metric, alert.lastValue)}\n${alert.source === "DEVICE" ? "Thiết bị báo" : alert.ruleName ?? "—"}`,
+                    },
+                    {
+                      id: "severity",
+                      label: "Mức độ",
+                      width: 18,
+                      value: (alert) => SEVERITY_LABELS[alert.severity],
+                    },
+                    {
+                      id: "status",
+                      label: "Trạng thái",
+                      width: 20,
+                      value: (alert) => ALERT_STATUS_LABELS[alert.status],
+                    },
+                  ]}
+                />
               }
             />
             <DataTableFilterChips table={table} fields={FILTER_FIELDS} />

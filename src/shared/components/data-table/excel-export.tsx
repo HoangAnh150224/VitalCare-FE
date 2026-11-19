@@ -5,10 +5,10 @@ import { Download } from "lucide-react";
 import { toast } from "sonner";
 import { fetchAllForExport } from "./fetch-all";
 import { Button } from "@/shared/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 import type { BaseRecord } from "@refinedev/core";
 
-export function ExcelTableExport<T extends BaseRecord>({ table, resource, title, columns }: { table: UseTableReturnType<T, HttpError>; resource: string; title: string; columns: { label: string; width: number; numFmt?: string; value: (row: T) => string | number }[] }) {
+export function ExcelTableExport<T extends BaseRecord>({ table, resource, title, columns }: { table: UseTableReturnType<T, HttpError>; resource: string; title: string; columns: { id?: string; label: string; width: number; numFmt?: string; value: (row: T) => string | number }[] }) {
   const provider = useDataProvider();
   const [busy, setBusy] = useState(false);
   async function exportFile(all: boolean) {
@@ -17,8 +17,11 @@ export function ExcelTableExport<T extends BaseRecord>({ table, resource, title,
       let rows: T[];
       if (all) rows = await fetchAllForExport<T>(provider(), resource, table.refineCore.filters, table.refineCore.sorters);
       else rows = table.reactTable.getRowModel().rows.map((row) => row.original);
+      const visibleIds = new Set(table.reactTable.getVisibleLeafColumns().map((column) => column.id));
+      const visibleColumns = columns.filter((column) => !column.id || visibleIds.has(column.id));
+      if (!visibleColumns.length) throw new Error("No visible columns to export");
       const { createTableWorkbook } = await import("./excel-workbook");
-      const workbook = createTableWorkbook(rows, all, title, columns);
+      const workbook = createTableWorkbook(rows, all, title, visibleColumns);
       const buffer = await workbook.xlsx.writeBuffer();
       const url = URL.createObjectURL(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
       const link = document.createElement("a");
@@ -32,8 +35,20 @@ export function ExcelTableExport<T extends BaseRecord>({ table, resource, title,
   return <DropdownMenu>
     <DropdownMenuTrigger asChild><Button variant="outline" disabled={busy}><Download />{busy ? "Đang xuất..." : "Xuất Excel"}</Button></DropdownMenuTrigger>
     <DropdownMenuContent align="end">
-      <DropdownMenuItem onSelect={() => void exportFile(false)}>Trang đang xem</DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => void exportFile(true)}>Tất cả kết quả theo bộ lọc</DropdownMenuItem>
+      <DropdownMenuLabel>Tải xuống dạng Excel</DropdownMenuLabel>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem disabled={busy} onSelect={() => void exportFile(false)}>
+        <span className="flex flex-col">
+          <span>Trang này</span>
+          <span className="text-muted-foreground text-xs">Các dòng và cột đang hiển thị</span>
+        </span>
+      </DropdownMenuItem>
+      <DropdownMenuItem disabled={busy} onSelect={() => void exportFile(true)}>
+        <span className="flex flex-col">
+          <span>Tất cả dòng</span>
+          <span className="text-muted-foreground text-xs">Mọi kết quả khớp với bộ lọc hiện tại</span>
+        </span>
+      </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>;
 }
