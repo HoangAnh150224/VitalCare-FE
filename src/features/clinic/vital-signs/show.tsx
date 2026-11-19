@@ -1,3 +1,4 @@
+import { useCan } from "@refinedev/core";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
 
@@ -20,6 +21,7 @@ import {
 /** Measurement Details (FE-04): one reading, where it came from and which sitting it was part of. */
 export const VitalSignShow = () => {
   const { id } = useParams();
+  const { data: devices } = useCan({ resource: "devices", action: "list" });
   const { data: v, isError } = useQuery({
     queryKey: ["vital_signs", "detail", id],
     queryFn: () => kyInstance.get(`vital_signs/${id}`).json<VitalDetail>(),
@@ -99,7 +101,9 @@ export const VitalSignShow = () => {
                 )}
               </DetailRow>
               <DetailRow label="Thiết bị">
-                {v?.deviceId ? (
+                {v?.deviceId && !devices?.can ? (
+                  <span className="font-mono">{v.deviceCode}</span>
+                ) : v?.deviceId ? (
                   <Link
                     to={`/devices/show/${v.deviceId}`}
                     className="font-mono hover:underline"
