@@ -47,6 +47,13 @@ export const AppointmentCalendar = () => {
     return new Date(year, m - 1, 1);
   });
   const [selected, setSelected] = useState(today);
+  // Another month: the day opened below moves into it (today if it is there, else the 1st),
+  // since only the shown month is loaded.
+  const showMonth = (offset: number) => {
+    const next = new Date(month.getFullYear(), month.getMonth() + offset, 1);
+    setMonth(next);
+    setSelected(today.startsWith(iso(next).slice(0, 8)) ? today : iso(next));
+  };
   const { result: clinicsResult } = useList<Clinic>({
     resource: "clinics",
     pagination: { mode: "off" },
@@ -119,9 +126,7 @@ export const AppointmentCalendar = () => {
             variant="outline"
             size="icon"
             aria-label="Tháng trước"
-            onClick={() =>
-              setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))
-            }
+            onClick={() => showMonth(-1)}
           >
             <ChevronLeftIcon />
           </Button>
@@ -132,9 +137,7 @@ export const AppointmentCalendar = () => {
             variant="outline"
             size="icon"
             aria-label="Tháng sau"
-            onClick={() =>
-              setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))
-            }
+            onClick={() => showMonth(1)}
           >
             <ChevronRightIcon />
           </Button>

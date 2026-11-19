@@ -37,6 +37,14 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ],
   ["This patient is already wearing a device", "Bệnh nhân đang đeo một thiết bị; thu hồi thiết bị đó trước."],
   ["That device is not available", "Thiết bị này không sẵn sàng (đang được gán hoặc bảo trì)."],
+  ["This device has already been returned", "Thiết bị này đã được thu hồi rồi."],
+  // The care team (who follows a patient)
+  ["Only a patient can be assigned staff or a device", "Chỉ gán nhân viên hoặc thiết bị cho bệnh nhân đang hoạt động. Kích hoạt hồ sơ bệnh nhân trước."],
+  ["That member of staff is already following this patient", "Nhân viên này đang theo dõi bệnh nhân rồi."],
+  ["This assignment has already ended", "Việc theo dõi này đã kết thúc rồi."],
+  // The exam-room board, a poll behind the room
+  ["Somebody else is in this room now", "Trong phòng đã là bệnh nhân khác. Bảng vừa được tải lại, vui lòng kiểm tra rồi thao tác lại."],
+  ["Nobody is in this room", "Phòng đang trống. Bảng vừa được tải lại."],
   ["A walk-in is registered for today", "Khám vãng lai chỉ đăng ký cho hôm nay."],
   // Ordering and results
   ["This encounter is concluded", "Lần khám đã hoàn tất nên không chỉ định hay thay đổi dịch vụ được nữa."],
@@ -70,6 +78,36 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ["Registration for that day is over", "Hôm nay phòng khám đã hết giờ nhận đăng ký. Vui lòng chọn ngày khác."],
   ["There is already a visit registered at that clinic on that day", "Bạn đã đăng ký khám tại phòng khám này trong ngày đó rồi."],
   ["Pick a clinic", "Vui lòng chọn phòng khám."],
+  ["That clinic is not taking visits", "Phòng khám này đang tạm ngừng nhận đăng ký khám."],
+  ["A date is required", "Vui lòng chọn ngày khám."],
+  ["Pick one of your own profiles", "Chọn một hồ sơ của bạn."],
+  ["Pick a profile of the same account", "Chọn hồ sơ thuộc cùng tài khoản."],
+  ["Pick a profile", "Chọn hồ sơ người khám."],
+  [
+    "Fill in this profile's date of birth and gender",
+    "Hồ sơ này chưa có ngày sinh hoặc giới tính. Bổ sung trước khi đăng ký khám.",
+  ],
+  // The desk's and the customer's actions on a registered visit (check-in, complete, no-show, BR-26 changes)
+  ["Only a registered appointment can be checked in", "Chỉ tiếp nhận được lượt đăng ký chưa tiếp nhận."],
+  ["An appointment can only be checked in on its own date", "Chỉ tiếp nhận được vào đúng ngày khám."],
+  ["Only a checked-in appointment can be completed", "Chỉ hoàn tất được lượt khám đã tiếp nhận."],
+  [
+    "Only a registered appointment can be marked as a no-show",
+    "Chỉ ghi nhận không đến cho lượt chưa tiếp nhận, hoặc đã tiếp nhận nhưng chưa trả phí khám.",
+  ],
+  ["That appointment's day has not come yet", "Chưa tới ngày khám nên chưa ghi nhận không đến được."],
+  ["Only a registered appointment can be cancelled", "Chỉ huỷ được lượt đăng ký chưa tiếp nhận."],
+  ["Only a registered appointment can be rescheduled", "Chỉ đổi ngày được lượt đăng ký chưa tiếp nhận."],
+  ["Only a registered appointment can be given to someone else", "Chỉ đổi người khám được khi lượt đăng ký chưa tiếp nhận."],
+  ["That appointment's day has passed", "Ngày khám đã qua nên không đổi hay huỷ được nữa."],
+  ["An appointment can only be cancelled up to two hours", "Chỉ huỷ được trước giờ khám dự kiến ít nhất 2 giờ."],
+  ["An appointment can only be rescheduled up to two hours", "Chỉ đổi ngày được trước giờ khám dự kiến ít nhất 2 giờ."],
+  ["The appointment is already on that day", "Lượt khám đã ở ngày này rồi. Vui lòng chọn ngày khác."],
+  ["An appointment that is over can no longer be changed", "Lượt khám đã kết thúc nên không cập nhật được nữa."],
+  [
+    "This appointment can be checked in as it is",
+    "Lượt này vẫn tiếp nhận được bình thường hoặc đang khám, không cần chuyển sang khám trực tiếp.",
+  ],
   ["The date cannot be in the past", "Ngày khám không được ở quá khứ."],
   ["Registration is open up to", "Ngày khám vượt quá thời gian mở đăng ký."],
   // First-aid content

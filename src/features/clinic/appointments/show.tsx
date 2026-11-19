@@ -93,7 +93,8 @@ export const AppointmentShow = () => {
     record?.status === "booked" ||
     record?.status === "checked_in" ||
     record?.status === "ready_for_examination" ||
-    record?.status === "in_exam";
+    record?.status === "in_exam" ||
+    record?.status === "awaiting_results";
 
   const status = record?.status;
   const willActivate =
@@ -103,8 +104,10 @@ export const AppointmentShow = () => {
     <ShowView>
       <ShowViewHeader
         actions={
-          /* The visit follows the check-in: open its encounter from here, beside Refresh. */
+          /* The visit follows the check-in: open its encounter from here, beside Refresh.
+             Only once the fee is paid (BF-02): the API refuses an encounter before. */
           record &&
+          record.paidAt &&
           (record.status === "checked_in" ||
             record.status === "ready_for_examination" ||
             record.status === "in_exam") &&

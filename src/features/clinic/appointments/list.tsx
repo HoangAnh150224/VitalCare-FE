@@ -65,6 +65,8 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
   const { data: canCheckIn } = useCan({ resource: "appointments", action: "check_in" });
   const clinics = useClinicOptions();
   const [[from, to], setRange] = useState(thisWeek);
+  // As the revenue report: a start after the end is said, not answered with an empty list.
+  const validRange = from <= to;
   const columns = React.useMemo(() => {
     const columnHelper = createColumnHelper<Appointment>();
 
@@ -205,6 +207,8 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
           { field: "appointmentDate", operator: "lte" as const, value: to },
         ],
       },
+      // A range turned backwards shows nothing, not the last good range's rows under its error.
+      queryOptions: { enabled: validRange, ...(validRange ? {} : { placeholderData: undefined }) },
     },
   });
 
@@ -254,6 +258,7 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
                     title="Từ ngày"
                     className="w-40"
                     value={from}
+                    max={to}
                     onChange={(event) => setRange([event.target.value || thisWeek()[0], to])}
                   />
                   <Input
@@ -262,12 +267,18 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
                     title="Đến ngày"
                     className="w-40"
                     value={to}
+                    min={from}
                     onChange={(event) => setRange([from, event.target.value || thisWeek()[1]])}
                   />
                   <DataTableQuickFilter
                     table={table}
                     placeholder="Tìm theo tên, SĐT, mã hồ sơ, giấy tờ định danh hoặc mã đặt khám..."
                   />
+                  {!validRange && (
+                    <p className="text-destructive w-full text-sm">
+                      Vui lòng chọn khoảng ngày hợp lệ, ngày bắt đầu không sau ngày kết thúc.
+                    </p>
+                  )}
                 </div>
               }
             />

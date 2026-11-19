@@ -124,6 +124,14 @@ function BillCard({ own, deskAllowed, visit }: { own: OwnInvoice; deskAllowed: b
   // At the desk is the visit's own record; online is only revealed here, it needs nothing saved.
   const atDesk = Boolean(choosing && deskAllowed && visit?.deskPaymentChosenAt);
   const [online, setOnline] = useState(false);
+  // Set once VNPay's link is back: the page is leaving, a second click would open a second transaction.
+  const [redirecting, setRedirecting] = useState(false);
+  // Back from VNPay through the browser's cache: the page is restored as it was left, so let it pay again.
+  useEffect(() => {
+    const restored = (event: PageTransitionEvent) => event.persisted && setRedirecting(false);
+    window.addEventListener("pageshow", restored);
+    return () => window.removeEventListener("pageshow", restored);
+  }, []);
   const [confirmDesk, setConfirmDesk] = useState(false);
   const showOnline = !choosing || !deskAllowed || (online && !atDesk);
 
@@ -147,7 +155,12 @@ function BillCard({ own, deskAllowed, visit }: { own: OwnInvoice; deskAllowed: b
         errorNotification: billingErrorNotification,
       },
       // A full navigation: VNPay's page, then back to this slip through the API's return.
-      { onSuccess: ({ data }) => window.location.assign(data.url) },
+      {
+        onSuccess: ({ data }) => {
+          setRedirecting(true);
+          window.location.assign(data.url);
+        },
+      },
     );
 
   /** Saves paying at the desk ({@code desk}) or online after all, then re-reads the visit. */
@@ -253,9 +266,9 @@ function BillCard({ own, deskAllowed, visit }: { own: OwnInvoice; deskAllowed: b
           )}
           {transfer && <TransferBox transfer={transfer} />}
           {onlinePayment ? (
-            <Button onClick={pay} disabled={mutation.isPending}>
+            <Button onClick={pay} disabled={mutation.isPending || redirecting}>
               <CreditCardIcon />
-              {mutation.isPending ? "Đang chuyển đến VNPay..." : "Thanh toán qua VNPay"}
+              {mutation.isPending || redirecting ? "Đang chuyển đến VNPay..." : "Thanh toán qua VNPay"}
             </Button>
           ) : null}
           {choosing && deskAllowed ? (

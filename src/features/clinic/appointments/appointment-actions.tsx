@@ -3,6 +3,7 @@ import { CalendarClockIcon, CheckIcon, LogInIcon, UserXIcon, XIcon } from "lucid
 import { useState } from "react";
 
 import { API_URL } from "@/shared/api/constants";
+import { billingErrorNotification } from "@/domains/billing/messages";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -90,21 +91,25 @@ export function AppointmentActions({ appointment, resource, size = "default", co
   const showComplete =
     !compact && desk && writable && (appointment.status === "checked_in" ||
       appointment.status === "ready_for_examination" ||
-      appointment.status === "in_exam");
+      appointment.status === "in_exam" ||
+      appointment.status === "awaiting_results");
   const showChange = !compact && scheduled && writable;
-  const showNoShow = showChange && desk && appointment.appointmentDate <= today;
+  // Also somebody checked in who left without paying: they never joined the line (BF-02).
+  const leftUnpaid = appointment.status === "checked_in" && !appointment.paidAt;
+  const showNoShow = !compact && writable && desk && (scheduled || leftUnpaid) && appointment.appointmentDate <= today;
 
   const { doctors, isLoading: doctorsLoading } = useClinicDoctors(rescheduling ? appointment.clinic.id : undefined, newDate);
   // A new day at the same clinic, in its shared line: what matters is whether that day can be had.
   const dayOpen = doctors.some((candidate) => candidate.day?.working && candidate.day?.bookable);
   const samePlace = newDate === appointment.appointmentDate;
 
-  if (!showCheckIn && !showComplete && !showChange) {
+  if (!showCheckIn && !showComplete && !showChange && !showNoShow) {
     return null;
   }
 
   const finish = (message: string, data: Appointment | undefined, description?: string) => {
-    invalidate({ resource, invalidates: ["detail", "list"], id: appointment.id });
+    // The customer's side also drops its slip's bills (a useCustom query), so a cancelled visit stops offering VNPay.
+    invalidate({ resource, invalidates: desk ? ["detail", "list"] : ["all"], id: appointment.id });
     open?.({ type: "success", message, description });
     if (data) onDone?.(data);
   };
@@ -118,6 +123,7 @@ export function AppointmentActions({ appointment, resource, size = "default", co
         // See ResetPasswordCard: without it Spring answers 415.
         config: { headers: { "Content-Type": "application/json" } },
         successNotification: false,
+        errorNotification: billingErrorNotification,
       },
       {
         onSuccess: ({ data }) => {
@@ -147,6 +153,7 @@ export function AppointmentActions({ appointment, resource, size = "default", co
         values: { appointmentDate: newDate },
         config: { headers: { "Content-Type": "application/json" } },
         successNotification: false,
+        errorNotification: billingErrorNotification,
       },
       {
         onSuccess: ({ data }) => {

@@ -16,7 +16,7 @@ import { DetailList, DetailRow } from "@/shared/components/views/record-detail";
 import { formatLocalDate, formatLocalTime, formatMoney } from "@/shared/lib/format";
 import type { Invoice } from "@/domains/billing/types";
 import { CounterPaymentDialog } from "../invoices/counter-payment";
-import type { Appointment } from "@/domains/appointment/types";
+import type { Appointment, AppointmentStatus } from "@/domains/appointment/types";
 import { APPOINTMENT_STATUS_LABELS, formatBookingCode } from "@/domains/appointment/types";
 import { CUSTOMER_STATUS_LABELS } from "@/domains/customer/types";
 import {
@@ -26,6 +26,17 @@ import {
 import { AppointmentActions } from "./appointment-actions";
 import { clinicToday } from "./clinic-day";
 import { DeskResolution } from "./desk-resolution";
+
+/**
+ * What the last action did, by the status it left the visit in; any other
+ * (checked in, ready, in the room) was a check-in.
+ */
+const DONE_LEAD: Partial<Record<AppointmentStatus, string>> = {
+  booked: "Đã đổi ngày khám của ",
+  completed: "Đã hoàn tất lượt khám của ",
+  cancelled: "Đã huỷ lượt đăng ký khám của ",
+  no_show: "Đã ghi nhận không đến: ",
+};
 
 /**
  * The front desk's check-in: scan or type the code from the slip, see who it
@@ -163,11 +174,13 @@ export const QuickCheckIn = () => {
             <Card className="border-success/40 mb-4 flex flex-row items-center gap-3 p-4">
               <CheckCircle2Icon className="text-success size-5 shrink-0" />
               <span className="text-sm">
-                {lastDone.status === "cancelled" ? "Đã huỷ lượt đăng ký khám của " : "Đã tiếp nhận "}
+                {DONE_LEAD[lastDone.status] ?? "Đã tiếp nhận "}
                 <strong>{lastDone.customer.fullName}</strong> ({formatBookingCode(lastDone.bookingCode)})
-                {lastDone.status !== "cancelled" && lastDone.customer.status === "patient"
-                  ? " — hồ sơ bệnh nhân đang hoạt động."
-                  : "."}
+                {lastDone.status === "booked"
+                  ? ` sang ngày ${formatLocalDate(lastDone.appointmentDate)}.`
+                  : !DONE_LEAD[lastDone.status] && lastDone.customer.status === "patient"
+                    ? " — hồ sơ bệnh nhân đang hoạt động."
+                    : "."}
               </span>
               {/* Not paid yet (paying here): take the fee now, so they join the queue. */}
               {lastDone.status === "checked_in" && !lastDone.paidAt && (

@@ -39,7 +39,8 @@ export const MyAppointmentCreate = () => {
   function onSubmit(values: BookingFormValues) {
     // With whom, which day and why only: neither the customer nor an internal
     // note is the customer's to set.
-    onFinish(toBookingPayload(values) as never);
+    // Returned, so the button stays disabled until the API answers: one click, one registration.
+    return onFinish(toBookingPayload(values) as never);
   }
 
   return (

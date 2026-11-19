@@ -58,7 +58,8 @@ export const AppointmentCreate = () => {
   });
 
   function onSubmit(values: BookingFormValues) {
-    onFinish({
+    // Returned, so the button stays disabled until the API answers: one click, one registration.
+    return onFinish({
       ...toBookingPayload(values),
       customerId: Number(values.customerId),
       note: values.note || null,

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 
 import { API_URL } from "@/shared/api/constants";
+import { billingErrorNotification } from "@/domains/billing/messages";
 import { formatDateTime, formatLocalDate } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
 import {
@@ -67,6 +68,7 @@ export function DeskResolution({
         values: { appointmentDate: today },
         config: JSON_HEADERS,
         successNotification: false,
+        errorNotification: billingErrorNotification,
       },
       { onSuccess: ({ data }) => done("Đã đổi lượt khám sang hôm nay", data) }
     );
@@ -80,6 +82,7 @@ export function DeskResolution({
         values: {},
         config: JSON_HEADERS,
         successNotification: false,
+        errorNotification: billingErrorNotification,
       },
       {
         onSuccess: ({ data }) => {
@@ -199,6 +202,7 @@ function ChangeExaminee({
                   values: { customerId: Number(picked) },
                   config: JSON_HEADERS,
                   successNotification: false,
+                  errorNotification: billingErrorNotification,
                 },
                 { onSuccess: ({ data }) => onDone("Đã đổi người khám", data) }
               )

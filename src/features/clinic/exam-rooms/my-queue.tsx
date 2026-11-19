@@ -16,6 +16,7 @@ import { Link } from "react-router";
 import { API_URL } from "@/shared/api/constants";
 import { subscribe } from "@/shared/api/live";
 import { customResult } from "@/shared/hooks/use-custom-result";
+import { billingErrorNotification } from "@/domains/billing/messages";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
@@ -66,11 +67,18 @@ export function MyExamQueue({ mode = "waiting" }: { mode?: "waiting" | "active" 
     setPending(action);
     mutate(
       {
-        url: `${API_URL}/exam_rooms/${room.id}/${action}`,
+        // A decision names the visit it was about: the server refuses it (409) when somebody else is
+        // inside by now, instead of acting on them -- the board can be up to a poll behind.
+        url: `${API_URL}/exam_rooms/${room.id}/${action}${
+          room.current && action !== "call-next" && action !== "pause" && action !== "resume"
+            ? `?appointmentId=${room.current.appointmentId}`
+            : ""
+        }`,
         method: "post",
         values: {},
         config: { headers: { "Content-Type": "application/json" } },
         successNotification: false,
+        errorNotification: billingErrorNotification,
       },
       {
         onSettled: () => {
