@@ -33,6 +33,7 @@ import {
   SEVERITY_LABELS,
   SEVERITY_OPTIONS,
   SEVERITY_VARIANTS,
+  condition,
   valueWithUnit,
   type Alert,
 } from "@/domains/alerts/types";
@@ -204,40 +205,24 @@ export const AlertList = () => {
                   resource="alerts"
                   title="Danh sách cảnh báo"
                   columns={[
-                    {
-                      id: "triggeredAt",
-                      label: "Phát sinh",
-                      width: 32,
-                      value: (alert) =>
-                        alert.occurrences > 1
-                          ? `${formatDateTime(alert.triggeredAt)}\n${alert.occurrences} lần · gần nhất ${formatDateTime(alert.lastTriggeredAt)}`
-                          : formatDateTime(alert.triggeredAt),
-                    },
-                    {
-                      id: "patient",
-                      label: "Bệnh nhân",
-                      width: 28,
-                      value: (alert) => alert.patient?.fullName ?? "—",
-                    },
-                    {
-                      id: "metric",
-                      label: "Chỉ số",
-                      width: 30,
-                      value: (alert) =>
-                        `${METRIC_LABELS[alert.metric]} ${valueWithUnit(alert.metric, alert.lastValue)}\n${alert.source === "DEVICE" ? "Thiết bị báo" : alert.ruleName ?? "—"}`,
-                    },
-                    {
-                      id: "severity",
-                      label: "Mức độ",
-                      width: 18,
-                      value: (alert) => SEVERITY_LABELS[alert.severity],
-                    },
-                    {
-                      id: "status",
-                      label: "Trạng thái",
-                      width: 20,
-                      value: (alert) => ALERT_STATUS_LABELS[alert.status],
-                    },
+                    // One fact per column, so the sheet sorts and filters; the table's own "Cột" menu still drops a group.
+                    { id: "triggeredAt", label: "Phát sinh lúc", width: 20, value: (alert) => formatDateTime(alert.triggeredAt) },
+                    { id: "triggeredAt", label: "Số lần", width: 10, value: (alert) => alert.occurrences },
+                    { id: "triggeredAt", label: "Gần nhất lúc", width: 20, value: (alert) => formatDateTime(alert.lastTriggeredAt) },
+                    { id: "patient", label: "Mã bệnh nhân", width: 16, numFmt: "@", value: (alert) => alert.patient?.customerCode ?? "—" },
+                    { id: "patient", label: "Bệnh nhân", width: 26, value: (alert) => alert.patient?.fullName ?? "—" },
+                    { id: "metric", label: "Chỉ số", width: 18, value: (alert) => METRIC_LABELS[alert.metric] },
+                    { id: "metric", label: "Giá trị lần đầu", width: 16, value: (alert) => valueWithUnit(alert.metric, alert.measuredValue) },
+                    { id: "metric", label: "Giá trị gần nhất", width: 16, value: (alert) => valueWithUnit(alert.metric, alert.lastValue) },
+                    { id: "metric", label: "Điều kiện cảnh báo", width: 24, value: (alert) => (alert.operator && alert.threshold != null ? condition(alert.metric, alert.operator, alert.threshold) : "—") },
+                    { id: "metric", label: "Nguồn", width: 14, value: (alert) => (alert.source === "DEVICE" ? "Thiết bị báo" : "Quy tắc") },
+                    { id: "metric", label: "Quy tắc", width: 24, value: (alert) => alert.ruleName ?? "—" },
+                    { id: "metric", label: "Thiết bị", width: 16, value: (alert) => alert.deviceCode ?? "—" },
+                    { id: "metric", label: "Nội dung", width: 40, value: (alert) => alert.message || "—" },
+                    { id: "severity", label: "Mức độ", width: 14, value: (alert) => SEVERITY_LABELS[alert.severity] },
+                    { id: "status", label: "Trạng thái", width: 18, value: (alert) => ALERT_STATUS_LABELS[alert.status] },
+                    { id: "status", label: "Tiếp nhận lúc", width: 20, value: (alert) => (alert.acknowledgedAt ? formatDateTime(alert.acknowledgedAt) : "—") },
+                    { id: "status", label: "Đóng lúc", width: 20, value: (alert) => { const closed = alert.resolvedAt ?? alert.dismissedAt; return closed ? formatDateTime(closed) : "—"; } },
                   ]}
                 />
               }
