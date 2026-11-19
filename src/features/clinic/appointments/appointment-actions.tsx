@@ -3,7 +3,7 @@ import { CalendarClockIcon, CheckIcon, LogInIcon, UserXIcon, XIcon } from "lucid
 import { useState } from "react";
 
 import { API_URL } from "@/shared/api/constants";
-import { billingErrorNotification } from "@/domains/billing/messages";
+import { billingErrorNotification, billingErrorText } from "@/domains/billing/messages";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,6 +79,8 @@ export function AppointmentActions({ appointment, resource, size = "default", co
   // Rescheduling: another doctor of the same clinic, another day, or both.
   const [rescheduling, setRescheduling] = useState(false);
   const [newDate, setNewDate] = useState("");
+  // The API's refusal of the new day, said under the date it is about (KAN-73), not in a toast.
+  const [rescheduleError, setRescheduleError] = useState<string | null>(null);
 
   const { data: canCheckIn } = useCan({ resource: "appointments", action: "check_in" });
   // "cancel" stands for the write permission on either side of the book.
@@ -153,9 +155,10 @@ export function AppointmentActions({ appointment, resource, size = "default", co
         values: { appointmentDate: newDate },
         config: { headers: { "Content-Type": "application/json" } },
         successNotification: false,
-        errorNotification: billingErrorNotification,
+        errorNotification: false,
       },
       {
+        onError: (error) => setRescheduleError(billingErrorText(error)),
         onSuccess: ({ data }) => {
           setRescheduling(false);
           finish(
@@ -191,6 +194,7 @@ export function AppointmentActions({ appointment, resource, size = "default", co
           variant="outline"
           onClick={() => {
             setNewDate(appointment.appointmentDate);
+            setRescheduleError(null);
             setRescheduling(true);
           }}
           disabled={busy}
@@ -236,10 +240,18 @@ export function AppointmentActions({ appointment, resource, size = "default", co
                 aria-label="Ngày khám mới"
                 min={today}
                 value={newDate}
-                onChange={(event) => setNewDate(event.target.value)}
+                aria-invalid={rescheduleError ? true : undefined}
+                onChange={(event) => {
+                  setNewDate(event.target.value);
+                  setRescheduleError(null);
+                }}
               />
             </div>
-            {samePlace ? (
+            {rescheduleError ? (
+              <p role="alert" className="text-destructive text-sm">
+                {rescheduleError}
+              </p>
+            ) : samePlace ? (
               <p className="text-muted-foreground text-sm">Đây là ngày hiện tại của lượt đăng ký này.</p>
             ) : (
               !doctorsLoading &&

@@ -76,7 +76,10 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ["No doctor has a turn left at that clinic on that day", "Ngày này phòng khám đã hết lượt khám. Vui lòng chọn ngày khác."],
   ["No doctor sees patients at that clinic on that day", "Ngày này phòng khám không có bác sĩ khám. Vui lòng chọn ngày khác."],
   ["Registration for that day is over", "Hôm nay phòng khám đã hết giờ nhận đăng ký. Vui lòng chọn ngày khác."],
-  ["There is already a visit registered at that clinic on that day", "Bạn đã đăng ký khám tại phòng khám này trong ngày đó rồi."],
+  [
+    "There is already a visit registered at that clinic on that day",
+    "Bạn đã có lượt khám được đăng ký tại phòng khám này vào ngày đã chọn. Vui lòng chọn ngày khác.",
+  ],
   ["Pick a clinic", "Vui lòng chọn phòng khám."],
   ["That clinic is not taking visits", "Phòng khám này đang tạm ngừng nhận đăng ký khám."],
   ["A date is required", "Vui lòng chọn ngày khám."],
