@@ -27,7 +27,7 @@ import type { Role } from "@/domains/role/types";
 import type { User } from "@/domains/user/types";
 import { ROLE_ORIGIN_HINT, STATUS_LABELS } from "@/domains/user/types";
 import { USER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
-import { formatDate } from "@/shared/lib/format";
+import { formatDate, formatVietnamesePhone } from "@/shared/lib/format";
 import { LockAccountButton } from "./lock-account-button";
 
 /**
@@ -92,7 +92,7 @@ export const UserList = () => {
         header: "Số điện thoại",
         enableSorting: true,
         cell: ({ getValue }) => (
-          <span className="font-medium font-mono">{getValue() || "—"}</span>
+          <span className="font-medium font-mono">{formatVietnamesePhone(getValue()) || "—"}</span>
         ),
       }),
       columnHelper.accessor("fullName", {

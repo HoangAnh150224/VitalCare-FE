@@ -10,16 +10,16 @@ import type { I18nProvider } from "@refinedev/core";
  */
 const MESSAGES: Record<string, string> = {
   "notifications.success": "Thành công",
-  "notifications.error": "Lỗi (mã trạng thái: {{statusCode}})",
+  "notifications.error": "Đã xảy ra lỗi",
   "notifications.createSuccess": "Đã tạo {{resource}} thành công",
   "notifications.createError":
-    "Không thể tạo {{resource}} (mã trạng thái: {{statusCode}})",
+    "Không thể tạo {{resource}}",
   "notifications.editSuccess": "Đã cập nhật {{resource}} thành công",
   "notifications.editError":
-    "Không thể cập nhật {{resource}} (mã trạng thái: {{statusCode}})",
+    "Không thể cập nhật {{resource}}",
   "notifications.deleteSuccess": "Đã xóa {{resource}} thành công",
   "notifications.deleteError":
-    "Không thể xóa {{resource}} (mã trạng thái: {{statusCode}})",
+    "Không thể xóa {{resource}}",
   "notifications.undoable": "Bạn có {{seconds}} giây để hoàn tác",
 
   "buttons.create": "Tạo mới",
@@ -63,11 +63,22 @@ const MESSAGES: Record<string, string> = {
   "view_as.view_as": "xem dưới vai trò",
 };
 
+/**
+ * The Vietnamese name of a resource. Refine's error toasts pass the bare identifier made singular
+ * ("role", "user") rather than its translation, which would put English in the sentence.
+ */
+function resourceName(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  const plural = value.endsWith("y") ? `${value.slice(0, -1)}ies` : `${value}s`;
+  return MESSAGES[`${value}.${value}`] ?? MESSAGES[`${plural}.${plural}`] ?? value;
+}
+
 function interpolate(text: string, values: unknown): string {
   const params = (typeof values === "object" && values) || {};
-  return text.replace(/\{\{(\w+)\}\}/g, (_, name: string) =>
-    String((params as Record<string, unknown>)[name] ?? "")
-  );
+  return text.replace(/\{\{(\w+)\}\}/g, (_, name: string) => {
+    const value = (params as Record<string, unknown>)[name];
+    return String((name === "resource" ? resourceName(value) : value) ?? "");
+  });
 }
 
 export const i18nProvider: I18nProvider = {
