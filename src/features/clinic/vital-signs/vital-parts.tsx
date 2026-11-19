@@ -1,9 +1,11 @@
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  CloudOffIcon,
   DropletIcon,
   HeartPulseIcon,
   ThermometerIcon,
+  TriangleAlertIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -30,6 +32,7 @@ import { Label } from "@/shared/ui/label";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { formatDateTime } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
+import { SEVERITY_LABELS, type Alert, type Metric, type Severity } from "@/domains/alerts/types";
 import type {
   VitalLatest,
   VitalTrend,
@@ -44,6 +47,8 @@ import {
   type VitalRange,
   type VitalScope,
 } from "./use-vitals";
+import { usePatientAlerts } from "../alerts/use-patient-alerts";
+import { EmptyState } from "../portal/parts";
 
 /** The three measures the bands report (BF-05), in one place for tiles, charts and tables. */
 const MEASURES = [
@@ -84,13 +89,50 @@ const show = (value: number | null | undefined, digits: number) =>
         minimumFractionDigits: digits,
       });
 
+const METRIC_OF: Record<(typeof CHARTS)[number]["key"], Metric> = {
+  heartRate: "HEART_RATE",
+  spo2: "SPO2",
+  skinTemperature: "SKIN_TEMPERATURE",
+  bodyTemperature: "BODY_TEMPERATURE",
+};
+
+/**
+ * How far out a shown value is, by the patient's alerts still open on that
+ * measure — the clinic's own thresholds, not ones made up here: the worst one
+ * the value is still beyond, or that it raised when the alert names no threshold.
+ */
+function severityOf(
+  alerts: Alert[] | undefined,
+  metric: Metric,
+  value: number
+): Severity | null {
+  const breached = (alerts ?? []).filter(
+    (a) =>
+      a.metric === metric &&
+      (a.status === "OPEN" || a.status === "ACKNOWLEDGED") &&
+      (a.threshold == null || a.operator == null
+        ? Number(a.lastValue) === value
+        : a.operator === "BELOW"
+        ? value < Number(a.threshold)
+        : value > Number(a.threshold))
+  );
+  if (breached.length === 0) return null;
+  return breached.some((a) => a.severity === "CRITICAL") ? "CRITICAL" : "WARNING";
+}
+
 /** The latest value of each measure, each with when it was taken: the headline numbers. */
 export function VitalTiles({
   latest,
   loading,
+  alerts,
+  own = false,
 }: {
   latest: VitalLatest | undefined;
   loading?: boolean;
+  /** The patient's latest alerts: a value one of them still holds is marked. */
+  alerts?: Alert[];
+  /** Speaking to the patient: a marked value says to contact the clinic. */
+  own?: boolean;
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-3" data-testid="vital-tiles">
@@ -101,11 +143,36 @@ export function VitalTiles({
         const m = lead ?? measure;
         const value = latest?.[m.key];
         const at = latest?.[`${m.key}At` as const];
+        const severity =
+          value == null || loading
+            ? null
+            : severityOf(alerts, METRIC_OF[m.key], Number(value));
         return (
-          <Card key={m.key} className="gap-1 px-4 py-3">
+          <Card
+            key={m.key}
+            className={cn(
+              "gap-1 px-4 py-3",
+              severity === "CRITICAL" && "border-destructive bg-destructive/5",
+              severity === "WARNING" && "border-warning bg-warning-subtle"
+            )}
+            data-severity={severity ?? undefined}
+          >
             <span className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
               <m.icon className="size-3.5" />
               {m.label}
+              {severity && (
+                <span
+                  className={cn(
+                    "ml-auto flex items-center gap-1",
+                    severity === "CRITICAL"
+                      ? "text-destructive"
+                      : "text-warning-text"
+                  )}
+                >
+                  <TriangleAlertIcon className="size-3.5" />
+                  {SEVERITY_LABELS[severity]}
+                </span>
+              )}
             </span>
             {loading ? (
               <Skeleton className="h-8 w-24" />
@@ -114,7 +181,13 @@ export function VitalTiles({
                 —
               </span>
             ) : (
-              <span className="text-2xl font-semibold tabular-nums">
+              <span
+                className={cn(
+                  "text-2xl font-semibold tabular-nums",
+                  severity === "CRITICAL" && "text-destructive",
+                  severity === "WARNING" && "text-warning-text"
+                )}
+              >
                 {show(value, m.digits)}
                 <span className="text-muted-foreground ml-1 text-sm font-normal">
                   {m.unit}
@@ -128,6 +201,18 @@ export function VitalTiles({
               <span className="text-muted-foreground text-xs tabular-nums">
                 {measure.label} {show(latest.skinTemperature, measure.digits)}{" "}
                 {measure.unit}
+              </span>
+            )}
+            {severity && own && (
+              <span className="text-xs">
+                {m.label} bất thường. Vui lòng nghỉ ngơi, đo lại hoặc{" "}
+                <Link
+                  to="/my-conversations"
+                  className="text-primary font-medium hover:underline"
+                >
+                  liên hệ phòng khám
+                </Link>{" "}
+                để được hỗ trợ.
               </span>
             )}
           </Card>
@@ -293,7 +378,20 @@ export function VitalTrends({
   scope: VitalScope;
   range: VitalRange;
 }) {
-  const { data: trend, isLoading } = useVitalTrend(scope, range);
+  const { data: trend, isLoading, isLoadingError, refetch } = useVitalTrend(
+    scope,
+    range
+  );
+  if (isLoadingError) {
+    return (
+      <p className="text-muted-foreground py-6 text-center text-sm">
+        Không tải được xu hướng.{" "}
+        <Button variant="link" className="h-auto p-0" onClick={() => refetch()}>
+          Thử lại
+        </Button>
+      </p>
+    );
+  }
   if (isLoading || !trend) {
     return (
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -329,7 +427,7 @@ export function VitalHistory({
   const [page, setPage] = useState(0);
   const [includeInvalid, setIncludeInvalid] = useState(false);
   const staff = scope.kind === "staff";
-  const { data, isLoading } = useVitalHistory(
+  const { data, isLoading, isLoadingError, refetch } = useVitalHistory(
     scope,
     range,
     page,
@@ -390,6 +488,22 @@ export function VitalHistory({
                   className="text-muted-foreground px-4 py-6 text-center"
                 >
                   Đang tải…
+                </td>
+              </tr>
+            ) : isLoadingError ? (
+              <tr>
+                <td
+                  colSpan={staff ? 6 : 5}
+                  className="text-muted-foreground px-4 py-6 text-center"
+                >
+                  Không tải được lịch sử số đo.{" "}
+                  <Button
+                    variant="link"
+                    className="h-auto p-0"
+                    onClick={() => refetch()}
+                  >
+                    Thử lại
+                  </Button>
                 </td>
               </tr>
             ) : rows.length === 0 ? (
@@ -490,11 +604,45 @@ export function VitalMonitor(props: VitalMonitorProps) {
 
 function PatientMonitor({ scope, detailHref, header }: VitalMonitorProps) {
   const [range, setRange] = useState<VitalRange>("24h");
-  const { data: latest, isLoading } = useVitalLatest(scope);
+  const { data: latest, isLoading, isLoadingError, refetch } =
+    useVitalLatest(scope);
+  // A caregiver's view has no alerts to read: the numbers stay unmarked there.
+  const { data: alerts } = usePatientAlerts(
+    scope.kind === "own" ? scope.profileId : scope.customerId,
+    scope.kind === "own",
+    scope.kind !== "shared"
+  );
+  if (isLoadingError) {
+    // The charts and history read the same API: one message, not three.
+    return (
+      <div className="flex flex-col gap-4">
+        {header}
+        <EmptyState
+          icon={CloudOffIcon}
+          title="Không thể tải dữ liệu sức khỏe"
+          text="Vui lòng kiểm tra kết nối mạng và thử lại."
+          action={
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => refetch()}
+            >
+              Thử lại
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-4">
       {header}
-      <VitalTiles latest={latest} loading={isLoading} />
+      <VitalTiles
+        latest={latest}
+        loading={isLoading}
+        alerts={alerts}
+        own={scope.kind === "own"}
+      />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm font-medium">Xu hướng</span>
         <RangePicker value={range} onChange={setRange} />

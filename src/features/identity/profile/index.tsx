@@ -33,6 +33,10 @@ import { cn } from "@/shared/lib/utils";
 import { formatVietnamesePhone, initials } from "@/shared/lib/format";
 import { PASSWORD_RANGE_MESSAGE, passwordInRange } from "@/shared/lib/password";
 
+/** The change-password fields, by element id, in the order they are focused when wrong. */
+const PASSWORD_FIELDS = ["current-password", "new-password", "confirm-password"] as const;
+type PasswordField = (typeof PASSWORD_FIELDS)[number];
+
 /**
  * The signed-in user's own account.
  *
@@ -59,18 +63,32 @@ export const Profile = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  // The server's only 409 here: the current password is wrong. Said under that field, not in a toast.
-  const [wrongCurrent, setWrongCurrent] = useState(false);
-
-  const mismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
-  // Too short is plain from the placeholder and the disabled button; too long needs saying.
-  const tooLong = newPassword.length >= 8 && !passwordInRange(newPassword);
-  const canSubmit =
-    currentPassword.length > 0 && passwordInRange(newPassword) && !mismatch;
+  // Said under the field, in Vietnamese, once the button is pressed — including the server's
+  // only 409 here (the current password is wrong). Editing a field clears its message.
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<PasswordField, string>>>({});
+  // Greyed out only while there is nothing to check; anything typed can be submitted and told what is wrong.
+  const empty = !currentPassword && !newPassword && !confirmPassword;
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    // The browser's own checks are off (noValidate): their bubbles follow the browser's
+    // language and sit apart from every other message. The same rules, said here.
+    const errors: Partial<Record<PasswordField, string>> = {};
+    if (!currentPassword) errors["current-password"] = "Vui lòng nhập mật khẩu hiện tại.";
+    if (!newPassword) errors["new-password"] = "Vui lòng nhập mật khẩu mới.";
+    else if (!passwordInRange(newPassword)) {
+      errors["new-password"] = `Mật khẩu mới chưa phù hợp. ${PASSWORD_RANGE_MESSAGE}`;
+    }
+    if (!confirmPassword) errors["confirm-password"] = "Vui lòng nhập lại mật khẩu mới.";
+    else if (newPassword && newPassword !== confirmPassword) {
+      errors["confirm-password"] = "Hai mật khẩu không khớp nhau.";
+    }
+    setFieldErrors(errors);
+    const first = PASSWORD_FIELDS.find((field) => errors[field]);
+    if (first) {
+      document.getElementById(first)?.focus();
+      return;
+    }
 
     mutate(
       {
@@ -92,7 +110,11 @@ export const Profile = () => {
               },
       },
       {
-        onError: (error) => setWrongCurrent(error?.statusCode === 409),
+        onError: (error) => {
+          if (error?.statusCode === 409) {
+            setFieldErrors({ "current-password": "Mật khẩu hiện tại không khớp. Xin vui lòng nhập lại." });
+          }
+        },
         onSuccess: ({ data }) => {
           // The server ends every other session and hands back a fresh pair for
           // this one. Storing it is what keeps the person who just changed
@@ -112,6 +134,12 @@ export const Profile = () => {
       }
     );
   };
+
+  const clearError = (field: PasswordField) =>
+    setFieldErrors((errors) => (errors[field] ? { ...errors, [field]: undefined } : errors));
+
+  const fieldError = (field: PasswordField) =>
+    fieldErrors[field] ? <p className="text-destructive text-sm">{fieldErrors[field]}</p> : null;
 
   return (
     <div className={cn("flex flex-col gap-4", "screen-enter screen-enter-stagger")}>
@@ -197,26 +225,21 @@ export const Profile = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={submit} className="flex flex-col gap-4">
+            <form onSubmit={submit} noValidate className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="current-password">Mật khẩu hiện tại</Label>
                 <InputPassword
                   id="current-password"
                   autoComplete="current-password"
                   placeholder="Nhập mật khẩu hiện tại"
-                  required
-                  aria-invalid={wrongCurrent || undefined}
+                  aria-invalid={!!fieldErrors["current-password"] || undefined}
                   value={currentPassword}
                   onChange={(e) => {
                     setCurrentPassword(e.target.value);
-                    setWrongCurrent(false);
+                    clearError("current-password");
                   }}
                 />
-                {wrongCurrent && (
-                  <p className="text-destructive text-sm">
-                    Mật khẩu hiện tại không khớp. Xin vui lòng nhập lại.
-                  </p>
-                )}
+                {fieldError("current-password")}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -225,17 +248,14 @@ export const Profile = () => {
                   id="new-password"
                   autoComplete="new-password"
                   placeholder="Từ 8 đến 72 ký tự"
-                  minLength={8}
-                  required
-                  aria-invalid={tooLong || undefined}
+                  aria-invalid={!!fieldErrors["new-password"] || undefined}
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    clearError("new-password");
+                  }}
                 />
-                {tooLong && (
-                  <p className="text-destructive text-sm">
-                    Mật khẩu mới chưa phù hợp. {PASSWORD_RANGE_MESSAGE}
-                  </p>
-                )}
+                {fieldError("new-password")}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -244,19 +264,18 @@ export const Profile = () => {
                   id="confirm-password"
                   autoComplete="new-password"
                   placeholder="Nhập lại mật khẩu mới"
-                  required
+                  aria-invalid={!!fieldErrors["confirm-password"] || undefined}
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    clearError("confirm-password");
+                  }}
                 />
-                {mismatch && (
-                  <p className="text-destructive text-sm">
-                    Hai mật khẩu không khớp nhau.
-                  </p>
-                )}
+                {fieldError("confirm-password")}
               </div>
 
               <div>
-                <Button type="submit" disabled={!canSubmit || mutation.isPending}>
+                <Button type="submit" disabled={empty || mutation.isPending}>
                   {mutation.isPending ? "Đang đổi..." : "Đổi mật khẩu"}
                 </Button>
               </div>

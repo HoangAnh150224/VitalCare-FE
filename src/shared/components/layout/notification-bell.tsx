@@ -19,6 +19,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/shared/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Separator } from "@/shared/ui/separator";
 import { Skeleton } from "@/shared/ui/skeleton";
@@ -42,31 +43,36 @@ export function NotificationBell() {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative size-9 rounded-lg text-muted-foreground hover:text-foreground"
-          aria-label={
-            unreadCount > 0 ? `Thông báo, ${unreadCount} chưa đọc` : "Thông báo"
-          }
-        >
-          <BellIcon className="size-[18px]" />
-          {unreadCount > 0 && (
-            <Badge
-              className={cn(
-                "absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center",
-                "rounded-full px-1 text-[10px] font-semibold tabular-nums",
-                "bg-destructive text-destructive-foreground"
-              )}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative size-9 rounded-lg text-muted-foreground hover:text-foreground"
+              aria-label={
+                unreadCount > 0 ? `Thông báo, ${unreadCount} chưa đọc` : "Thông báo"
+              }
             >
-              {/* Past a point the exact number stops being useful and only
-                  makes the badge wider than the icon it sits on. */}
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </Badge>
-          )}
-        </Button>
-      </PopoverTrigger>
+              <BellIcon className="size-[18px]" />
+              {unreadCount > 0 && (
+                <Badge
+                  className={cn(
+                    "absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center",
+                    "rounded-full px-1 text-[10px] font-semibold tabular-nums",
+                    "bg-destructive text-destructive-foreground"
+                  )}
+                >
+                  {/* Past a point the exact number stops being useful and only
+                      makes the badge wider than the icon it sits on. */}
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Thông báo</TooltipContent>
+      </Tooltip>
 
       <PopoverContent align="end" className="w-90 p-0">
         <div className="flex items-center justify-between gap-2 px-4 py-3">

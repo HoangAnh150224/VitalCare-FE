@@ -24,9 +24,11 @@ import { API_URL } from "@/shared/api/constants";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { customResult } from "@/shared/hooks/use-custom-result";
+import { cn } from "@/shared/lib/utils";
 import type { Appointment } from "@/domains/appointment/types";
 import type { MyVisitResult, VisitVitals } from "@/domains/encounter/types";
 import { bodyMassIndex, VITAL_FIELDS } from "@/domains/encounter/types";
+import { vitalFlag, vitalRangeText } from "@/domains/encounter/vital-ranges";
 import { MyInvoiceCard } from "../invoices/my-invoice-card";
 import { MyFeedbackCard } from "../results/feedback";
 import { MyResultReturn } from "../results/my-return";
@@ -219,7 +221,16 @@ const number = (value: number) => value.toLocaleString("vi-VN", { maximumFractio
  * The visit's measurements as a patient reads them: blood pressure as one
  * "118/76", decimals with a comma, BMI worked out — and only what was taken.
  */
-type VitalTile = { label: string; value: string; unit: string; icon: LucideIcon; tone: Tone };
+type VitalTile = {
+  label: string;
+  value: string;
+  unit: string;
+  icon: LucideIcon;
+  tone: Tone;
+  /** "Thấp" / "Cao" when outside the normal range. */
+  flag?: string | null;
+  range?: string | null;
+};
 
 /** Each measurement's icon, coloured by what it is about: heat and heart, breath, body. */
 const VITAL_LOOKS: Record<keyof VisitVitals, { icon: LucideIcon; tone: Tone }> = {
@@ -237,10 +248,26 @@ function vitalTiles(vitals: VisitVitals | null): VitalTile[] {
   if (!vitals) return [];
   const field = (name: keyof VisitVitals) => VITAL_FIELDS.find((candidate) => candidate.name === name)!;
   const tile = (name: keyof VisitVitals, label = field(name).label) =>
-    vitals[name] == null ? [] : [{ label, value: number(vitals[name]!), unit: field(name).unit, ...VITAL_LOOKS[name] }];
+    vitals[name] == null
+      ? []
+      : [{
+          label,
+          value: number(vitals[name]!),
+          unit: field(name).unit,
+          flag: vitalFlag(name, vitals[name]),
+          range: vitalRangeText(name),
+          ...VITAL_LOOKS[name],
+        }];
   const bloodPressure =
     vitals.systolicBp != null && vitals.diastolicBp != null
-      ? [{ label: "Huyết áp", value: `${vitals.systolicBp}/${vitals.diastolicBp}`, unit: "mmHg", ...VITAL_LOOKS.systolicBp }]
+      ? [{
+          label: "Huyết áp",
+          value: `${vitals.systolicBp}/${vitals.diastolicBp}`,
+          unit: "mmHg",
+          flag: vitalFlag("systolicBp", vitals.systolicBp) ?? vitalFlag("diastolicBp", vitals.diastolicBp),
+          range: `${vitalRangeText("systolicBp")}/${vitalRangeText("diastolicBp")}`,
+          ...VITAL_LOOKS.systolicBp,
+        }]
       : [...tile("systolicBp"), ...tile("diastolicBp")];
   const bmi = bodyMassIndex(vitals);
   return [
@@ -255,16 +282,33 @@ function vitalTiles(vitals: VisitVitals | null): VitalTile[] {
   ];
 }
 
-function Tile({ label, value, unit, icon, tone }: VitalTile) {
+/** A reading outside its normal range is ringed in amber and says "Thấp" or "Cao"; the range sits underneath. */
+function Tile({ label, value, unit, icon, tone, flag, range }: VitalTile) {
   return (
-    <li className="card-soft flex flex-col gap-3 p-4">
-      <IconChip icon={icon} tone={tone} className="size-9 rounded-xl" />
+    <li className={cn("card-soft flex flex-col gap-3 p-4", flag && "ring-2 ring-amber-500/70")}>
+      <div className="flex items-start justify-between gap-2">
+        <IconChip icon={icon} tone={tone} className="size-9 rounded-xl" />
+        {flag && (
+          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+            {flag}
+          </span>
+        )}
+      </div>
       <div className="flex flex-col">
         <span className="text-muted-foreground text-xs font-medium">{label}</span>
         <span className="flex items-baseline gap-1">
-          <span className="font-display text-2xl font-extrabold tabular-nums">{value}</span>
+          <span
+            className={cn("font-display text-2xl font-extrabold tabular-nums", flag && "text-amber-700 dark:text-amber-400")}
+          >
+            {value}
+          </span>
           <span className="text-muted-foreground text-xs">{unit}</span>
         </span>
+        {range && (
+          <span className="text-muted-foreground mt-1 text-xs">
+            Bình thường: {range} {unit}
+          </span>
+        )}
       </div>
     </li>
   );

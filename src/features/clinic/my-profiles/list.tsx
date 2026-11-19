@@ -1,5 +1,5 @@
 import { useList } from "@refinedev/core";
-import { ChevronRightIcon, PlusIcon, TriangleAlertIcon } from "lucide-react";
+import { ChevronRightIcon, CloudOffIcon, PlusIcon, TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
@@ -10,8 +10,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { GENDER_LABELS } from "@/domains/customer/types";
 import type { Profile } from "@/domains/profile/types";
 import { RELATIVES_FULL_MESSAGE, profileKind, relativesFull } from "@/domains/profile/types";
-import { initials } from "@/shared/lib/format";
+import { formatVietnamesePhone, initials } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
+import { EmptyState } from "../portal/parts";
 
 /** A colour per person, so a family reads at a glance; the owner, first, keeps the brand. */
 const AVATAR_TONES = [
@@ -76,6 +77,17 @@ export const MyProfileList = () => {
           <Skeleton className="h-24 rounded-3xl" />
           <Skeleton className="h-24 rounded-3xl" />
         </div>
+      ) : query.isLoadingError ? (
+        <EmptyState
+          icon={CloudOffIcon}
+          title="Không thể tải danh sách hồ sơ"
+          text="Vui lòng kiểm tra kết nối và thử lại."
+          action={
+            <Button variant="outline" className="rounded-full" onClick={() => query.refetch()}>
+              Thử lại
+            </Button>
+          }
+        />
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">
           {profiles.map((profile, index) => (
@@ -99,7 +111,7 @@ export const MyProfileList = () => {
                       <Badge variant={profile.self ? "info" : "secondary"}>{profileKind(profile)}</Badge>
                     </span>
                     <span className="text-muted-foreground text-sm">
-                      {summary(profile)} · <span className="tabular-nums">{profile.phone}</span>
+                      {summary(profile)} · <span className="tabular-nums">{formatVietnamesePhone(profile.phone)}</span>
                     </span>
                   </span>
                   <ChevronRightIcon className="text-muted-foreground size-5 shrink-0" />

@@ -1,5 +1,5 @@
 import { useList } from "@refinedev/core";
-import { CalendarCheck2Icon, CalendarPlusIcon, HistoryIcon } from "lucide-react";
+import { CalendarCheck2Icon, CalendarPlusIcon, CloudOffIcon, HistoryIcon } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
 import { Button } from "@/shared/ui/button";
@@ -76,7 +76,7 @@ export const PortalAppointments = () => {
             )}
           >
             {label}
-            {!query.isLoading && <span className="ms-1.5 tabular-nums opacity-70">{count}</span>}
+            {!query.isLoading && !query.isLoadingError && <span className="ms-1.5 tabular-nums opacity-70">{count}</span>}
           </button>
         ))}
       </div>
@@ -86,6 +86,17 @@ export const PortalAppointments = () => {
           <Skeleton className="h-40 rounded-3xl" />
           <Skeleton className="h-40 rounded-3xl" />
         </div>
+      ) : query.isLoadingError ? (
+        <EmptyState
+          icon={CloudOffIcon}
+          title="Không tải được danh sách lượt khám"
+          text="Vui lòng kiểm tra kết nối mạng và thử lại."
+          action={
+            <Button variant="outline" className="rounded-full" onClick={() => query.refetch()}>
+              Thử lại
+            </Button>
+          }
+        />
       ) : shown.length === 0 ? (
         <EmptyState
           icon={tab === "upcoming" ? CalendarCheck2Icon : HistoryIcon}

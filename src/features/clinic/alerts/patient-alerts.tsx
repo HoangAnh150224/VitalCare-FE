@@ -1,8 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 
-import { kyInstance } from "@/shared/api/data";
 import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { formatDateTime } from "@/shared/lib/format";
 import {
@@ -10,13 +9,10 @@ import {
   ALERT_STATUS_VARIANTS,
   SEVERITY_LABELS,
   SEVERITY_VARIANTS,
-  type Alert,
 } from "@/domains/alerts/types";
+import { usePatientAlerts } from "./use-patient-alerts";
 
-/**
- * Patient Alert History (FE-05): a patient's alerts, newest first — for staff
- * (`/alerts?customerId=`) or for the patient themself (`/my_alerts`).
- */
+/** Patient Alert History (FE-05): a patient's alerts, newest first. */
 export function PatientAlertHistory({
   customerId,
   own = false,
@@ -24,31 +20,7 @@ export function PatientAlertHistory({
   customerId: number | null;
   own?: boolean;
 }) {
-  const { data } = useQuery({
-    queryKey: [own ? "my_alerts" : "alerts", "patient", customerId],
-    queryFn: () =>
-      own
-        ? kyInstance
-            .get("my_alerts", {
-              searchParams: {
-                ...(customerId ? { profileId: String(customerId) } : {}),
-                _start: "0",
-                _end: "20",
-              },
-            })
-            .json<Alert[]>()
-        : kyInstance
-            .get("alerts", {
-              searchParams: {
-                customerId: String(customerId),
-                _start: "0",
-                _end: "20",
-              },
-            })
-            .json<Alert[]>(),
-    enabled: own || customerId != null,
-    refetchInterval: 60_000,
-  });
+  const { data, isLoadingError, refetch } = usePatientAlerts(customerId, own);
   const rows = data ?? [];
 
   return (
@@ -56,7 +28,14 @@ export function PatientAlertHistory({
       <div className="border-b px-4 py-2.5 text-sm font-medium">
         Lịch sử cảnh báo
       </div>
-      {rows.length === 0 ? (
+      {isLoadingError ? (
+        <p className="text-muted-foreground px-4 py-6 text-center text-sm">
+          Không tải được lịch sử cảnh báo.{" "}
+          <Button variant="link" className="h-auto p-0" onClick={() => refetch()}>
+            Thử lại
+          </Button>
+        </p>
+      ) : rows.length === 0 ? (
         <p className="text-muted-foreground px-4 py-6 text-center text-sm">
           Chưa có cảnh báo nào.
         </p>

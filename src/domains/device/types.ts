@@ -61,3 +61,11 @@ export const DEVICE_STATUS_OPTIONS: { label: string; value: DeviceStatus }[] = [
 export const SETTABLE_DEVICE_STATUS_OPTIONS = DEVICE_STATUS_OPTIONS.filter(
   (option) => option.value !== "assigned"
 );
+
+/** `deviceType` is free text; the known codes read in Vietnamese, any other as typed. */
+export const DEVICE_TYPE_LABELS: Record<string, string> = {
+  WRIST_MONITOR: "Vòng đeo tay theo dõi",
+};
+
+export const deviceTypeLabel = (type: string | null | undefined) =>
+  type ? (DEVICE_TYPE_LABELS[type.trim().toUpperCase()] ?? type) : null;

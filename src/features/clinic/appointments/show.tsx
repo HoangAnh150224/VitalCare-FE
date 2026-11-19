@@ -517,7 +517,7 @@ function EditVisitDialog({
             <Label htmlFor="visit-reason">Lý do khám</Label>
             <Input
               id="visit-reason"
-              maxLength={255}
+              maxLength={500}
               value={reason}
               onChange={(event) => setReason(event.target.value)}
             />

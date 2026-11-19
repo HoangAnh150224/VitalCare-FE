@@ -1,18 +1,21 @@
 import { useList } from "@refinedev/core";
+import { CloudOffIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import type { Profile } from "@/domains/profile/types";
 import { VitalMonitor } from "./vital-parts";
 import { PatientAlertHistory } from "../alerts/patient-alerts";
+import { EmptyState } from "../portal/parts";
 
 /**
  * The portal's "Sức khỏe" (FE-04 on the patient side): the account's own vital
  * signs and those of the relatives it manages, one profile at a time.
  */
 export const MyHealth = () => {
-  const { result } = useList<Profile>({
+  const { result, query } = useList<Profile>({
     resource: "my_profiles",
     pagination: { mode: "off" },
   });
@@ -33,6 +36,18 @@ export const MyHealth = () => {
           Chia sẻ với người chăm sóc →
         </Link>
       </div>
+      {query.isLoadingError && (
+        <EmptyState
+          icon={CloudOffIcon}
+          title="Không thể tải dữ liệu sức khỏe"
+          text="Vui lòng kiểm tra kết nối mạng và thử lại."
+          action={
+            <Button variant="outline" className="rounded-full" onClick={() => query.refetch()}>
+              Thử lại
+            </Button>
+          }
+        />
+      )}
       {profiles.length > 1 && (
         <div
           role="group"

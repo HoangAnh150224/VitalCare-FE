@@ -16,7 +16,7 @@ import {
 } from "@/shared/components/views/record-detail";
 import { formatDateTime } from "@/shared/lib/format";
 import type { Device } from "@/domains/device/types";
-import { DEVICE_STATUS_LABELS } from "@/domains/device/types";
+import { DEVICE_STATUS_LABELS, deviceTypeLabel } from "@/domains/device/types";
 import type { DeviceAssignment } from "@/domains/assignment/types";
 import { DEVICE_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import {
@@ -129,7 +129,7 @@ export const DeviceShow = () => {
               {record?.manufacturer ?? <EmptyValue />}
             </DetailRow>
             <DetailRow label="Loại">
-              {record?.deviceType ?? <EmptyValue />}
+              {deviceTypeLabel(record?.deviceType) ?? <EmptyValue />}
             </DetailRow>
             <DetailRow label="Firmware">
               {record?.firmwareVersion ?? <EmptyValue />}

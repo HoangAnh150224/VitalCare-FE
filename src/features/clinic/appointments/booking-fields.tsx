@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import { useFormContext, useWatch, type Control } from "react-hook-form";
 
 import { Input } from "@/shared/ui/input";
+import { Textarea } from "@/shared/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -296,7 +297,7 @@ export function BookingFields({
         rules={{
           validate: (value) =>
             value.trim() !== "" || "Vui lòng nhập lý do khám",
-          maxLength: { value: 255, message: "Tối đa 255 ký tự" },
+          maxLength: { value: 500, message: "Tối đa 500 ký tự" },
         }}
         render={({ field }) => (
           <FormItem className="md:col-span-8">
@@ -304,9 +305,10 @@ export function BookingFields({
               Lý do khám <span className="text-destructive" aria-hidden="true">*</span>
             </FormLabel>
             <FormControl>
-              <Input
+              <Textarea
                 {...field}
                 required
+                rows={3}
                 value={field.value ?? ""}
                 placeholder="Theo dõi sức khỏe định kỳ"
               />

@@ -1,16 +1,27 @@
-import type { HttpError } from "@refinedev/core";
+import { useDelete, type HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
-import { ChevronLeftIcon, IdCardIcon, MapPinIcon, UserRoundIcon, type LucideIcon } from "lucide-react";
+import { ChevronLeftIcon, IdCardIcon, MapPinIcon, Trash2Icon, UserRoundIcon, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/shared/ui/alert-dialog";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/shared/ui/form";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
-import { initials } from "@/shared/lib/format";
+import { formatVietnamesePhone, initials } from "@/shared/lib/format";
 import { GENDER_LABELS, type Gender } from "@/domains/customer/types";
 import type { IdType, Profile, Relationship } from "@/domains/profile/types";
 import { ID_TYPE_LABELS, RELATIONSHIP_OPTIONS, RELATIVES_FULL_MESSAGE } from "@/domains/profile/types";
@@ -37,6 +48,20 @@ type ProfileFormValues = {
 /** A Vietnamese number as the API takes it on a profile: 0 or +84, nine more digits, spaces allowed. */
 const PHONE = /^\s*(?:\+?84|0)(?:\s*\d){9}\s*$/;
 
+/** Letters (accents included) and spaces only, as the API checks a relative's name. */
+const NAME = /^[\p{L}\p{M} ]+$/u;
+const NAME_MESSAGE = "Họ và tên chỉ được chứa chữ cái tiếng Việt và khoảng trắng.";
+const ID_TAKEN_MESSAGE = "Số giấy tờ này đã được đăng ký cho một hồ sơ khác trong hệ thống.";
+const ISSUED_BEFORE_BIRTH_MESSAGE = "Ngày cấp phải sau hoặc bằng ngày sinh.";
+
+/** Why the API would not take a relative off the account, in Vietnamese. */
+const DELETE_ERRORS: Record<string, string> = {
+  "Your own profile cannot be deleted": "Không thể xóa hồ sơ của chính bạn.",
+  "This relative has a visit under way": "Người thân đang có lượt khám chưa hoàn tất, chưa thể xóa hồ sơ.",
+  "This relative is still wearing a clinic device":
+    "Người thân đang đeo thiết bị của phòng khám, vui lòng trả thiết bị trước khi xóa hồ sơ.",
+};
+
 /** The API's refusals on a profile, in Vietnamese, for the field they are about. */
 const PROFILE_ERRORS: Record<string, string> = {
   "Phone number is not valid": "Vui lòng nhập số điện thoại phù hợp.",
@@ -45,6 +70,9 @@ const PROFILE_ERRORS: Record<string, string> = {
   "A relative with this name and date of birth is already under your account":
     "Đã có người thân với tên và ngày sinh như trên. Vui lòng nhập người thân khác.",
   "Name must be at most 255 characters": "Họ và tên tối đa 255 ký tự",
+  "A name may contain only letters and spaces": NAME_MESSAGE,
+  "This identity number is already on another profile": ID_TAKEN_MESSAGE,
+  "The issue date cannot be before the date of birth": ISSUED_BEFORE_BIRTH_MESSAGE,
   "Say whose profile this is": "Vui lòng chọn quan hệ",
   "Relationship must be child, parent, spouse, sibling or other": "Vui lòng chọn quan hệ",
   "Date of birth is required": "Vui lòng nhập ngày sinh",
@@ -118,6 +146,13 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
     refineCoreProps: {
       resource: "my_profiles",
       redirect: "list",
+      // The number as people write it (0…), not as stored (+84…): in the fields and on the owner's card.
+      queryOptions: {
+        select: (result) =>
+          result.data?.phone
+            ? { ...result, data: { ...result.data, phone: formatVietnamesePhone(result.data.phone) } }
+            : result,
+      },
       // A refused field is said under that field, in Vietnamese (below), not again in a toast.
       errorNotification: (error) =>
         error?.statusCode === 422
@@ -216,7 +251,10 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                   <FormField
                     control={form.control}
                     name="fullName"
-                    rules={{ validate: (value) => value.trim() !== "" || "Vui lòng nhập họ và tên" }}
+                    rules={{
+                      validate: (value) =>
+                        value.trim() === "" ? "Vui lòng nhập họ và tên" : NAME.test(value.trim()) || NAME_MESSAGE,
+                    }}
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
                         <Label required>Họ và tên</Label>
@@ -377,13 +415,24 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
                 control={form.control}
                 name="nationalIdIssuedOn"
                 rules={{
-                  validate: (value) => !value || value <= clinicToday() || "Ngày cấp không được ở tương lai",
+                  validate: (value) => {
+                    if (!value) return true;
+                    if (value > clinicToday()) return "Ngày cấp không được ở tương lai";
+                    const born = form.getValues("dateOfBirth");
+                    return !born || value >= born || ISSUED_BEFORE_BIRTH_MESSAGE;
+                  },
                 }}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Ngày cấp</FormLabel>
                     <FormControl>
-                      <Input {...field} type="date" max={clinicToday()} value={field.value ?? ""} />
+                      <Input
+                        {...field}
+                        type="date"
+                        min={form.watch("dateOfBirth") || undefined}
+                        max={clinicToday()}
+                        value={field.value ?? ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -488,6 +537,7 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
             </Group>
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              {!creating && record?.self === false && <DeleteRelative id={record.id} name={record.fullName} />}
               <Button type="button" variant="ghost" className="h-11 rounded-full px-6" onClick={() => navigate(-1)}>
                 Hủy
               </Button>
@@ -499,6 +549,59 @@ function ProfileForm({ title, creating }: { title: string; creating: boolean }) 
         </Form>
       )}
     </div>
+  );
+}
+
+/**
+ * Takes a relative off the account, after asking. Their past visits and results
+ * stay on record; the place frees up for another relative.
+ */
+function DeleteRelative({ id, name }: { id: number; name: string }) {
+  const navigate = useNavigate();
+  const { mutate, mutation } = useDelete();
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          className="text-destructive hover:text-destructive h-11 rounded-full px-6 sm:me-auto"
+          disabled={mutation.isPending}
+        >
+          <Trash2Icon />
+          Xóa hồ sơ
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Xóa hồ sơ của {name}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Hồ sơ sẽ không còn trong danh sách của bạn. Lịch sử khám và kết quả đã có vẫn được phòng khám lưu giữ.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Không</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() =>
+              mutate(
+                {
+                  resource: "my_profiles",
+                  id,
+                  successNotification: { type: "success", message: "Đã xóa hồ sơ người thân." },
+                  errorNotification: (error) => ({
+                    type: "error",
+                    message: DELETE_ERRORS[error?.message ?? ""] ?? "Không xóa được hồ sơ. Vui lòng thử lại.",
+                  }),
+                },
+                { onSuccess: () => navigate("/my-profiles") }
+              )
+            }
+          >
+            Xóa hồ sơ
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

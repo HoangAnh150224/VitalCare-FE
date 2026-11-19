@@ -4,17 +4,34 @@ import {
   useList,
   useNotification,
 } from "@refinedev/core";
-import { BluetoothIcon, Link2OffIcon, WatchIcon } from "lucide-react";
+import {
+  BluetoothIcon,
+  CloudOffIcon,
+  Link2OffIcon,
+  WatchIcon,
+} from "lucide-react";
 import { useState } from "react";
 
 import { API_URL } from "@/shared/api/constants";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/shared/ui/alert-dialog";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { formatDateTime } from "@/shared/lib/format";
 import { BatteryLevel, ConnectivityBadge } from "../devices/device-status";
-import type { Connectivity } from "@/domains/device/types";
+import { EmptyState } from "../portal/parts";
+import { deviceTypeLabel, type Connectivity } from "@/domains/device/types";
 
 type MyDevice = {
   deviceId: number;
@@ -85,6 +102,21 @@ export const MyDeviceList = () => {
 
       {query.isLoading ? (
         <p className="text-muted-foreground text-sm">Đang tải…</p>
+      ) : query.isLoadingError ? (
+        <EmptyState
+          icon={CloudOffIcon}
+          title="Không thể tải danh sách thiết bị"
+          text="Vui lòng kiểm tra kết nối mạng và thử lại."
+          action={
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => query.refetch()}
+            >
+              Thử lại
+            </Button>
+          }
+        />
       ) : devices.length === 0 ? (
         <Card className="items-center gap-2 px-6 py-8 text-center">
           <WatchIcon className="text-muted-foreground size-8" />
@@ -103,7 +135,7 @@ export const MyDeviceList = () => {
               <div className="flex flex-col">
                 <span className="font-mono font-semibold">{d.deviceCode}</span>
                 <span className="text-muted-foreground text-xs">
-                  {[d.model, d.deviceType].filter(Boolean).join(" · ") ||
+                  {[d.model, deviceTypeLabel(d.deviceType)].filter(Boolean).join(" · ") ||
                     "Thiết bị theo dõi"}{" "}
                   — {d.customerName}
                 </span>
@@ -129,22 +161,44 @@ export const MyDeviceList = () => {
             </dl>
             <div>
               {d.pairedWithMe ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={mutation.isPending}
-                  onClick={() =>
-                    send(
-                      `${API_URL}/my_devices/${d.deviceCode}/pair`,
-                      "delete",
-                      {},
-                      "Đã huỷ ghép thiết bị"
-                    )
-                  }
-                >
-                  <Link2OffIcon />
-                  Huỷ ghép
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={mutation.isPending}
+                    >
+                      <Link2OffIcon />
+                      Huỷ ghép
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Huỷ ghép thiết bị {d.deviceCode}?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Điện thoại này sẽ không còn nhận số đo từ thiết bị. Bạn
+                        có thể ghép lại bằng mã in trên thiết bị.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Đóng</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() =>
+                          send(
+                            `${API_URL}/my_devices/${d.deviceCode}/pair`,
+                            "delete",
+                            {},
+                            "Đã huỷ ghép thiết bị"
+                          )
+                        }
+                      >
+                        Xác nhận huỷ ghép
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               ) : (
                 <Button
                   size="sm"

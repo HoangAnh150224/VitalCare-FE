@@ -32,6 +32,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { cn } from "@/shared/lib/utils";
 import { permissionFor } from "@/shared/lib/permissions";
 import { formatVietnamesePhone } from "@/shared/lib/format";
@@ -141,20 +142,25 @@ export function PortalLayout({ children }: PropsWithChildren) {
               aria-label="Điều hướng chính"
               className="hidden min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] md:flex"
             >
+              {/* Each item says its name on hover too, as the staff sidebar does (KAN-77). */}
               {nav.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  aria-current={isActive(item.to) ? "page" : undefined}
-                  className={cn(
-                    "shrink-0 rounded-full px-3 py-2 text-sm font-semibold whitespace-nowrap transition-colors lg:px-4",
-                    isActive(item.to)
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-card hover:text-foreground"
-                  )}
-                >
-                  {item.label}
-                </Link>
+                <Tooltip key={item.to}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to={item.to}
+                      aria-current={isActive(item.to) ? "page" : undefined}
+                      className={cn(
+                        "shrink-0 rounded-full px-3 py-2 text-sm font-semibold whitespace-nowrap transition-colors lg:px-4",
+                        isActive(item.to)
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-card hover:text-foreground"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">{item.label}</TooltipContent>
+                </Tooltip>
               ))}
             </nav>
 
@@ -236,16 +242,21 @@ function AccountMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label="Tài khoản"
-        className="focus-visible:ring-ring rounded-full focus-visible:outline-none focus-visible:ring-2"
-      >
-        <Avatar className="size-9">
-          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
-            {initials(name)}
-          </AvatarFallback>
-        </Avatar>
-      </DropdownMenuTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger
+            aria-label="Tài khoản"
+            className="focus-visible:ring-ring rounded-full focus-visible:outline-none focus-visible:ring-2"
+          >
+            <Avatar className="size-9">
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                {initials(name)}
+              </AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Tài khoản</TooltipContent>
+      </Tooltip>
       <DropdownMenuContent align="end" className="min-w-56">
         <DropdownMenuLabel className="flex flex-col gap-0.5">
           <span className="truncate text-sm font-medium">{name}</span>

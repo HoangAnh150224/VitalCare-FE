@@ -27,8 +27,8 @@ type NotificationDetail = Notification & {
 const LEVEL_LABELS: Record<Notification["level"], string> = {
   INFO: "Thông tin",
   SUCCESS: "Thành công",
-  WARNING: "Cần chú ý",
-  ERROR: "Khẩn",
+  WARNING: "Cảnh báo",
+  ERROR: "Khẩn cấp",
 };
 
 const LEVEL_VARIANTS = {

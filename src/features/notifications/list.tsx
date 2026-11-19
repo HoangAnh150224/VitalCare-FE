@@ -53,7 +53,7 @@ const ADVANCED_FILTER_FIELDS: AdvancedFilterField[] = [
       { label: "Thông tin", value: "INFO" },
       { label: "Thành công", value: "SUCCESS" },
       { label: "Cảnh báo", value: "WARNING" },
-      { label: "Lỗi", value: "ERROR" },
+      { label: "Khẩn cấp", value: "ERROR" },
     ],
   },
   {
@@ -87,7 +87,9 @@ const LEVEL_LABEL: Record<Notification["level"], string> = {
   INFO: "Thông tin",
   SUCCESS: "Thành công",
   WARNING: "Cảnh báo",
-  ERROR: "Lỗi",
+  // ERROR is only ever raised for a critical health alert or an emergency
+  // (AlertNotifications, EmergencyEscalation), never for a technical fault.
+  ERROR: "Khẩn cấp",
 };
 
 export const NotificationList = () => {
@@ -118,19 +120,26 @@ export const NotificationList = () => {
         enableResizing: true,
         header: "Tiêu đề",
         enableSorting: true,
+        // The table ellipsises every cell, so the title gets the room and the
+        // full text rides on `title` for whatever still does not fit.
+        size: 420,
         cell: ({ row }) => (
           <div className="flex flex-col gap-0.5">
             <Link
               to={`/notifications/show/${row.original.id}`}
+              title={row.original.title}
               className={cn(
-                "text-sm hover:underline",
+                "truncate text-sm hover:underline",
                 !row.original.read && "font-semibold"
               )}
             >
               {row.original.title}
             </Link>
             {row.original.body && (
-              <span className="line-clamp-1 text-xs text-muted-foreground">
+              <span
+                className="line-clamp-1 text-xs text-muted-foreground"
+                title={row.original.body}
+              >
                 {row.original.body}
               </span>
             )}
