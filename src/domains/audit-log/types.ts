@@ -27,4 +27,28 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   assign: "Cấp / gán",
   return: "Thu hồi",
   pay: "Thu tiền",
+  create: "Tạo mới",
+  consent: "Đồng ý theo dõi",
+  end: "Kết thúc",
+  export: "Xuất dữ liệu",
+  consult: "Tư vấn",
+  schedule: "Hẹn lịch",
+  reschedule: "Đổi lịch hẹn",
+  arrive: "Đã đến",
+  acknowledge: "Xác nhận",
+  grant: "Cấp quyền",
+  revoke: "Thu hồi quyền",
+  reply: "Phản hồi",
 };
+
+/**
+ * Which record a row is about, for the "Dữ liệu" column: the numeric id, or —
+ * for a record keyed by a UUID (clinics), which the log's numeric entity id
+ * cannot hold — the name or id carried in its state.
+ */
+export function auditSubject(entry: AuditEntry): string | null {
+  if (entry.entityId != null) return `#${entry.entityId}`;
+  const state = entry.after ?? entry.before;
+  const label = state?.name ?? state?.clinicId;
+  return typeof label === "string" && label ? label : null;
+}

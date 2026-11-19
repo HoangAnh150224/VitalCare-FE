@@ -22,7 +22,7 @@ import { ShowButton } from "@/shared/components/buttons/show";
 import { Badge } from "@/shared/ui/badge";
 import { formatDateTime } from "@/shared/lib/format";
 import { humanizeResource } from "@/domains/permission/types";
-import { AUDIT_ACTION_LABELS, type AuditEntry } from "./types";
+import { AUDIT_ACTION_LABELS, auditSubject, type AuditEntry } from "./types";
 import { AuditExport } from "./export";
 
 const FILTER_FIELDS: AdvancedFilterField[] = [
@@ -39,7 +39,7 @@ const FILTER_FIELDS: AdvancedFilterField[] = [
     field: "entityType",
     label: "Loại dữ liệu",
     type: "select",
-    options: ["users", "employees", "medical_records", "device_assignments", "invoices"].map(
+    options: ["users", "employees", "roles", "row_level_policies", "clinics", "medical_records", "device_assignments", "invoices"].map(
       (value) => ({ value, label: humanizeResource(value) })
     ),
   },
@@ -97,9 +97,9 @@ export const AuditLogList = () => {
         cell: ({ row }) => (
           <span>
             {humanizeResource(row.original.entityType)}
-            {row.original.entityId != null && (
+            {auditSubject(row.original) && (
               <span className="text-muted-foreground ml-1 font-mono">
-                #{row.original.entityId}
+                {auditSubject(row.original)}
               </span>
             )}
           </span>

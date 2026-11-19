@@ -34,7 +34,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/shared/components/tabs/tabs";
-import { formatDateTime } from "@/shared/lib/format";
+import { formatDateTime, formatVietnamesePhone } from "@/shared/lib/format";
 import { ResetPasswordCard } from "./reset-password-card";
 import {
   ROLE_ORIGIN_HINT,
@@ -61,7 +61,19 @@ export const UserEdit = () => {
     refineCore: { onFinish, query },
     ...form
   } = useForm({
-    refineCoreProps: {},
+    refineCoreProps: {
+      // Shown as people write it (0…), as on the detail screen (KAN-55). Done on the
+      // loaded record itself: Refine writes it into the fields after any reset here.
+      // The API accepts either spelling and compares them normalised.
+      queryOptions: {
+        select: (result) => {
+          const record = result.data as User | undefined;
+          return record?.phone
+            ? { ...result, data: { ...record, phone: formatVietnamesePhone(record.phone) } }
+            : result;
+        },
+      },
+    },
   });
 
   const user = query?.data?.data as User | undefined;

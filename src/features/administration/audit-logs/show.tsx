@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/shared/ui/badge";
 import { formatDateTime } from "@/shared/lib/format";
 import { humanizeResource } from "@/domains/permission/types";
-import { AUDIT_ACTION_LABELS, type AuditEntry } from "./types";
+import { AUDIT_ACTION_LABELS, auditSubject, type AuditEntry } from "./types";
 
 /** Audit Log Details (FE-20): one event with the state before and after it. */
 export const AuditLogShow = () => {
@@ -49,7 +49,7 @@ export const AuditLogShow = () => {
             <DetailRow label="Dữ liệu">
               {entry ? (
                 `${humanizeResource(entry.entityType)}${
-                  entry.entityId != null ? ` #${entry.entityId}` : ""
+                  auditSubject(entry) ? ` ${auditSubject(entry)}` : ""
                 }`
               ) : (
                 <EmptyValue />

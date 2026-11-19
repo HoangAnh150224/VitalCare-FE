@@ -1,3 +1,4 @@
+import type { DataProvider, HttpError } from "@refinedev/core";
 import { createSimpleRestDataProvider } from "@refinedev/rest/simple-rest";
 
 import { API_URL } from "./constants";
@@ -15,7 +16,7 @@ import {
  * The two ky hooks below are the whole of the authentication story for data
  * requests: no page, resource or hook ever sees a token.
  */
-export const { dataProvider, kyInstance } = createSimpleRestDataProvider({
+const rest = createSimpleRestDataProvider({
   apiURL: API_URL,
   kyOptions: {
     // ky retries failed requests by default. Retrying a 401 would race the
@@ -138,3 +139,70 @@ export const { dataProvider, kyInstance } = createSimpleRestDataProvider({
     },
   },
 });
+
+export const { kyInstance } = rest;
+
+/**
+ * What a detail screen calls the record it is about, for the sentence below.
+ *
+ * Singular nouns, not the menu labels in `app/resources` ("Nhật ký hoạt động",
+ * "Quản lí phòng khám"): the sentence is about one record.
+ */
+const RECORD_NOUNS: Record<string, string> = {
+  users: "Người dùng",
+  roles: "Vai trò",
+  permissions: "Quyền",
+  row_level_policies: "Chính sách phạm vi dữ liệu",
+  audit_logs: "Hoạt động",
+  clinics: "Phòng khám",
+  organizations: "Tổ chức",
+  departments: "Phòng ban",
+  customers: "Khách hàng",
+  employees: "Nhân viên",
+  appointments: "Lượt đăng ký khám",
+  my_appointments: "Lượt đăng ký khám",
+  devices: "Thiết bị",
+  alerts: "Cảnh báo",
+  alert_rules: "Quy tắc cảnh báo",
+  invoices: "Hóa đơn",
+  medical_services: "Dịch vụ y tế",
+  service_orders: "Chỉ định dịch vụ",
+  clinical_encounters: "Lần khám",
+  licenses: "Chứng chỉ hành nghề",
+  first_aid_articles: "Nội dung sơ cứu",
+  monitoring_assignments: "Phân công theo dõi",
+  notifications: "Thông báo",
+  tasks: "Công việc",
+  blog_posts: "Bài viết",
+  categories: "Danh mục",
+};
+
+/**
+ * The REST data provider, with one change: a record that is not there says so
+ * in Vietnamese.
+ *
+ * Every detail and edit screen reads its record through `getOne` (`useShow`,
+ * `useForm`), and Refine toasts the error's `message` as the description under
+ * "Lỗi (mã trạng thái: …)". The API's 404 text is English ("User with id 5 was
+ * not found"), and an id the API cannot even parse ("abc" for a numeric id)
+ * comes back as a 400 — to the person who edited the URL, both mean the same
+ * thing. Rewritten here once, so every screen gets it and still shows it in
+ * one place: the toast. A screen that draws its own not-found state already
+ * passes `errorNotification: false`, so it never sees this text twice.
+ */
+export const dataProvider: DataProvider = {
+  ...rest.dataProvider,
+  getOne: async (params) => {
+    try {
+      return await rest.dataProvider.getOne(params);
+    } catch (error) {
+      const status = (error as HttpError)?.statusCode;
+      if (status !== 404 && status !== 400) throw error;
+      const noun = RECORD_NOUNS[params.resource] ?? "Bản ghi";
+      throw {
+        ...(error as HttpError),
+        message: `${noun} với ID: ${params.id} không tồn tại.`,
+      };
+    }
+  },
+};
