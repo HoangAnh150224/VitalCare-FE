@@ -19,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
+import { getRefreshToken } from "@/shared/api/session";
 import { buttonVariants } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
@@ -135,6 +136,15 @@ export function UnsavedChangesGuard({
 
   const hold = React.useCallback((run: () => void) => {
     if (replaying.current || !warnWhenRef.current) {
+      run();
+      return;
+    }
+    // Signed out (the logout button, or a session that ran out): the edits went
+    // with the session, and the page behind is already the signed-out one, so
+    // "stay on this page" has nothing left to keep. Refine's logout navigates
+    // with `push` only after the session is cleared.
+    if (!getRefreshToken()) {
+      setWarnWhenRef.current?.(false);
       run();
       return;
     }

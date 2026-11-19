@@ -84,6 +84,11 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ["Pick a profile of the same account", "Chọn hồ sơ thuộc cùng tài khoản."],
   ["Pick a profile", "Chọn hồ sơ người khám."],
   [
+    "Fill in this profile's date of birth, gender and ID number",
+    "Hồ sơ này chưa có đủ ngày sinh, giới tính và số CCCD. Bổ sung trước khi đăng ký khám.",
+  ],
+  // The wording before KAN-69, from an API not yet redeployed.
+  [
     "Fill in this profile's date of birth and gender",
     "Hồ sơ này chưa có ngày sinh hoặc giới tính. Bổ sung trước khi đăng ký khám.",
   ],

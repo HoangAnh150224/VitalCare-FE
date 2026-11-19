@@ -62,6 +62,9 @@ export function BookingFields({
     [profilesResult?.data]
   );
   const patient = profiles.find((profile) => String(profile.id) === patientId);
+  // KAN-69: the API's `complete` now also asks for the ID number; checked here too so the
+  // form says it before the API has to.
+  const patientIncomplete = Boolean(patient) && (!patient?.complete || !patient?.nationalId?.trim());
 
   // The owner themselves until somebody chooses otherwise.
   useEffect(() => {
@@ -75,6 +78,8 @@ export function BookingFields({
     resource: "clinics",
     optionLabel: "name",
     optionValue: "id",
+    // KAN-47: a clinic that has stopped operating takes no new visits, so it is not offered.
+    filters: [{ field: "operatingStatus", operator: "eq", value: "OPERATING" }],
     pagination: { mode: "off" },
   });
 
@@ -87,20 +92,26 @@ export function BookingFields({
   }, [clinicOptions, getValues, setValue]);
 
 
-  const { doctors, isLoading: doctorsLoading } = useClinicDoctors(
+  const { doctors, isLoading: doctorsLoading, isError: doctorsError } = useClinicDoctors(
     clinicId,
     date
   );
   // Whether the day can be had at all, counted as the API will count it when the visit is registered.
   const clinicDay = useClinicDay(clinicId || undefined, date || undefined);
-  const dayKnown = Boolean(date && clinicId) && !doctorsLoading && !clinicDay.isLoading;
-  const dayClosed = dayKnown && !clinicDay.open ? closedDayReason(doctors, date, clinicToday()) : null;
+  // A lookup that failed says nothing about the day: it is not "no doctor".
+  const dayFailed = Boolean(date && clinicId) && (doctorsError || clinicDay.isError);
+  const dayKnown = Boolean(date && clinicId) && !dayFailed && !doctorsLoading && !clinicDay.isLoading;
+  const dayClosed = dayFailed
+    ? "Chưa tải được lịch khám của ngày này. Vui lòng thử lại sau."
+    : dayKnown && !clinicDay.open
+      ? closedDayReason(doctors, date, clinicToday())
+      : null;
   // Said on the date field as soon as it is known, not first on pressing the button.
   useEffect(() => {
-    if (dayKnown) {
+    if (dayKnown || dayFailed) {
       void trigger("appointmentDate");
     }
-  }, [dayKnown, dayClosed, trigger]);
+  }, [dayKnown, dayFailed, dayClosed, trigger]);
 
   return (
     <>
@@ -111,8 +122,8 @@ export function BookingFields({
           rules={{
             required: "Vui lòng chọn người tới khám",
             validate: () =>
-              patient?.complete !== false ||
-              "Hồ sơ này chưa có ngày sinh và giới tính",
+              !patientIncomplete ||
+              "Hồ sơ này chưa có đủ ngày sinh, giới tính và số CCCD",
           }}
           render={({ field }) => (
             <FormItem className="md:col-span-8">
@@ -134,9 +145,9 @@ export function BookingFields({
                 </SelectContent>
               </Select>
               <p className="text-muted-foreground text-sm">
-                {patient && !patient.complete ? (
+                {patient && patientIncomplete ? (
                   <>
-                    Hồ sơ này chưa có ngày sinh và giới tính.{" "}
+                    Hồ sơ này chưa có đủ ngày sinh, giới tính và số CCCD.{" "}
                     <Link
                       to={`/my-profiles/edit/${patient.id}`}
                       className="text-foreground underline"
@@ -248,7 +259,7 @@ export function BookingFields({
         )}
       />
       {/* Only when the day cannot be had; it takes no row otherwise. */}
-      {dayClosed && (
+      {dayClosed && !dayFailed && (
         <OpenDayChoices
           days={clinicDay.others}
           onPick={

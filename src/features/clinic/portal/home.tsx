@@ -3,6 +3,7 @@ import {
   CalendarCheck2Icon,
   CalendarPlusIcon,
   ChevronRightIcon,
+  CloudOffIcon,
   FileHeartIcon,
   HeartPulseIcon,
   TriangleAlertIcon,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router";
 
+import { usePortalCanOpen } from "@/shared/components/layout/portal-layout";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import type { Appointment } from "@/domains/appointment/types";
@@ -66,21 +68,28 @@ export const PortalHome = () => {
   const { invoices, query: invoicesQuery } = useMyInvoices();
   const unpaidBills = invoices.filter((invoice) => invoice.status === "unpaid").length;
   const loading = visitsQuery.isLoading || profilesQuery.isLoading || invoicesQuery.isLoading;
+  // KAN-71: a list that failed to load is not an empty one; no "0 người" for an account that has a profile.
+  const failed = [visitsQuery, profilesQuery, invoicesQuery].filter((query) => query.isError);
+  const notLoaded = "Chưa tải được";
 
-  const shortcuts: { to: string; label: string; note: string; icon: typeof CalendarCheck2Icon; tone: Tone }[] = [
-    { to: "/my-appointments", label: "Lượt khám", note: `${upcoming.length} sắp tới`, icon: CalendarCheck2Icon, tone: "teal" },
-    { to: "/my-results", label: "Kết quả", note: `${results} kết quả`, icon: FileHeartIcon, tone: "sky" },
-    { to: "/my-profiles", label: "Hồ sơ", note: `${profiles.length} người`, icon: UsersRoundIcon, tone: "gold" },
-    { to: "/my-sharing", label: "Chia sẻ", note: "Người chăm sóc", icon: Share2Icon, tone: "sky" },
-    { to: "/shared-patients", label: "Chăm sóc", note: "Người thân của tôi", icon: HandHeartIcon, tone: "teal" },
+  const canOpen = usePortalCanOpen();
+  const allShortcuts: { to: string; label: string; note: string; icon: typeof CalendarCheck2Icon; tone: Tone; resource: string }[] = [
+    { to: "/my-appointments", label: "Lượt khám", note: visitsQuery.isError ? notLoaded : `${upcoming.length} sắp tới`, icon: CalendarCheck2Icon, tone: "teal", resource: "my_appointments" },
+    { to: "/my-results", label: "Kết quả", note: visitsQuery.isError ? notLoaded : `${results} kết quả`, icon: FileHeartIcon, tone: "sky", resource: "my_appointments" },
+    { to: "/my-profiles", label: "Hồ sơ", note: profilesQuery.isError ? notLoaded : `${profiles.length} người`, icon: UsersRoundIcon, tone: "gold", resource: "my_profiles" },
+    { to: "/my-sharing", label: "Chia sẻ", note: "Người chăm sóc", icon: Share2Icon, tone: "sky", resource: "my_sharing" },
+    { to: "/shared-patients", label: "Chăm sóc", note: "Người thân của tôi", icon: HandHeartIcon, tone: "teal", resource: "shared_patients" },
     {
       to: "/my-payments",
       label: "Thanh toán",
       note: invoicesQuery.isError ? "Xem hóa đơn" : unpaidBills > 0 ? `${unpaidBills} chưa trả` : "Đã trả hết",
       icon: WalletIcon,
       tone: "green",
+      resource: "my_appointments",
     },
   ];
+  // KAN-70: a guest is not shown the way in to a screen its account cannot open.
+  const shortcuts = allShortcuts.filter((item) => canOpen(item.resource));
 
   return (
     <div className="screen-enter screen-enter-stagger flex flex-col gap-8">
@@ -94,7 +103,7 @@ export const PortalHome = () => {
           {greeting(new Date().getHours())}, {firstName ?? "bạn"}
         </h1>
         <p className="relative mt-2 max-w-md text-white/90">
-          {visitsQuery.isLoading
+          {visitsQuery.isLoading || visitsQuery.isError
             ? " "
             : next
               ? `Lượt khám tiếp theo: ${formatVisitDay(next.appointmentDate)}, số ${formatQueueNumber(next.queueNumber)}.`
@@ -128,6 +137,18 @@ export const PortalHome = () => {
         ))}
       </nav>
 
+      {failed.length > 0 && (
+        <div role="alert" className="card-soft flex flex-col items-start gap-3 px-5 py-4 sm:flex-row sm:items-center">
+          <CloudOffIcon className="text-destructive size-5 shrink-0" />
+          <p className="flex-1 text-sm">
+            Không thể tải dữ liệu trang chủ. Vui lòng kiểm tra kết nối mạng và thử lại.
+          </p>
+          <Button variant="outline" className="rounded-full" onClick={() => failed.forEach((query) => void query.refetch())}>
+            Thử lại
+          </Button>
+        </div>
+      )}
+
       {incomplete > 0 && (
         <Link
           to="/my-profiles"
@@ -153,6 +174,9 @@ export const PortalHome = () => {
       >
         {visitsQuery.isLoading ? (
           <Skeleton className="h-40 rounded-3xl" />
+        ) : visitsQuery.isError ? (
+          // The failure and its retry are said once, in the alert above (RULE-35).
+          <p className="text-muted-foreground text-sm">Chưa tải được.</p>
         ) : next ? (
           <AppointmentTicket
             appointment={next}

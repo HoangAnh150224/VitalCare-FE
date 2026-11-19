@@ -22,7 +22,9 @@ export function useClinicDoctors(clinicId: string | undefined, date: string | un
     },
   });
   const doctors = Array.isArray(result?.data) ? result.data : [];
-  return { doctors, isLoading: query.isLoading };
+  // Placeholder data is the previous day's answer (Refine keeps it while the new
+  // day loads): judging the new day by it says "no doctor" for a day that has one.
+  return { doctors, isLoading: query.isLoading || query.isPlaceholderData, isError: query.isLoadingError };
 }
 
 export const doctorLabel = (doctor: Pick<DoctorAvailability, "fullName" | "specialty">) =>
@@ -94,7 +96,10 @@ export function useClinicDay(clinicId: string | undefined, date: string | undefi
   return {
     open: days[0]?.date === date,
     others: days.filter((day) => day.date !== date).slice(0, 5),
-    isLoading: query.isLoading,
+    // As in useClinicDoctors: the previous day's list is not this day's.
+    isLoading: query.isLoading || query.isPlaceholderData,
+    // Only a day never loaded: one failed 30-second poll keeps what was known (TanStack keeps the data).
+    isError: query.isLoadingError,
   };
 }
 

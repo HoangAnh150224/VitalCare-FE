@@ -3,8 +3,8 @@ import "@fontsource/be-vietnam-pro/latin-600.css";
 import "@fontsource/be-vietnam-pro/vietnamese-800.css";
 import "@fontsource/be-vietnam-pro/latin-800.css";
 
-import type { PropsWithChildren } from "react";
-import { useGetIdentity, useLogout } from "@refinedev/core";
+import { useCallback, type PropsWithChildren } from "react";
+import { useGetIdentity, useLogout, usePermissions } from "@refinedev/core";
 import {
   CalendarCheck2Icon,
   CircleUserRoundIcon,
@@ -33,22 +33,42 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { cn } from "@/shared/lib/utils";
+import { permissionFor } from "@/shared/lib/permissions";
 import { formatVietnamesePhone } from "@/shared/lib/format";
 import { initials } from "@/shared/lib/format";
 
-type NavItem = { to: string; label: string; icon: LucideIcon };
+type NavItem = { to: string; label: string; icon: LucideIcon; /** The resource its route opens; none for one every account has. */ resource?: string };
 
 /** The portal's whole map: a customer has these screens and nothing else. */
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Trang chủ", icon: HouseIcon },
-  { to: "/my-appointments", label: "Lượt khám", icon: CalendarCheck2Icon },
-  { to: "/my-results", label: "Kết quả", icon: FileHeartIcon },
-  { to: "/my-health", label: "Sức khỏe", icon: HeartPulseIcon },
-  { to: "/my-conversations", label: "Tin nhắn", icon: MessagesSquareIcon },
-  { to: "/my-profiles", label: "Hồ sơ", icon: UsersRoundIcon },
-  { to: "/my-devices", label: "Thiết bị", icon: WatchIcon },
-  { to: "/shared-patients", label: "Chăm sóc", icon: HandHeartIcon },
+  { to: "/my-appointments", label: "Lượt khám", icon: CalendarCheck2Icon, resource: "my_appointments" },
+  { to: "/my-results", label: "Kết quả", icon: FileHeartIcon, resource: "my_appointments" },
+  { to: "/my-health", label: "Sức khỏe", icon: HeartPulseIcon, resource: "my_vital_signs" },
+  { to: "/my-conversations", label: "Tin nhắn", icon: MessagesSquareIcon, resource: "my_conversations" },
+  { to: "/my-profiles", label: "Hồ sơ", icon: UsersRoundIcon, resource: "my_profiles" },
+  { to: "/my-devices", label: "Thiết bị", icon: WatchIcon, resource: "my_devices" },
+  { to: "/shared-patients", label: "Chăm sóc", icon: HandHeartIcon, resource: "shared_patients" },
 ];
+
+/**
+ * Whether this account may open a portal screen: the list permission its route's
+ * `<CanAccess>` asks for, read as the staff sidebar reads it. A self-registered
+ * guest holds no `my_vital_signs`, `my_devices` or `my_sharing`, so it is not
+ * offered the way in to a page that would only say 403.
+ */
+export function usePortalCanOpen() {
+  const { data: permissions } = usePermissions<string[]>({});
+  return useCallback(
+    (resource: string | undefined) => {
+      // Not known yet: offered, as the sidebar does, rather than a menu that grows.
+      if (!permissions) return true;
+      const required = permissionFor(resource, "list");
+      return !required || permissions.includes(required);
+    },
+    [permissions]
+  );
+}
 
 /**
  * The phone's tab bar adds the account, which the desktop keeps behind the
@@ -76,6 +96,9 @@ export function PortalLayout({ children }: PropsWithChildren) {
   const { pathname } = useLocation();
   const isActive = (to: string) =>
     pathname === to || pathname.startsWith(`${to}/`);
+  const canOpen = usePortalCanOpen();
+  const nav = NAV.filter((item) => canOpen(item.resource));
+  const tabs = TABS.filter((item) => canOpen(item.resource));
 
   return (
     <ShellVariantContext.Provider value="portal">
@@ -118,7 +141,7 @@ export function PortalLayout({ children }: PropsWithChildren) {
               aria-label="Điều hướng chính"
               className="hidden min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] md:flex"
             >
-              {NAV.map((item) => (
+              {nav.map((item) => (
                 <Link
                   key={item.to}
                   to={item.to}
@@ -146,7 +169,7 @@ export function PortalLayout({ children }: PropsWithChildren) {
         <main
           id="main-content"
           className={cn(
-            "relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8",
+            "relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 pt-6 sm:px-6 sm:pt-8",
             // Room for the tab bar, which sits over the bottom of the page on a phone.
             "pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10"
           )}
@@ -162,8 +185,9 @@ export function PortalLayout({ children }: PropsWithChildren) {
             "pb-[env(safe-area-inset-bottom)]"
           )}
         >
-          <ul className="grid grid-cols-6">
-            {TABS.map((item) => {
+          {/* As many columns as tabs this account has: six for a patient, fewer for a guest. */}
+          <ul className="grid" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+            {tabs.map((item) => {
               const active = isActive(item.to);
               return (
                 <li key={item.to}>
