@@ -3,6 +3,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { kyInstance } from "@/shared/api/data";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/shared/ui/alert-dialog";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
@@ -69,6 +80,8 @@ export const MySharing = () => {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
   const [edit, setEdit] = useState<Draft>(EMPTY);
+  // Kept apart from the grant form's: a refused edit is shown on the share being edited.
+  const [editError, setEditError] = useState<string | null>(null);
 
   const { data } = useQuery({
     queryKey: ["my_sharing"],
@@ -79,13 +92,13 @@ export const MySharing = () => {
   const history = all.filter((p) => p.status !== "ACTIVE");
   const refresh = () =>
     void queryClient.invalidateQueries({ queryKey: ["my_sharing"] });
-  const failed = async (e: unknown) => {
+  const refusalText = (e: unknown) => {
     // Refine's data provider hands refusals on as its HttpError: {message, statusCode, errors}.
     const body = (e as { data?: unknown }).data ?? e;
     const message =
       (body as { message?: string; errors?: Record<string, string> } | null)
         ?.message ?? "";
-    setError(
+    return (
       /two caregivers/.test(message)
         ? "Chỉ được chia sẻ cho tối đa 2 người cùng lúc. Hãy thu hồi một người trước."
         : /already has access/.test(message)
@@ -116,7 +129,7 @@ export const MySharing = () => {
       notify?.({ type: "success", message: "Đã chia sẻ" });
       refresh();
     },
-    onError: failed,
+    onError: (e) => setError(refusalText(e)),
   });
   const update = useMutation({
     mutationFn: (id: number) =>
@@ -130,10 +143,11 @@ export const MySharing = () => {
       }),
     onSuccess: () => {
       setEditing(null);
+      setEditError(null);
       notify?.({ type: "success", message: "Đã cập nhật quyền" });
       refresh();
     },
-    onError: failed,
+    onError: (e) => setEditError(refusalText(e)),
   });
   const revoke = useMutation({
     mutationFn: (id: number) =>
@@ -213,6 +227,7 @@ export const MySharing = () => {
                   variant="outline"
                   onClick={() => {
                     setEditing(p.id);
+                    setEditError(null);
                     setEdit({
                       caregiverPhone: p.caregiverPhone,
                       emergencyPhone: p.emergencyPhone,
@@ -225,14 +240,26 @@ export const MySharing = () => {
                 >
                   Sửa
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => revoke.mutate(p.id)}
-                  disabled={revoke.isPending}
-                >
-                  Thu hồi
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="sm" variant="ghost" disabled={revoke.isPending}>
+                      Thu hồi
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Thu hồi chia sẻ với {p.caregiverName}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Người này sẽ không còn xem được sức khỏe của {p.customerName} và không nhận cảnh báo khẩn nữa.
+                        Muốn chia sẻ lại phải cấp mới.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Không</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => revoke.mutate(p.id)}>Thu hồi</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </span>
             </div>
             {editing === p.id && (
@@ -255,6 +282,11 @@ export const MySharing = () => {
                     }
                   />
                 </div>
+                {editError && (
+                  <p className="text-destructive text-sm" data-testid="sharing-edit-error">
+                    {editError}
+                  </p>
+                )}
                 <Button
                   size="sm"
                   className="self-start"

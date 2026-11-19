@@ -182,14 +182,17 @@ export function CancelOrderDialog({
   onConfirm: (reason: string) => void;
 }) {
   const [reason, setReason] = useState("");
+  // Radix only reports closes it caused itself, so "Không huỷ" goes through
+  // here too — otherwise the next order opens with this one's reason.
+  const close = () => {
+    setReason("");
+    onClose();
+  };
   return (
     <Dialog
       open={order != null}
       onOpenChange={(next) => {
-        if (!next) {
-          setReason("");
-          onClose();
-        }
+        if (!next) close();
       }}
     >
       <DialogContent>
@@ -205,7 +208,7 @@ export function CancelOrderDialog({
           maxLength={500}
         />
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={close}>
             Không huỷ
           </Button>
           <Button

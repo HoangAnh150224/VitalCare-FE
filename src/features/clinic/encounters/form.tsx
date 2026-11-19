@@ -160,7 +160,8 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
       control={form.control}
       name={name}
       rules={{
-        required: extra?.required ?? false,
+        // Trimmed, so a field of spaces alone does not count as filled in.
+        validate: (value) => !extra?.required || (value ?? "").trim() !== "" || extra.required,
         maxLength: { value: max, message: `Tối đa ${max} ký tự` },
       }}
       render={({ field }) => (
@@ -190,7 +191,7 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
           // Only what the API takes: an edit's loaded record carries far more.
           onFinish({
             ...patient,
-            chiefComplaint: values.chiefComplaint,
+            chiefComplaint: (values.chiefComplaint ?? "").trim(),
             examinationFindings: values.examinationFindings ?? "",
             clinicalNote: values.clinicalNote ?? "",
             diagnosis: values.diagnosis ?? "",

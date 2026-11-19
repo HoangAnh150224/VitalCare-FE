@@ -12,6 +12,17 @@ import { WatchIcon } from "lucide-react";
 import { Link } from "react-router";
 
 import { API_URL } from "@/shared/api/constants";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/shared/ui/alert-dialog";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import {
@@ -102,20 +113,35 @@ export function DevicePanel({ customer }: { customer: Customer }) {
                 </span>
               </div>
               {canAssign && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={mutation.isPending}
-                  onClick={() =>
-                    run(
-                      `${API_URL}/customers/${customer.id}/devices/${current.id}/return`,
-                      {},
-                      `Đã thu hồi ${current.device?.deviceCode}`
-                    )
-                  }
-                >
-                  Thu hồi
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="sm" variant="outline" disabled={mutation.isPending}>
+                      Thu hồi
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Thu hồi thiết bị {current.device?.deviceCode}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Thiết bị sẽ ngừng gửi chỉ số của bệnh nhân này và trở về kho.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Không</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() =>
+                          run(
+                            `${API_URL}/customers/${customer.id}/devices/${current.id}/return`,
+                            {},
+                            `Đã thu hồi ${current.device?.deviceCode}`
+                          )
+                        }
+                      >
+                        Thu hồi
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </div>
           ) : (

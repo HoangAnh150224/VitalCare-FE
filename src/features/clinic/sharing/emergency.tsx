@@ -20,7 +20,9 @@ export const EmergencyShow = () => {
     queryKey: ["emergency_alerts", id],
     queryFn: () =>
       kyInstance.get(`emergency_alerts/${id}`).json<EmergencyNotice>(),
-    refetchInterval: 5_000,
+    // Only a PENDING notice can still change on its own (the sweep escalates
+    // it, calls included, in one go); once acknowledged or escalated, stop.
+    refetchInterval: (query) => (query.state.data?.status === "PENDING" ? 5_000 : false),
   });
   const ack = useMutation({
     mutationFn: () =>

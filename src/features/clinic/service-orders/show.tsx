@@ -37,7 +37,9 @@ export const ServiceOrderShow = () => {
   const actions = useOrderActions(refresh);
   const [draft, setDraft] = useState("");
   // The draft starts from what is saved, and follows it when another save lands.
-  useEffect(() => setDraft(order?.resultText ?? ""), [order?.resultText]);
+  // Keyed on the id too: moving to another order with the same text (often
+  // none) must not carry this order's draft over to be saved onto that one.
+  useEffect(() => setDraft(order?.resultText ?? ""), [order?.id, order?.resultText]);
 
   const writable = (canWrite?.can ?? false) && order?._can?.write !== false;
   const working = order?.status === "in_progress" || order?.status === "result_ready";

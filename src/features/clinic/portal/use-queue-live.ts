@@ -70,9 +70,12 @@ export function useMyQueueLive() {
 
   useEffect(() => {
     if (!visits) return;
-    const called = visits.filter(
-      (visit) => visit.status === "in_exam" && seen.current.get(String(visit.id)) === "ready_for_examination"
-    );
+    // Any move into the room counts — a missed poll can skip "ready_for_examination"
+    // and go straight from "checked_in" — but not a visit seen for the first time.
+    const called = visits.filter((visit) => {
+      const before = seen.current.get(String(visit.id));
+      return visit.status === "in_exam" && before !== undefined && before !== "in_exam";
+    });
     for (const visit of visits) seen.current.set(String(visit.id), visit.status);
     if (called.length === 0) return;
     for (const visit of called) {

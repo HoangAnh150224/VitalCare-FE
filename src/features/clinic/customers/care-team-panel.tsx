@@ -10,6 +10,17 @@ import {
 import { UserPlusIcon, UsersIcon } from "lucide-react";
 
 import { API_URL } from "@/shared/api/constants";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/shared/ui/alert-dialog";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import {
@@ -25,6 +36,7 @@ import type { Customer } from "@/domains/customer/types";
 import type { CareTeamMember } from "@/domains/assignment/types";
 import type { Employee } from "@/domains/employee/types";
 import { isClinicalStaff, STAFF_TYPE_LABELS } from "@/domains/employee/types";
+import { translateBillingMessage } from "@/domains/billing/messages";
 
 const JSON_HEADERS = { headers: { "Content-Type": "application/json" } };
 
@@ -73,8 +85,16 @@ export function CareTeamPanel({ customer }: { customer: Customer }) {
           void query.refetch();
           open?.({ type: "success", message });
         },
-        onError: (error: HttpError) =>
-          open?.({ type: "error", message: error.message ?? "Không thực hiện được" }),
+        onError: (error: HttpError) => {
+          // The API answers in English; a sentence with no translation yet gets
+          // a generic Vietnamese one rather than reaching the user as is.
+          const translated = error.message ? translateBillingMessage(error.message) : undefined;
+          open?.({
+            type: "error",
+            message:
+              translated && translated !== error.message ? translated : "Không thực hiện được. Vui lòng thử lại.",
+          });
+        },
       }
     );
 
@@ -103,20 +123,35 @@ export function CareTeamPanel({ customer }: { customer: Customer }) {
                 </span>
               </div>
               {canAssign && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={mutation.isPending}
-                  onClick={() =>
-                    run(
-                      `${API_URL}/customers/${customer.id}/care-team/${member.id}/end`,
-                      {},
-                      `Đã gỡ ${member.fullName} khỏi nhóm chăm sóc`
-                    )
-                  }
-                >
-                  Kết thúc
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="sm" variant="outline" disabled={mutation.isPending}>
+                      Kết thúc
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Kết thúc theo dõi của {member.fullName}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Nhân viên này sẽ không còn theo dõi bệnh nhân. Muốn theo dõi lại phải thêm vào nhóm lần nữa.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Không</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() =>
+                          run(
+                            `${API_URL}/customers/${customer.id}/care-team/${member.id}/end`,
+                            {},
+                            `Đã gỡ ${member.fullName} khỏi nhóm chăm sóc`
+                          )
+                        }
+                      >
+                        Kết thúc
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </div>
           ))}

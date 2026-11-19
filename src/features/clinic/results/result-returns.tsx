@@ -5,6 +5,17 @@ import { Link } from "react-router";
 
 import { kyInstance } from "@/shared/api/data";
 import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/shared/ui/alert-dialog";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
@@ -134,23 +145,54 @@ export const ResultReturnList = () => {
                           >
                             Lưu lịch mới
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setRescheduling(null);
+                              setAt("");
+                            }}
+                          >
+                            Thôi
+                          </Button>
                         </>
                       ) : (
                         <>
                           <Button size="sm" disabled={act.isPending} onClick={() => act.mutate({ id: r.id, step: "arrive" })}>
                             Xác nhận đã đến
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => setRescheduling(r.id)}>
-                            Đặt lại lịch
-                          </Button>
                           <Button
                             size="sm"
-                            variant="ghost"
-                            disabled={act.isPending}
-                            onClick={() => act.mutate({ id: r.id, step: "cancel" })}
+                            variant="outline"
+                            onClick={() => {
+                              // One draft at a time: a time picked on another row is not carried over.
+                              setRescheduling(r.id);
+                              setAt("");
+                            }}
                           >
-                            Huỷ
+                            Đặt lại lịch
                           </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="ghost" disabled={act.isPending}>
+                                Huỷ
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Huỷ hẹn trả kết quả của {r.customerName}?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Lịch hẹn {formatDateTime(r.scheduledAt)} sẽ bị huỷ.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Không</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => act.mutate({ id: r.id, step: "cancel" })}>
+                                  Huỷ hẹn
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </>
                       )}
                     </div>

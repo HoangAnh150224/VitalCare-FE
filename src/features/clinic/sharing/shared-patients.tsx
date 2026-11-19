@@ -74,7 +74,9 @@ export const SharedPatientShow = () => {
     queryFn: () =>
       kyInstance.get(`shared_patients/${customerId}/alerts`).json<Alert[]>(),
     enabled: Boolean(grant?.shareAlerts),
-    refetchInterval: 30_000,
+    // Each read is audited server-side, so poll gently; TanStack already skips
+    // the interval while the tab is hidden (refetchIntervalInBackground: false).
+    refetchInterval: 60_000,
   });
   const { data: visits } = useQuery({
     queryKey: ["shared_patients", customerId, "appointments"],

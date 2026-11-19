@@ -221,8 +221,8 @@ export const CustomerShow = () => {
           monitoring that follows activation depends on. */}
       {record && (
         <div className="grid min-w-0 gap-4 lg:grid-cols-2">
-          <CareTeamPanel customer={record} />
-          <DevicePanel customer={record} />
+          <CareTeamPanel key={record.id} customer={record} />
+          <DevicePanel key={record.id} customer={record} />
         </div>
       )}
 

@@ -53,7 +53,6 @@ export const ViewAsAllPatients = () => {
     () => (query.data?.data ?? []).filter((employee) => isClinicalStaff(employee.staffType)),
     [query.data?.data],
   );
-  const patientPath = useCallback((id: number) => `/customers/show/${id}`, []);
   const narrowedTo = employeeId === "all" ? undefined : Number(employeeId);
 
   return (
@@ -82,7 +81,7 @@ export const ViewAsAllPatients = () => {
         resource="view_as/patients"
         employeeId={narrowedTo}
         showCareTeam
-        patientPath={patientPath}
+        readOnly
       />
     </div>
   );
@@ -103,9 +102,26 @@ export const ViewAsFrontDesk = () => {
 
   // One receptionist: wait for their record, then lock every list to their clinic.
   if (employeeId && query.isLoading) {
-    return <ViewAsBanner role="Lễ tân" />;
+    return (
+      <div className="flex flex-col gap-4">
+        <ViewAsBanner role="Lễ tân" />
+        <p className="text-muted-foreground text-sm">Đang tải...</p>
+      </div>
+    );
   }
   const clinicId = employeeId ? (receptionist?.clinicId ?? undefined) : undefined;
+  // No clinic to lock to (lookup failed, or none on record): an unscoped list
+  // here would show every clinic under this receptionist's name.
+  if (employeeId && clinicId == null) {
+    return (
+      <div className="flex flex-col gap-4">
+        <ViewAsBanner role="Lễ tân" name={receptionist?.fullName} />
+        <p role="alert" className="text-destructive text-sm">
+          Không xác định được phòng khám của nhân viên này.
+        </p>
+      </div>
+    );
+  }
   const name = employeeId
     ? `${receptionist?.fullName ?? ""} (${clinics.nameOf(clinicId)})`
     : "tất cả phòng khám";

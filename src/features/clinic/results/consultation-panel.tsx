@@ -98,6 +98,18 @@ export function ConsultationPanel({ encounter, finishing = false }: { encounter:
     onError: (e) => setError(resultsErrorText(refusal(e))),
   });
 
+  // Leaving without saving drops the draft, so reopening starts from what is on file.
+  const cancel = () => {
+    setEditing(false);
+    setConclusion(encounter.finalConclusion ?? encounter.diagnosis ?? "");
+    setNotes(encounter.consultationNotes ?? "");
+    setMonitor(false);
+    setReason("");
+    setDecision(null);
+    setConsentNote("");
+    setError(null);
+  };
+
   const submit = () => {
     if (offersMonitoring && monitor) {
       if (!reason.trim()) return setError("Nhập lý do chỉ định theo dõi IoMT");
@@ -186,7 +198,7 @@ export function ConsultationPanel({ encounter, finishing = false }: { encounter:
             <Button size="sm" disabled={save.isPending} onClick={submit}>
               {finishing ? "Lưu kết luận và kết thúc lần khám" : "Lưu kết luận"}
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
+            <Button size="sm" variant="outline" onClick={cancel}>
               Huỷ
             </Button>
           </div>

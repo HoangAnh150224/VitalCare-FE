@@ -142,7 +142,8 @@ export const CustomerList = ({ clinicId, readOnly = false }: FrontDeskListProps 
         cell: ({ row }) => (
           <div className="flex gap-1">
             {!readOnly && <EditButton resource="customers" recordItemId={row.original.id} iconOnly size="icon-sm" />}
-            <ShowButton resource="customers" recordItemId={row.original.id} iconOnly size="icon-sm" />
+            {/* Read-only (view-as): no way into the patient page, whose panels assign and end things. */}
+            {!readOnly && <ShowButton resource="customers" recordItemId={row.original.id} iconOnly size="icon-sm" />}
           </div>
         ),
         enableSorting: false,

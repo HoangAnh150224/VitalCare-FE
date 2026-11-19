@@ -2,7 +2,6 @@ import { useTable } from "@refinedev/react-table";
 import { createColumnHelper, getFilteredRowModel, type FilterFn } from "@tanstack/react-table";
 import { SearchIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router";
 
 import {
   actionsColumnWidth,
@@ -10,6 +9,7 @@ import {
   RESIZABLE_COLUMN_DEFAULTS,
 } from "@/shared/components/data-table/data-table";
 import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
+import { Link } from "react-router";
 import { ShowButton } from "@/shared/components/buttons/show";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -55,13 +55,16 @@ const matchesPatient: FilterFn<MyPatient> = (row, _columnId, filter: PatientFilt
  * and no way to see somebody else's caseload.
  *
  * An administrator viewing as a member of staff gets the same table from
- * `view_as`: `resource` points it there and `patientPath` links each row.
+ * `view_as`: `resource` points it there and `patientPath` links each row to
+ * a read-only page. With no such page, `readOnly` drops the link instead, since
+ * a patient's own page has actions an onlooker must not reach.
  * `showCareTeam` lists who follows each patient, for the view of every
  * caseload at once, and `employeeId` narrows that view to one person's.
  */
 type MyPatientListProps = {
   resource?: string;
   patientPath?: (id: number) => string;
+  readOnly?: boolean;
   showCareTeam?: boolean;
   employeeId?: number;
   title?: string;
@@ -71,6 +74,7 @@ type MyPatientListProps = {
 export const MyPatientList = ({
   resource,
   patientPath,
+  readOnly = false,
   showCareTeam = false,
   employeeId,
   title,
@@ -127,22 +131,26 @@ export const MyPatientList = ({
         enableSorting: false,
         cell: ({ getValue }) => <span className="text-sm">{formatDate(getValue())}</span>,
       }),
-      columnHelper.display({
-        id: "actions",
-        header: "Thao tác",
-        enableSorting: false,
-        cell: ({ row }) =>
-          patientPath ? (
-            <Button asChild size="sm" variant="outline">
-              <Link to={patientPath(row.original.id)}>Xem</Link>
-            </Button>
-          ) : (
-            <ShowButton recordItemId={row.original.id} iconOnly size="icon-sm" />
-          ),
-        ...actionsColumnWidth(1),
-      }),
+      ...(readOnly && !patientPath
+        ? []
+        : [
+            columnHelper.display({
+              id: "actions",
+              header: "Thao tác",
+              enableSorting: false,
+              cell: ({ row }) =>
+                patientPath ? (
+                  <Button asChild size="sm" variant="outline">
+                    <Link to={patientPath(row.original.id)}>Xem</Link>
+                  </Button>
+                ) : (
+                  <ShowButton recordItemId={row.original.id} iconOnly size="icon-sm" />
+                ),
+              ...actionsColumnWidth(1),
+            }),
+          ]),
     ];
-  }, [patientPath, showCareTeam]);
+  }, [patientPath, readOnly, showCareTeam]);
 
   const table = useTable({
     columns,

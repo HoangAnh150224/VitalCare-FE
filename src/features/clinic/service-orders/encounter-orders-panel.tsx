@@ -230,7 +230,14 @@ function OrderDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          {/* A programmatic close skips onOpenChange, so it resets here too. */}
+          <Button
+            variant="outline"
+            onClick={() => {
+              reset();
+              onClose();
+            }}
+          >
             Đóng
           </Button>
           <Button onClick={submit} disabled={!serviceId || mutation.isPending}>

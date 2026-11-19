@@ -7,6 +7,17 @@ import { useRef, useState } from "react";
 
 import { kyInstance } from "@/shared/api/data";
 import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/shared/ui/alert-dialog";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
@@ -280,9 +291,25 @@ export const MyLicenses = () => {
                 <Button size="sm" variant="outline" onClick={() => startEdit(l)}>
                   Sửa
                 </Button>
-                <Button size="sm" variant="ghost" disabled={remove.isPending} onClick={() => remove.mutate(l.id)}>
-                  Xoá
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="sm" variant="ghost" disabled={remove.isPending}>
+                      Xoá
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Xoá {l.title}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Giấy tờ và bản scan đi kèm sẽ bị xoá, không khôi phục được.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Không</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => remove.mutate(l.id)}>Xoá</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </Card>
           ))}
