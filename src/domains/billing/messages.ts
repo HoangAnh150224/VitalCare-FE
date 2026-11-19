@@ -44,7 +44,8 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ["This assignment has already ended", "Việc theo dõi này đã kết thúc rồi."],
   // The exam-room board, a poll behind the room
   ["Somebody else is in this room now", "Trong phòng đã là bệnh nhân khác. Bảng vừa được tải lại, vui lòng kiểm tra rồi thao tác lại."],
-  ["Nobody is in this room", "Phòng đang trống. Bảng vừa được tải lại."],
+  ["This visit already has an encounter", "Lượt khám này đã có lần khám (có thể vừa được mở ở tab khác). Quay lại màn Đang khám và bấm “Mở lần khám” thay vì tạo mới."],
+  ["Nobody is in this room","Phòng đang trống. Bảng vừa được tải lại."],
   ["A walk-in is registered for today", "Khám vãng lai chỉ đăng ký cho hôm nay."],
   // Ordering and results
   ["This encounter is concluded", "Lần khám đã hoàn tất nên không chỉ định hay thay đổi dịch vụ được nữa."],
