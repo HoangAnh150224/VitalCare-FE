@@ -2,6 +2,7 @@ import { useShow } from "@refinedev/core";
 import { Link } from "react-router";
 
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
+import { DeviceCode } from "../devices/device-code";
 import {
   DetailList,
   DetailPanel,
@@ -48,12 +49,7 @@ export const SyncFailureShow = () => {
             </DetailRow>
             <DetailRow label="Thiết bị">
               {failure?.deviceId ? (
-                <Link
-                  to={`/devices/show/${failure.deviceId}`}
-                  className="font-mono hover:underline"
-                >
-                  {failure.deviceCode}
-                </Link>
+                <DeviceCode id={failure.deviceId} code={failure.deviceCode} />
               ) : (
                 <EmptyValue />
               )}

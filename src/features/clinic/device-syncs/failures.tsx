@@ -20,6 +20,8 @@ import {
   ListViewHeader,
 } from "@/shared/components/views/list-view";
 import { ShowButton } from "@/shared/components/buttons/show";
+import { ExcelTableExport } from "@/shared/components/data-table/excel-export";
+import { DeviceCode } from "../devices/device-code";
 import { Badge } from "@/shared/ui/badge";
 import { formatDateTime } from "@/shared/lib/format";
 import {
@@ -61,12 +63,7 @@ export const SyncFailureList = () => {
         enableSorting: false,
         cell: ({ row }) =>
           row.original.deviceId ? (
-            <Link
-              to={`/devices/show/${row.original.deviceId}`}
-              className="font-mono hover:underline"
-            >
-              {row.original.deviceCode}
-            </Link>
+            <DeviceCode id={row.original.deviceId} code={row.original.deviceCode} />
           ) : (
             "—"
           ),
@@ -151,6 +148,24 @@ export const SyncFailureList = () => {
               search={<DataTableQuickFilter table={table} placeholder="Tìm theo mã thiết bị, mã bản ghi hoặc lý do lỗi..." />}
               filters={
                 <DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />
+              }
+              exportAction={
+                <ExcelTableExport<SyncFailure>
+                  table={table}
+                  resource="sync_failures"
+                  title="Bản ghi đồng bộ lỗi"
+                  columns={[
+                    { id: "lastAttemptAt", label: "Lần thử gần nhất", width: 22, value: (f) => formatDateTime(f.lastAttemptAt) },
+                    { id: "lastAttemptAt", label: "Nhận lần đầu", width: 22, value: (f) => formatDateTime(f.receivedAt) },
+                    { id: "deviceCode", label: "Thiết bị", width: 18, numFmt: "@", value: (f) => f.deviceCode ?? "—" },
+                    { id: "deviceCode", label: "Mã bản ghi", width: 24, numFmt: "@", value: (f) => f.clientRecordId ?? "—" },
+                    { id: "deviceCode", label: "Lần đồng bộ", width: 12, value: (f) => f.batchId },
+                    { id: "reason", label: "Lý do", width: 40, value: (f) => f.reason },
+                    { id: "attempts", label: "Số lần thử", width: 12, value: (f) => f.attempts },
+                    { id: "status", label: "Trạng thái", width: 16, value: (f) => SYNC_FAILURE_STATUS_LABELS[f.status] ?? f.status },
+                    { id: "status", label: "Xử lý xong lúc", width: 22, value: (f) => (f.resolvedAt ? formatDateTime(f.resolvedAt) : "—") },
+                  ]}
+                />
               }
             />
             <DataTableFilterChips table={table} fields={FILTER_FIELDS} />

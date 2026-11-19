@@ -20,6 +20,8 @@ import {
   ListViewHeader,
 } from "@/shared/components/views/list-view";
 import { ShowButton } from "@/shared/components/buttons/show";
+import { ExcelTableExport } from "@/shared/components/data-table/excel-export";
+import { DeviceCode } from "../devices/device-code";
 import { Badge } from "@/shared/ui/badge";
 import { formatDateTime } from "@/shared/lib/format";
 import {
@@ -74,12 +76,7 @@ export const DeviceSyncList = () => {
         enableSorting: false,
         cell: ({ row }) =>
           row.original.deviceId ? (
-            <Link
-              to={`/devices/show/${row.original.deviceId}`}
-              className="font-mono hover:underline"
-            >
-              {row.original.deviceCode}
-            </Link>
+            <DeviceCode id={row.original.deviceId} code={row.original.deviceCode} />
           ) : (
             "—"
           ),
@@ -186,6 +183,28 @@ export const DeviceSyncList = () => {
               search={<DataTableQuickFilter table={table} placeholder="Tìm theo mã thiết bị hoặc mã lô đồng bộ..." />}
               filters={
                 <DataTableAdvancedFilter table={table} fields={FILTER_FIELDS} />
+              }
+              exportAction={
+                <ExcelTableExport<SyncBatch>
+                  table={table}
+                  resource="device_syncs"
+                  title="Lịch sử đồng bộ"
+                  columns={[
+                    { id: "receivedAt", label: "Nhận lúc", width: 22, value: (b) => formatDateTime(b.receivedAt) },
+                    { id: "receivedAt", label: "Mã lần đồng bộ", width: 14, value: (b) => b.id },
+                    { id: "deviceCode", label: "Thiết bị", width: 18, numFmt: "@", value: (b) => b.deviceCode ?? "—" },
+                    { id: "customerName", label: "Bệnh nhân", width: 26, value: (b) => b.customerName ?? "—" },
+                    { id: "source", label: "Nguồn", width: 18, value: (b) => SYNC_SOURCE_LABELS[b.source] ?? b.source },
+                    { id: "counts", label: "Tổng bản ghi", width: 12, value: (b) => b.recordCount },
+                    { id: "counts", label: "Đã lưu", width: 10, value: (b) => b.acceptedCount },
+                    { id: "counts", label: "Trùng", width: 10, value: (b) => b.duplicateCount },
+                    { id: "counts", label: "Lỗi", width: 10, value: (b) => b.rejectedCount },
+                    { id: "pendingOnDevice", label: "Chờ trên thiết bị", width: 16, value: (b) => b.pendingOnDevice ?? "—" },
+                    { id: "status", label: "Kết quả", width: 14, value: (b) => SYNC_STATUS_LABELS[b.status] ?? b.status },
+                    { id: "status", label: "Mã lô của thiết bị", width: 24, numFmt: "@", value: (b) => b.clientBatchId ?? "—" },
+                    { id: "status", label: "Lỗi", width: 36, value: (b) => b.error ?? "—" },
+                  ]}
+                />
               }
             />
             <DataTableFilterChips table={table} fields={FILTER_FIELDS} />

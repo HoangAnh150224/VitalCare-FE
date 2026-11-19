@@ -3,6 +3,7 @@ import { Link } from "react-router";
 
 import { API_URL } from "@/shared/api/constants";
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
+import { DeviceCode } from "../devices/device-code";
 import {
   DetailList,
   DetailPanel,
@@ -55,12 +56,7 @@ export const DeviceSyncShow = () => {
             </DetailRow>
             <DetailRow label="Thiết bị">
               {batch?.deviceId ? (
-                <Link
-                  to={`/devices/show/${batch.deviceId}`}
-                  className="font-mono hover:underline"
-                >
-                  {batch.deviceCode}
-                </Link>
+                <DeviceCode id={batch.deviceId} code={batch.deviceCode} />
               ) : (
                 <EmptyValue />
               )}

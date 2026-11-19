@@ -287,6 +287,8 @@ const AlertDetails = () => {
   const { open: notify } = useNotification();
   const invalidate = useInvalidate();
   const { data: can } = useCan({ resource: "alerts", action: "edit" });
+  // The front desk does not manage devices: for it the device code is text, not a link to a closed screen.
+  const { data: devices } = useCan({ resource: "devices", action: "list" });
   const [step, setStep] = useState<Step | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -467,7 +469,9 @@ const AlertDetails = () => {
                   )}
                 </DetailRow>
                 <DetailRow label="Thiết bị">
-                  {a?.deviceId ? (
+                  {a?.deviceId && !devices?.can ? (
+                    <span className="font-mono">{a.deviceCode}</span>
+                  ) : a?.deviceId ? (
                     <Link
                       to={`/devices/show/${a.deviceId}`}
                       className="font-mono hover:underline"
