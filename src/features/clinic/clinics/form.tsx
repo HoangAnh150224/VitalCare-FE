@@ -44,29 +44,49 @@ type TextField = {
   max: number;
   placeholder?: string;
   type?: string;
+  pattern?: { value: RegExp; message: string };
 };
+
+// KAN-44: the same Vietnamese number `ClinicRequest` takes — mobile (0 + 9 digits) or
+// landline (0 + 10), or either after +84, spaces, dots, dashes and brackets allowed.
+const PHONE = /^[\s.()-]*(?:\+?84|0)[\s.()-]*[1-9](?:[\s.()-]*\d){8,9}[\s.()-]*$/;
 
 // SRS 3.18.2 / 3.18.4, in the order the wireframe lays them out.
 const TEXT_FIELDS: TextField[] = [
   { name: "name", label: "Tên phòng khám", required: "Vui lòng nhập tên phòng khám", max: 255, placeholder: "VitalCare Clinic – Cơ sở 3" },
-  { name: "contactEmail", label: "Email liên hệ", required: "Vui lòng nhập email liên hệ", max: 255, placeholder: "contact@vitalcare.vn", type: "email" },
-  { name: "contactPhone", label: "Điện thoại liên hệ", required: "Vui lòng nhập điện thoại liên hệ", max: 50, placeholder: "+84 28 …" },
+  { name: "contactEmail", label: "Email liên hệ", required: "Vui lòng nhập email liên hệ", max: 255, placeholder: "contact@vitalcare.vn", type: "email",
+    pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Vui lòng nhập email hợp lệ" } },
+  { name: "contactPhone", label: "Điện thoại liên hệ", required: "Vui lòng nhập điện thoại liên hệ", max: 50, placeholder: "+84 28 …",
+    pattern: { value: PHONE, message: "Số điện thoại không hợp lệ. Vui lòng nhập một số khác" } },
   { name: "contactPerson", label: "Người liên hệ", required: "Vui lòng nhập người liên hệ", max: 255, placeholder: "Văn phòng phòng khám" },
   { name: "address", label: "Địa chỉ", required: "Vui lòng nhập địa chỉ", max: 500, placeholder: "Đường, phường/xã, tỉnh/thành phố" },
 ];
+
+const FIELD_NAMES: Record<string, true> = Object.fromEntries(
+  [...TEXT_FIELDS.map((field) => field.name), "operatingStatus"].map((name) => [name, true])
+);
 
 /**
  * Creating and editing a clinic are the same fields (`ClinicRequest`, SRS
  * 3.18.2 / 3.18.4), so one form serves both. A clinic marked as no longer
  * operating takes no new visits; what it already holds stays.
  */
-function ClinicForm({ submitLabel }: { submitLabel: string }) {
+function ClinicForm({ submitLabel, editing = false }: { submitLabel: string; editing?: boolean }) {
   const navigate = useNavigate();
   const {
-    refineCore: { onFinish },
+    refineCore: { onFinish, query },
     ...form
   } = useForm<ClinicFormValues, HttpError, ClinicFormValues>({
-    refineCoreProps: { redirect: "show" },
+    refineCoreProps: {
+      redirect: "show",
+      // A refused field (a duplicate name, KAN-45) is said under that field by the
+      // server-side validation useForm applies, not again as "Validation failed" in a toast.
+      // A 422 naming no field of this form still says so.
+      errorNotification: (error) =>
+        error?.statusCode === 422 && Object.keys(error.errors ?? {}).some((key) => key in FIELD_NAMES)
+          ? false
+          : { type: "error", message: "Không lưu được phòng khám. Vui lòng thử lại." },
+    },
     defaultValues: {
       name: "",
       contactEmail: "",
@@ -77,7 +97,24 @@ function ClinicForm({ submitLabel }: { submitLabel: string }) {
     },
   });
 
+  // "Làm mới" means "back to what is saved": a refetch alone leaves the typed
+  // values in place when the record has not changed (KAN-48).
+  async function reload() {
+    const fresh = (await query?.refetch())?.data?.data;
+    if (!fresh) return;
+    form.reset({
+      name: fresh.name ?? "",
+      contactEmail: fresh.contactEmail ?? "",
+      contactPhone: fresh.contactPhone ?? "",
+      contactPerson: fresh.contactPerson ?? "",
+      address: fresh.address ?? "",
+      operatingStatus: fresh.operatingStatus ?? "OPERATING",
+    });
+  }
+
   return (
+    <>
+    {editing && <EditViewHeader onRefresh={() => void reload()} />}
     <Form {...form}>
       <form
         noValidate
@@ -100,7 +137,7 @@ function ClinicForm({ submitLabel }: { submitLabel: string }) {
             contentClassName="items-start"
             description="Thay đổi ảnh hưởng tới quản trị phòng khám. Truy cập dữ liệu sức khỏe bệnh nhân cần được cấp quyền riêng."
           >
-            {TEXT_FIELDS.map(({ name, label, required, max, placeholder, type }) => (
+            {TEXT_FIELDS.map(({ name, label, required, max, placeholder, type, pattern }) => (
               <FormField
                 key={name}
                 control={form.control}
@@ -108,10 +145,7 @@ function ClinicForm({ submitLabel }: { submitLabel: string }) {
                 rules={{
                   required,
                   validate: (value) => (value ?? "").trim() !== "" || required,
-                  pattern: type === "email" ? {
-                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                    message: "Vui lòng nhập email hợp lệ",
-                  } : undefined,
+                  pattern,
                   maxLength: { value: max, message: `Tối đa ${max} ký tự` },
                 }}
                 render={({ field }) => (
@@ -162,6 +196,7 @@ function ClinicForm({ submitLabel }: { submitLabel: string }) {
         </SectionedFormPanel>
       </form>
     </Form>
+    </>
   );
 }
 
@@ -174,7 +209,6 @@ export const ClinicCreate = () => (
 
 export const ClinicEdit = () => (
   <EditView>
-    <EditViewHeader />
-    <ClinicForm submitLabel="Lưu thay đổi" />
+    <ClinicForm submitLabel="Lưu thay đổi" editing />
   </EditView>
 );
