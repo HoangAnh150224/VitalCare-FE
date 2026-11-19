@@ -39,12 +39,20 @@ type EditViewHeaderProps = PropsWithChildren<{
   wrapperClassName?: string;
   headerClassName?: string;
   actionsSlot?: React.ReactNode;
+  /**
+   * Replaces what "Làm mới" does. The default only refetches the record, and
+   * Refine's `useForm` leaves fields alone when the refetch brings back the
+   * same data — so edits survive the click. A form that should drop its edits
+   * passes a handler that refetches and resets.
+   */
+  onRefresh?: () => void;
 }>;
 
 export const EditViewHeader = ({
   resource: resourceFromProps,
   title: titleFromProps,
   actionsSlot,
+  onRefresh,
   wrapperClassName,
   headerClassName,
 }: EditViewHeaderProps) => {
@@ -94,6 +102,7 @@ export const EditViewHeader = ({
             variant="outline"
             recordItemId={recordItemId}
             resource={resourceName}
+            {...(onRefresh && { onClick: onRefresh })}
           />
         </div>
       </div>

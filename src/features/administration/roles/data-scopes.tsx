@@ -29,6 +29,7 @@ import {
 import { DEFAULT_POLICY, normalize } from "@/features/administration/row-level-policies/policy-values";
 import { readCondition } from "@/domains/row-level-policy/read-condition";
 import { useManagedResources } from "@/features/administration/row-level-policies/use-managed-resources";
+import { useEmptyScopeConfirm } from "@/features/administration/row-level-policies/empty-scope-confirm";
 import { EMPTY_SCOPE, type RowLevelPolicy } from "@/domains/row-level-policy/types";
 
 /**
@@ -394,6 +395,10 @@ function PolicyDialog({
     onFinish(normalize(values));
   }
 
+  // Only a new scope is asked about; editing one that already matches every
+  // row is a change somebody has already made once.
+  const { guard, dialog } = useEmptyScopeConfirm(onSubmit);
+
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
       <DialogContent
@@ -432,7 +437,13 @@ function PolicyDialog({
           // `min-h-0`, or the body below refuses to shrink and pushes the
           // footer off the bottom instead of scrolling inside itself.
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            // A portal moves the DOM, not the React tree: this submit event
+            // still bubbles to the role form around the dialog, which then
+            // saved the role and left for the list (KAN-60). Stopped here.
+            onSubmit={(event) => {
+              event.stopPropagation();
+              void form.handleSubmit(isEdit ? onSubmit : guard)(event);
+            }}
             className="flex min-h-0 flex-1 flex-col"
           >
             <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
@@ -492,6 +503,7 @@ function PolicyDialog({
           </div>
         )}
       </DialogContent>
+      {dialog}
     </Dialog>
   );
 }

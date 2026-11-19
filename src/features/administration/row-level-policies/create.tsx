@@ -9,6 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { PolicyForm, type PolicyFormValues } from "./policy-form";
 import { DEFAULT_POLICY, normalize } from "./policy-values";
 import { useManagedResources } from "./use-managed-resources";
+import { useEmptyScopeConfirm } from "./empty-scope-confirm";
 
 export const RowLevelPolicyCreate = () => {
   const navigate = useNavigate();
@@ -22,14 +23,14 @@ export const RowLevelPolicyCreate = () => {
     defaultValues: DEFAULT_POLICY,
   });
 
-  function onSubmit(values: PolicyFormValues) {
-    onFinish(normalize(values));
-  }
+  const { guard, dialog } = useEmptyScopeConfirm((values: PolicyFormValues) =>
+    onFinish(normalize(values))
+  );
 
   return (
     <CreateView>
       <CreateViewHeader />
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(guard)} className="space-y-6">
         <PolicyForm form={form} resources={resources} />
         <div className="flex gap-2">
           <Button type="submit" disabled={form.formState.isSubmitting}>
@@ -40,6 +41,7 @@ export const RowLevelPolicyCreate = () => {
           </Button>
         </div>
       </form>
+      {dialog}
     </CreateView>
   );
 };

@@ -88,6 +88,19 @@ export const RoleEdit = () => {
   });
 
   const record = query?.data?.data;
+
+  // "Làm mới" means "back to what is saved": refetch, then reset every field —
+  // the permission matrix included — and the dirty flag with them (KAN-59).
+  async function reload() {
+    const fresh = (await query?.refetch())?.data?.data;
+    if (!fresh) return;
+    form.reset({
+      code: fresh.code,
+      name: fresh.name,
+      description: fresh.description,
+      permissions: fresh.permissions,
+    });
+  }
   const isSystemRole = record?.systemRole === true;
 
   const grantedCount = form.watch("permissions")?.length ?? 0;
@@ -115,6 +128,7 @@ export const RoleEdit = () => {
     // unchanged would be a no-op at best and a 409 if the field were touched.
     // Leaving it out of the payload states the intent instead.
     const { code: submittedCode, ...rest } = values as Record<string, unknown>;
+    if (typeof rest.name === "string") rest.name = rest.name.trim();
     const payload = isSystemRole
       ? { ...rest, permissions }
       : { ...rest, code: submittedCode, permissions };
@@ -124,7 +138,7 @@ export const RoleEdit = () => {
 
   return (
     <EditView>
-      <EditViewHeader />
+      <EditViewHeader onRefresh={() => void reload()} />
       <Form {...form}>
         <form
           // Collapsed, the identity fields are still mounted and still
@@ -262,7 +276,16 @@ export const RoleEdit = () => {
               <FormField
                 control={form.control}
                 name="name"
-                rules={{ required: "Vui lòng nhập tên" }}
+                rules={{
+                  required: "Vui lòng nhập tên",
+                  validate: (value) =>
+                    Boolean(value?.trim()) ||
+                    "Tên vai trò không hợp lệ. Vui lòng thử lại.",
+                  maxLength: {
+                    value: 255,
+                    message: "Tên vai trò chỉ trong khoảng 1-255 ký tự",
+                  },
+                }}
                 render={({ field }) => (
                   <FormItem className="lg:col-span-4">
                     <FormLabel>Tên</FormLabel>
