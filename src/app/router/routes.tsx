@@ -1,4 +1,5 @@
 import { Authenticated, CanAccess } from "@refinedev/core";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router";
 
 import { justSignedOut } from "@/app/providers/auth";
@@ -47,15 +48,7 @@ import {
   AuditLogShow,
 } from "@/features/administration";
 import { ForgotPassword, Login, Profile, Register } from "@/features/identity";
-import { Landing } from "@/features/landing";
-import {
-  PublicClinics,
-  PublicClinicShow,
-  PublicFirstAid,
-  PublicFirstAidShow,
-  PublicLayout,
-  PublicServices,
-} from "@/features/public";
+import { PublicLayout } from "@/features/public/layout";
 import {
   AppointmentCreate,
   AppointmentList,
@@ -81,14 +74,12 @@ import {
   MyProfileEdit,
   MyProfileList,
   MyAppointmentList,
-  MyAppointmentShow,
   PortalAppointmentCreate,
   PortalAppointments,
   PortalHome,
   PortalPayments,
   PortalResult,
   PortalResults,
-  QuickCheckIn,
   WalkInRegistration,
   AppointmentCalendar,
   StaffList,
@@ -160,7 +151,28 @@ import {
 } from "@/features/clinic";
 import { ErrorComponent } from "@/shared/components/layout/error-component";
 import { Forbidden } from "@/shared/components/layout/forbidden";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { PortalSwitch, ShellLayout } from "./shell";
+
+/*
+  Pages that bring a heavy library of their own load on first visit, not with
+  the app: the landing and public pages (gsap, lenis), the check-in scanner
+  (@yudiel/react-qr-scanner) and the appointment slip (qrcode.react). Imported
+  from their own files, not the feature barrels, so the code can split there.
+*/
+const Landing = lazy(() => import("@/features/public/landing").then((m) => ({ default: m.Landing })));
+const PublicClinics = lazy(() => import("@/features/public/clinics").then((m) => ({ default: m.PublicClinics })));
+const PublicClinicShow = lazy(() => import("@/features/public/clinics").then((m) => ({ default: m.PublicClinicShow })));
+const PublicServices = lazy(() => import("@/features/public/services").then((m) => ({ default: m.PublicServices })));
+const PublicFirstAid = lazy(() => import("@/features/public/first-aid").then((m) => ({ default: m.PublicFirstAid })));
+const PublicFirstAidShow = lazy(() => import("@/features/public/first-aid").then((m) => ({ default: m.PublicFirstAidShow })));
+const QuickCheckIn = lazy(() => import("@/features/clinic/appointments/quick-check-in").then((m) => ({ default: m.QuickCheckIn })));
+const MyAppointmentShow = lazy(() => import("@/features/clinic/my-appointments/show").then((m) => ({ default: m.MyAppointmentShow })));
+
+/** A lazily loaded page, with a placeholder while its code arrives. */
+const lazyPage = (page: ReactNode) => (
+  <Suspense fallback={<Skeleton className="m-6 h-64" />}>{page}</Suspense>
+);
 
 /**
  * Where a protected page goes once there is no session: home after "Đăng xuất", otherwise the
@@ -189,17 +201,17 @@ export function AppRoutes() {
         The front door, for everybody: signed in or not, the site opens on the
         landing page, and signing in leads on to the dashboard.
       */}
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={lazyPage(<Landing />)} />
       {/*
         The public site, for everybody too: clinics, prices, first aid. Its
         own frame, not the app's shell; it reads only /api/public.
       */}
       <Route element={<PublicLayout />}>
-        <Route path="/locations" element={<PublicClinics />} />
-        <Route path="/locations/:id" element={<PublicClinicShow />} />
-        <Route path="/services" element={<PublicServices />} />
-        <Route path="/first-aid" element={<PublicFirstAid />} />
-        <Route path="/first-aid/:id" element={<PublicFirstAidShow />} />
+        <Route path="/locations" element={lazyPage(<PublicClinics />)} />
+        <Route path="/locations/:id" element={lazyPage(<PublicClinicShow />)} />
+        <Route path="/services" element={lazyPage(<PublicServices />)} />
+        <Route path="/first-aid" element={lazyPage(<PublicFirstAid />)} />
+        <Route path="/first-aid/:id" element={lazyPage(<PublicFirstAidShow />)} />
       </Route>
       <Route
         element={
@@ -431,7 +443,7 @@ export function AppRoutes() {
                 action="check_in"
                 fallback={<Forbidden resource="appointments" />}
               >
-                <QuickCheckIn />
+                {lazyPage(<QuickCheckIn />)}
               </CanAccess>
             }
           />
@@ -1011,7 +1023,7 @@ export function AppRoutes() {
               />
             }
           />
-          <Route path="show/:id" element={<MyAppointmentShow />} />
+          <Route path="show/:id" element={lazyPage(<MyAppointmentShow />)} />
         </Route>
         {/* The customer's concluded visits and what came of them; the same grant as their appointments. */}
         <Route

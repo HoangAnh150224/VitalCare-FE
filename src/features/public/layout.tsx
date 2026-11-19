@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Outlet, useLocation } from "react-router";
 
 import { Button } from "@/shared/ui/button";
-import { SiteNavbar } from "@/features/landing/navbar";
+import { SiteNavbar } from "./landing/navbar";
 import { NOT_AN_EMERGENCY_SERVICE } from "@/domains/first-aid/types";
 import { GuestChatLauncher } from "@/shared/components/chat/guest-chat";
 import { EmergencyDialog } from "./emergency";

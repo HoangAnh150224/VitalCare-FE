@@ -7,10 +7,10 @@ import { publicGet, publicRetry } from "@/shared/api/public";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { FIRST_AID_CATEGORY_LABELS, type PublishedFirstAid } from "@/domains/first-aid/types";
-import { ClinicGrid } from "@/features/public/clinics";
-import { EmptyState } from "@/features/public/empty-state";
-import { EmergencyDialog } from "@/features/public/emergency";
-import { ServicePriceList } from "@/features/public/services";
+import { ClinicGrid } from "../clinics";
+import { EmptyState } from "../empty-state";
+import { EmergencyDialog } from "../emergency";
+import { ServicePriceList } from "../services";
 
 /** The public pages, shown in place on the landing; each still has its own page for the whole of it. */
 function PublicSection({
