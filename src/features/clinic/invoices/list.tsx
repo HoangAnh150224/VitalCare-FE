@@ -85,7 +85,7 @@ export const InvoiceList = () => {
       <ListViewHeader
         resource="invoices"
         canCreate={false}
-        description="Hóa đơn được lập khi bác sĩ hoàn tất lần khám, gồm phí khám và các dịch vụ đã làm."
+        description="Phí khám được lập hóa đơn khi đăng ký khám, dịch vụ khi bác sĩ chỉ định — thanh toán trước khi vào hàng chờ hoặc làm dịch vụ."
       />
       <DataTable
         table={table}

@@ -1,6 +1,5 @@
 import { Refine } from "@refinedev/core";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
-import { keepPreviousData, QueryClient } from "@tanstack/react-query";
 
 import { BrowserRouter } from "react-router";
 import routerProvider, {
@@ -8,6 +7,7 @@ import routerProvider, {
 } from "@refinedev/react-router";
 import { dataProvider } from "@/shared/api/data";
 import { authProvider } from "./providers/auth";
+import { queryClient } from "./providers/query-client";
 import { accessControlProvider } from "./providers/access-control";
 import { AuthoritiesSync } from "./providers/authorities-sync";
 import { i18nProvider } from "./providers/i18n";
@@ -25,19 +25,6 @@ import { AppRoutes } from "./router/routes";
 import "@fontsource-variable/inter";
 import "@/styles/index.css";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // These are Refine's defaults when it creates its own QueryClient.
-      refetchOnWindowFocus: false,
-      placeholderData: keepPreviousData,
-    },
-  },
-});
-// Auth checks must run after local logout even when the browser is offline.
-// Refine's default "online" mode pauses invalidated auth queries and leaves
-// the previous authenticated result in the route guard's cache.
-queryClient.setQueryDefaults(["auth"], { networkMode: "always" });
 
 function App() {
   return (

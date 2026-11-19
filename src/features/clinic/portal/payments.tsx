@@ -96,7 +96,7 @@ export const PortalPayments = () => {
           }
         />
       ) : shown.length === 0 ? (
-        <EmptyState icon={WalletIcon} title="Chưa có hóa đơn nào" text="Hóa đơn được lập khi bác sĩ hoàn tất lượt khám." />
+        <EmptyState icon={WalletIcon} title="Chưa có hóa đơn nào" text="Hóa đơn được lập khi bạn đăng ký khám và khi bác sĩ chỉ định dịch vụ." />
       ) : (
         <ul className="flex flex-col gap-3">
           {shown.map((invoice) => {
@@ -133,7 +133,9 @@ export const PortalPayments = () => {
                     </div>
                     {invoice.status === "unpaid" && invoice.appointmentId && (
                       <Button asChild className="self-start rounded-full">
-                        <Link to={`/my-results/${invoice.appointmentId}`}>Thanh toán</Link>
+                        {/* The slip, not the result: a bill is paid before the visit is done (BF-02/03), and
+                            the result page only opens once it is. */}
+                        <Link to={`/my-appointments/show/${invoice.appointmentId}`}>Thanh toán</Link>
                       </Button>
                     )}
                   </div>

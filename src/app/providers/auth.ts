@@ -3,6 +3,7 @@ import type { AuthActionResponse, AuthProvider } from "@refinedev/core";
 import { API_URL } from "@/shared/api/constants";
 import { readRegistrationError, translateRegistrationMessage } from "@/shared/api/registration";
 import { connect, disconnect } from "@/shared/api/live";
+import { forgetAccountData } from "./query-client";
 import {
   clearSession,
   getAccessToken,
@@ -105,6 +106,8 @@ async function readError(response: Response, fallback: string): Promise<ApiError
 
 /** Everything that follows receiving a token pair from a sign-in. */
 async function startSession(tokens: TokenPair, errorName: string): Promise<AuthActionResponse> {
+  // However the last session ended (logout, expiry, a closed tab), nothing it loaded is this account's.
+  forgetAccountData();
   saveSession(tokens);
 
   // The token says who you are and nothing more, so what this account may
@@ -238,6 +241,7 @@ export const authProvider: AuthProvider = {
     // that has signed out, and hand the next account somebody else's channel.
     disconnect();
     clearSession();
+    forgetAccountData();
     // Home, where every visit starts: leaving on purpose is not a request to sign in again.
     // An expired session still goes to /login (check, onError) so the user can carry on.
     return { success: true, redirectTo: params?.redirectPath ?? "/" };
