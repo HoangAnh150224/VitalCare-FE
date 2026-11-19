@@ -44,7 +44,7 @@ import {
   type Metric,
 } from "@/domains/alerts/types";
 import { CallLogPanel } from "../sharing/call-log-panel";
-import { MonitorTrace } from "./monitor-trace";
+import { GAP_MS, MonitorTrace } from "./monitor-trace";
 
 type Step = "notes" | "resolve" | "dismiss";
 
@@ -95,7 +95,7 @@ const beyond = (a: Alert, metric: Metric, v: number | null) =>
  * before it is taken up.
  */
 function LiveReadings({ alert, live }: { alert: Alert; live: boolean }) {
-  const { data } = useQuery({
+  const { data, dataUpdatedAt, isError: liveFailed } = useQuery({
     queryKey: ["alerts", "live", alert.id],
     queryFn: () =>
       kyInstance.get(`alerts/${alert.id}/live`).json<LiveReading[]>(),
@@ -103,6 +103,24 @@ function LiveReadings({ alert, live }: { alert: Alert; live: boolean }) {
   });
   const rows = data ?? [];
   const latest = rows[0];
+  const newestAt = latest ? new Date(latest.measuredAt).getTime() : undefined;
+  // Browser clock minus the band's, taken when a newer reading turns up: it
+  // has just arrived, so its age then is the clocks' difference, not a gap.
+  // ponytail: a band uploading a buffered backlog reads as live for GAP_MS; a server receivedAt would settle it.
+  const [clock, setClock] = useState({ newestAt, skew: 0 });
+  if (newestAt !== clock.newestAt) {
+    setClock({
+      newestAt,
+      skew:
+        newestAt != null && clock.newestAt != null && newestAt > clock.newestAt
+          ? dataUpdatedAt - newestAt
+          : clock.skew,
+    });
+  }
+  // As of the last poll: an unchanged reading still re-renders here every 3 seconds through dataUpdatedAt.
+  // A poll that fails leaves dataUpdatedAt where it was, so a failing one is not live either.
+  const stale =
+    liveFailed || newestAt == null || dataUpdatedAt - clock.skew - newestAt > GAP_MS;
   const body = latest?.bodyTemperature ?? null;
   const cards: {
     label: string;
@@ -148,7 +166,11 @@ function LiveReadings({ alert, live }: { alert: Alert; live: boolean }) {
     );
   return (
     <DetailPanel
-      title={live ? "Số đo trực tiếp · cập nhật mỗi 3 giây" : "Số đo gần nhất"}
+      title={
+        live && !stale
+          ? "Số đo trực tiếp · cập nhật mỗi 3 giây"
+          : "Số đo gần nhất"
+      }
       bodyClassName="p-0"
     >
       <div
@@ -162,16 +184,26 @@ function LiveReadings({ alert, live }: { alert: Alert; live: boolean }) {
               <p className="text-muted-foreground text-sm">{c.label}</p>
               <p
                 className={`mt-1 text-3xl font-bold tabular-nums ${
-                  value != null && beyond(alert, c.metric, value)
-                    ? "text-destructive"
-                    : ""
+                  stale
+                    ? "text-muted-foreground"
+                    : value != null && beyond(alert, c.metric, value)
+                      ? "text-destructive"
+                      : ""
                 }`}
               >
                 {value == null ? "--" : Number(value)}
                 <span className="text-sm font-normal">{c.unit}</span>
               </p>
+              {latest && (
+                <p className="text-muted-foreground text-xs tabular-nums">
+                  lúc {new Date(latest.measuredAt).toLocaleTimeString("vi-VN")}
+                  {live && stale ? " · mất tín hiệu" : ""}
+                </p>
+              )}
               <MonitorTrace
                 color={c.color}
+                skew={clock.skew}
+                live={live}
                 points={rows.flatMap((r) => {
                   const v = c.read(r);
                   return v == null
@@ -243,6 +275,13 @@ function LiveReadings({ alert, live }: { alert: Alert; live: boolean }) {
  * handling notes) and dismiss (with a reason) for staff who handle alerts.
  */
 export const AlertShow = () => {
+  const { id } = useParams();
+  // Remounted per alert: the global keepPreviousData would otherwise show the
+  // last alert (and its buttons) while acting on this one.
+  return <AlertDetails key={id} />;
+};
+
+const AlertDetails = () => {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const { open: notify } = useNotification();
@@ -351,7 +390,8 @@ export const AlertShow = () => {
           ) : null
         }
       />
-      {isError ? (
+      {/* One failed poll keeps what is already shown; only a never-loaded alert is "not found". */}
+      {isError && !data ? (
         <p className="text-muted-foreground text-sm">
           Không tìm thấy cảnh báo này.
         </p>

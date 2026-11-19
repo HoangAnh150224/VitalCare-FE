@@ -4,26 +4,31 @@ export type TracePoint = { at: number; value: number };
 
 const WINDOW_MS = 60_000;
 /** After this long without a reading the line stops: the band is no longer sending. */
-const GAP_MS = 20_000;
+export const GAP_MS = 20_000;
 
 /**
  * The last minute of one measure, drawn as the readings came: the line runs
  * level while the value holds, steps up when it rises and down when it falls,
  * and slides left as time passes. With no reading in the minute it lies flat
  * and faint along the bottom.
+ *
+ * `skew` is the browser's clock minus the band's: the points carry the band's
+ * time, so without it a band a little behind would have every reading slide
+ * off as if the signal had gone. Not `live` (alert closed), it is drawn once
+ * and left still.
  */
 export function MonitorTrace({
   points,
   color,
+  skew = 0,
+  live = true,
 }: {
   points: TracePoint[];
   color: string;
+  skew?: number;
+  live?: boolean;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const data = useRef(points);
-  useEffect(() => {
-    data.current = points;
-  }, [points]);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -34,14 +39,17 @@ export function MonitorTrace({
       const ratio = window.devicePixelRatio || 1;
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
-      if (canvas.width !== w * ratio || canvas.height !== h * ratio) {
-        canvas.width = w * ratio;
-        canvas.height = h * ratio;
+      // Rounded as the canvas rounds them, or a fractional ratio reallocates the buffer every frame.
+      const pw = Math.round(w * ratio);
+      const ph = Math.round(h * ratio);
+      if (canvas.width !== pw || canvas.height !== ph) {
+        canvas.width = pw;
+        canvas.height = ph;
       }
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       ctx.clearRect(0, 0, w, h);
-      const now = Date.now();
-      const shown = data.current
+      const now = Date.now() - skew;
+      const shown = points
         .filter((p) => now - p.at < WINDOW_MS + GAP_MS)
         .sort((a, b) => a.at - b.at);
       const base = h - 5;
@@ -88,11 +96,11 @@ export function MonitorTrace({
           ctx.fill();
         }
       }
-      frame = requestAnimationFrame(draw);
+      if (live) frame = requestAnimationFrame(draw);
     };
-    frame = requestAnimationFrame(draw);
+    draw();
     return () => cancelAnimationFrame(frame);
-  }, [color]);
+  }, [color, points, skew, live]);
 
   return <canvas ref={ref} className="h-16 w-full" aria-hidden />;
 }

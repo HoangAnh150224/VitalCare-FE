@@ -74,6 +74,7 @@ export function DeviceTokenButton({ device }: { device: Device }) {
         variant="outline"
         size="sm"
         onClick={() => (device.hasToken ? setConfirming(true) : issue())}
+        disabled={mutation.isPending}
       >
         <KeyRoundIcon />
         {device.hasToken ? "Cấp lại mã bí mật" : "Cấp mã bí mật"}

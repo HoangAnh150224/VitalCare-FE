@@ -7,7 +7,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import React from "react";
 import { LockKeyhole, LockKeyholeOpen } from "lucide-react";
 import { toast } from "sonner";
-import type { Control } from "react-hook-form";
+import type { Control, UseFormSetError } from "react-hook-form";
 import { Link, useNavigate, useSearchParams } from "react-router";
 
 import { kyInstance } from "@/shared/api/data";
@@ -287,6 +287,55 @@ type RuleValues = {
   customerId?: number | null;
 };
 
+/** A Vietnamese keyboard types "38,5": the comma is read as the decimal point. */
+const toThreshold = (v: unknown) =>
+  Number(String(v ?? "").trim().replace(",", "."));
+
+/** The API's English field refusals (AlertRules), in Vietnamese. */
+const FIELD_MESSAGES: Record<string, string> = {
+  "Choose heart rate, SpO2, skin or body temperature": "Chọn nhịp tim, SpO2, nhiệt độ da hoặc nhiệt độ cơ thể.",
+  "Choose below or above": "Chọn điều kiện thấp hơn hoặc cao hơn.",
+  "Choose warning or critical": "Chọn mức cảnh báo hoặc nguy cấp.",
+};
+
+/**
+ * Refine has already put the API's English refusal under the field; it is
+ * said again in Vietnamese in its place.
+ */
+const translateThresholdError = (
+  error: HttpError,
+  setError: UseFormSetError<RuleValues>
+) => {
+  const range = /^Between (\S+) and (\S+) for this measure/.exec(
+    String(error?.errors?.threshold ?? "")
+  );
+  if (range) {
+    setError("threshold", {
+      type: "server",
+      message: `Ngưỡng phải nằm trong khoảng ${range[1]} đến ${range[2]} cho chỉ số này.`,
+    });
+  }
+  for (const name of ["metric", "operator", "severity"] as const) {
+    const vi = FIELD_MESSAGES[String(error?.errors?.[name] ?? "")];
+    if (vi) setError(name, { type: "server", message: vi });
+  }
+};
+
+/**
+ * A refused field is said under that field, not again in a toast (RULE-35).
+ * `clinicId` has no field here: a system administrator, who belongs to no
+ * clinic, is told so instead of a button that seems to do nothing.
+ */
+const ruleErrorNotification = (error?: HttpError) =>
+  error?.statusCode === 422 && !error.errors?.clinicId
+    ? false
+    : {
+        type: "error" as const,
+        message: error?.errors?.clinicId
+          ? "Quy tắc thuộc về một phòng khám. Đăng nhập bằng tài khoản quản trị phòng khám để tạo quy tắc."
+          : "Không lưu được quy tắc. Vui lòng thử lại.",
+      };
+
 const SelectField = ({
   control,
   name,
@@ -379,7 +428,7 @@ function RuleFields({
         rules={{
           required: "Nhập ngưỡng",
           validate: (v) =>
-            String(v ?? "").trim() !== "" && Number.isFinite(Number(v)) ? true : "Vui lòng nhập ngưỡng hợp lệ",
+            String(v ?? "").trim() !== "" && Number.isFinite(toThreshold(v)) ? true : "Vui lòng nhập ngưỡng hợp lệ",
         }}
         render={({ field }) => (
           <FormItem className="md:col-span-2">
@@ -435,7 +484,7 @@ function RuleFields({
   );
 }
 
-const toBody = (v: RuleValues) => ({ ...v, threshold: Number(v.threshold) });
+const toBody = (v: RuleValues) => ({ ...v, threshold: toThreshold(v.threshold) });
 
 /** Alert Rule Create: clinic-wide, or `?customerId=` for a patient's own. */
 export const AlertRuleCreate = () => {
@@ -454,7 +503,12 @@ export const AlertRuleCreate = () => {
     refineCore: { onFinish },
     ...form
   } = useForm<RuleValues, HttpError, RuleValues>({
-    refineCoreProps: { resource: "alert_rules", redirect: "show" },
+    refineCoreProps: {
+      resource: "alert_rules",
+      redirect: "show",
+      errorNotification: ruleErrorNotification,
+      onMutationError: (error) => translateThresholdError(error, form.setError),
+    },
     defaultValues: {
       name: "",
       metric: "SPO2",
@@ -517,6 +571,8 @@ export const AlertRuleEdit = () => {
       resource: "alert_rules",
       redirect: "show",
       action: "edit",
+      errorNotification: ruleErrorNotification,
+      onMutationError: (error) => translateThresholdError(error, form.setError),
     },
   });
   const rule = query?.data?.data as AlertRule | undefined;

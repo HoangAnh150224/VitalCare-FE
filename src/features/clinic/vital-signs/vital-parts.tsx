@@ -475,16 +475,20 @@ export function VitalHistory({
   );
 }
 
-/** Tiles, then a range picker over the trends and the history — one patient's whole monitoring view. */
-export function VitalMonitor({
-  scope,
-  detailHref,
-  header,
-}: {
+type VitalMonitorProps = {
   scope: VitalScope;
   detailHref?: (id: number) => string;
   header?: ReactNode;
-}) {
+};
+
+/** Tiles, then a range picker over the trends and the history — one patient's whole monitoring view. */
+export function VitalMonitor(props: VitalMonitorProps) {
+  // Remounted per patient: kept-previous data (and the history's page and
+  // filter) would otherwise show the last patient's readings under this one.
+  return <PatientMonitor key={JSON.stringify(props.scope)} {...props} />;
+}
+
+function PatientMonitor({ scope, detailHref, header }: VitalMonitorProps) {
   const [range, setRange] = useState<VitalRange>("24h");
   const { data: latest, isLoading } = useVitalLatest(scope);
   return (
