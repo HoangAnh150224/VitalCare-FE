@@ -100,8 +100,72 @@ const RESOURCE_LABELS: Record<string, string> = {
 
 /** `blog_posts` reads better as "Blog posts" in a group heading. */
 export function humanizeResource(resource: string): string {
+  if (resource === "roles") return "Vai trò";
+  if (resource === "row_level_policies") return "Phạm vi dữ liệu";
   const known = RESOURCE_LABELS[resource];
   if (known) return known;
   const spaced = resource.replace(/_/g, " ");
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+const PERMISSION_RESOURCE_LABELS: Record<string, string> = {
+  my_appointments: "Lịch khám của tôi",
+  my_patients: "Bệnh nhân được phân công",
+  view_as: "Màn hình theo vai trò khác",
+  monitoring_assignments: "Phân công theo dõi",
+  exam_rooms: "Phòng khám",
+  invoices: "Hóa đơn",
+  medical_services: "Dịch vụ y tế",
+  service_orders: "Y lệnh dịch vụ",
+  my_profiles: "Hồ sơ của tôi",
+  my_devices: "Thiết bị của tôi",
+  vital_signs: "Sinh hiệu bệnh nhân",
+  my_vital_signs: "Sinh hiệu của tôi",
+  my_result_returns: "Lịch trả kết quả của tôi",
+  my_licenses: "Chứng chỉ của tôi",
+};
+
+const PERMISSION_ACTION_NAMES: Record<string, string> = {
+  read: "Xem",
+  write: "Quản lý",
+  delete: "Xóa",
+  activate: "Kích hoạt",
+  check_in: "Tiếp nhận",
+  assign: "Phân công chăm sóc",
+  assign_staff: "Phân công nhóm chăm sóc",
+  status: "Cập nhật trạng thái",
+  conclude: "Kết luận",
+  operate: "Điều phối",
+  perform: "Thực hiện",
+  review: "Duyệt",
+  export: "Xuất",
+  report: "Xem báo cáo",
+  transfer: "Điều chuyển",
+};
+
+const PERMISSION_NAME_OVERRIDES: Record<string, string> = {
+  "invoices:report": "Xem báo cáo doanh thu",
+  "reports:export": "Xuất báo cáo tổng hợp",
+  "view_as:read": "Xem giao diện theo vai trò khác",
+  "devices:operate": "Điều phối thiết bị",
+  "clinical_encounters:conclude": "Hoàn tất lượt khám",
+  "my_appointments:write": "Đặt lịch khám của tôi",
+  "notifications:write": "Quản lý thông báo của tôi",
+};
+
+/** Localized presentation for permission metadata; the API code stays canonical. */
+export function permissionDisplay(permission: Pick<Permission, "code">): { name: string; description: string } {
+  const { resource, action } = splitPermissionCode(permission.code);
+  const subject = PERMISSION_RESOURCE_LABELS[resource] ?? humanizeResource(resource);
+  const lowerSubject = subject.toLocaleLowerCase("vi-VN");
+  const actionName = PERMISSION_ACTION_NAMES[action] ?? "Thực hiện";
+  const name = PERMISSION_NAME_OVERRIDES[permission.code] ?? `${actionName} ${lowerSubject}`;
+  const description = action === "read"
+    ? `Cho phép xem danh sách và thông tin ${lowerSubject} trong phạm vi được cấp.`
+    : action === "write"
+      ? `Cho phép tạo mới hoặc cập nhật ${lowerSubject} trong phạm vi được cấp.`
+      : action === "delete"
+        ? `Cho phép xóa ${lowerSubject} trong phạm vi được cấp.`
+        : `Cho phép ${name.toLocaleLowerCase("vi-VN")} trong phạm vi dữ liệu được cấp.`;
+  return { name, description };
 }

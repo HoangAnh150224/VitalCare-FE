@@ -1,4 +1,5 @@
-import { useCustom, useShow } from "@refinedev/core";
+import { useCustom, useNotification, useShow } from "@refinedev/core";
+import { useEffect, useRef } from "react";
 
 import { API_URL } from "@/shared/api/constants";
 import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
@@ -23,7 +24,23 @@ import { ClinicRoomsPanel } from "../exam-rooms/rooms-panel";
  * each doctor's own schedule.
  */
 export const ClinicShow = () => {
-  const { result: record, query } = useShow<Clinic>({});
+  const { open } = useNotification();
+  const { result: record, query } = useShow<Clinic>({
+    errorNotification: false,
+  });
+  const notifiedError = useRef<unknown>(null);
+  useEffect(() => {
+    const error = query.error;
+    if (!error || notifiedError.current === error) return;
+    notifiedError.current = error;
+    open?.({
+      type: "error",
+      message:
+        error.statusCode === 400 || error.statusCode === 404
+          ? "Không tìm thấy phòng khám."
+          : "Không tải được thông tin phòng khám. Vui lòng thử lại.",
+    });
+  }, [open, query.error]);
   const { result: summaryResult } = useCustom<ClinicSummary>({
     url: `${API_URL}/clinics/${record?.id}/summary`,
     method: "get",

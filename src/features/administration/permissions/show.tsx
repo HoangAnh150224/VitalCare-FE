@@ -1,6 +1,6 @@
-import { useMemo } from "react";
-import { useCan, useList, useShow } from "@refinedev/core";
-import { Link } from "react-router";
+import { useEffect, useMemo, useRef } from "react";
+import { useCan, useList, useNotification, useShow } from "@refinedev/core";
+import { Link, useParams } from "react-router";
 
 import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
 import {
@@ -20,6 +20,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import type { Role } from "@/domains/role/types";
 import {
   humanizeResource,
+  permissionDisplay,
   splitPermissionCode,
   type Permission,
 } from "@/domains/permission/types";
@@ -27,8 +28,24 @@ import { actionLabel } from "@/domains/row-level-policy/types";
 import { PERMISSION_ACTION_VARIANTS } from "@/shared/lib/status-variants";
 
 export const PermissionShow = () => {
-  const { result: record, query } = useShow<Permission>({});
+  const { open } = useNotification();
+  const { id } = useParams<{ id: string }>();
+  const { result: record, query } = useShow<Permission>({ errorNotification: false });
   const { isLoading } = query;
+  const notifiedError = useRef<unknown>(null);
+
+  useEffect(() => {
+    const error = query.error;
+    if (!error || notifiedError.current === error) return;
+    notifiedError.current = error;
+    open?.({
+      type: "error",
+      message:
+        error.statusCode === 404
+          ? `Quyền với ID: ${id} không tồn tại.`
+          : "Không tải được thông tin quyền. Vui lòng thử lại.",
+    });
+  }, [id, open, query.error]);
 
   // Which roles grant this code — the question the catalogue actually raises,
   // and the reason this page exists rather than a tooltip on the list row.
@@ -58,6 +75,8 @@ export const PermissionShow = () => {
     );
   }, [record, roleResult?.data]);
 
+  const display = record ? permissionDisplay(record) : null;
+
   const { resource, action } = splitPermissionCode(record?.code ?? "");
 
   return (
@@ -66,7 +85,7 @@ export const PermissionShow = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {record?.name ?? "—"}
+            {display?.name ?? "—"}
             {record?.systemPermission && (
               <Badge variant="secondary">Hệ thống</Badge>
             )}
@@ -82,7 +101,7 @@ export const PermissionShow = () => {
                 <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
                   Mô tả
                 </span>
-                <p className="text-sm">{record?.description ?? "—"}</p>
+                <p className="text-sm">{display?.description ?? "—"}</p>
               </div>
 
               <div className="flex flex-wrap gap-8">

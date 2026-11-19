@@ -26,6 +26,8 @@ type RefreshButtonProps = {
    * `meta` property is used when creating the URL for the related action and path.
    */
   meta?: Record<string, unknown>;
+  /** Custom reset behavior after refreshing a form's saved record. */
+  onRefresh?: () => void;
 } & React.ComponentProps<typeof Button>;
 
 export const RefreshButton = React.forwardRef<
@@ -33,7 +35,7 @@ export const RefreshButton = React.forwardRef<
   RefreshButtonProps
 >(
   (
-    { resource, recordItemId, dataProviderName, meta, children, ...rest },
+    { resource, recordItemId, dataProviderName, meta, children, onRefresh, ...rest },
     ref
   ) => {
     const {
@@ -56,7 +58,8 @@ export const RefreshButton = React.forwardRef<
             e.preventDefault();
             return;
           }
-          refresh();
+          if (onRefresh) onRefresh();
+          else refresh();
         }}
         {...rest}
         ref={ref}

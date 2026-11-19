@@ -1,5 +1,6 @@
-import { useShow } from "@refinedev/core";
-import { Link } from "react-router";
+import { useNotification, useShow } from "@refinedev/core";
+import { Link, useParams } from "react-router";
+import { useEffect, useRef } from "react";
 import { ShieldIcon, ShieldOffIcon } from "lucide-react";
 
 import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
@@ -61,8 +62,24 @@ function initials(name?: string | null) {
  * that role grant".
  */
 export const UserShow = () => {
-  const { result: record, query } = useShow<User>({});
+  const { open } = useNotification();
+  const { id } = useParams<{ id: string }>();
+  const { result: record, query } = useShow<User>({ errorNotification: false });
   const { isLoading } = query;
+  const notifiedError = useRef<unknown>(null);
+
+  useEffect(() => {
+    const error = query.error;
+    if (!error || notifiedError.current === error) return;
+    notifiedError.current = error;
+    open?.({
+      type: "error",
+      message:
+        error.statusCode === 404
+          ? `Người dùng với ID: ${id} không tồn tại.`
+          : "Không tải được thông tin người dùng. Vui lòng thử lại.",
+    });
+  }, [id, open, query.error]);
 
   const status = record?.status;
 

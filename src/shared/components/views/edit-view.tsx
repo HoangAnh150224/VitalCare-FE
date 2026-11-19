@@ -102,7 +102,7 @@ export const EditViewHeader = ({
             variant="outline"
             recordItemId={recordItemId}
             resource={resourceName}
-            {...(onRefresh && { onClick: onRefresh })}
+            onRefresh={onRefresh}
           />
         </div>
       </div>

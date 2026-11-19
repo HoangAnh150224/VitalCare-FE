@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { BaseRecord, HttpError } from "@refinedev/core";
-import { useExport, useResourceParams } from "@refinedev/core";
+import { useDataProvider, useResourceParams } from "@refinedev/core";
 import type { UseTableReturnType } from "@refinedev/react-table";
 import type { Column } from "@tanstack/react-table";
 import {
@@ -28,6 +28,7 @@ import {
   TooltipTrigger,
 } from "@/shared/ui/tooltip";
 import { cn } from "@/shared/lib/utils";
+import { toast } from "sonner";
 
 /* --------------------------------------------------------------------------
    Refresh
@@ -158,7 +159,7 @@ export function DataTableColumnToggle<TData extends BaseRecord>({
    -------------------------------------------------------------------------- */
 
 /**
- * A cell as one CSV field.
+ * A cell value that reads cleanly in a spreadsheet.
  *
  * A list cell is often an object — an assignee, a department, a category — and
  * `String(value)` on one of those writes `[object Object]` into the file, which
@@ -179,43 +180,19 @@ function toField(value: unknown): string {
   return String(value);
 }
 
-/** RFC 4180: quote the field and double any quote inside it. */
-export function toCsv(rows: string[][]): string {
-  return rows
-    .map((row) =>
-      row.map((field) => `"${field.replace(/"/g, '""')}"`).join(",")
-    )
-    .join("\r\n");
-}
-
-export function download(filename: string, csv: string) {
-  // The BOM is what makes Excel open a UTF-8 CSV as UTF-8 rather than as the
-  // system codepage — without it every accented name arrives mojibake.
-  const blob = new Blob(["\ufeff" + csv], {
-    type: "text/csv;charset=utf-8;",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
 /**
- * Export the table.
+ * Export the table as a formatted Excel workbook.
  *
  * Two items, because they answer different questions and only one of them is
  * cheap. **This page** is the rows already in the browser and needs no request:
  * the columns are the ones currently shown, in the order they are shown, so
  * hiding a column from the Columns menu takes it out of the file too. **All
- * rows** goes back to the API through refine's `useExport`, page by page,
+ * rows** goes back to the API page by page,
  * carrying the current filters and sorters so the file matches the table
  * rather than the whole resource.
  *
- * Both write the *stored* value rather than the rendered one — `2024-03-04`
- * rather than "Mar 4, 2024", `active` rather than "Active". A CSV is opened in
- * a spreadsheet, where a real date sorts and a formatted one is a string.
+ * Both write the stored column values, with widths and workbook formatting so
+ * Excel does not clip dates or discard workbook features as it does with CSV.
  *
  * A row-level scope still applies to the second one: the export reads through
  * the same endpoint, so it can only ever contain rows the caller may read.
@@ -230,38 +207,63 @@ export function DataTableExport<TData extends BaseRecord>({
   const { resource, identifier } = useResourceParams();
   const name = identifier ?? resource?.name ?? "export";
   const { filters, sorters } = table.refineCore;
+  const dataProvider = useDataProvider();
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { triggerExport, isLoading } = useExport<TData>({
-    resource: resource?.name,
-    filters,
-    sorters,
-    // `download` and `useBom` both default to true, which is what writes the
-    // file and what makes Excel read it back as UTF-8.
-    filename: name,
-    // `_can` is the row-level flag object the API stamps on each row so the
-    // UI knows which buttons to offer. It is plumbing, and in a spreadsheet it
-    // is a column of `[object Object]`.
-    mapData: (record) => {
-      const fields: Record<string, unknown> = { ...record };
-      delete fields._can;
-      return fields;
-    },
-  });
+  const exportFile = async (all: boolean) => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      const columns = table.reactTable
+        .getVisibleLeafColumns()
+        .filter((column) => column.id !== "actions" && column.accessorFn);
+      if (!columns.length) {
+        toast.error("Không có cột dữ liệu để xuất.");
+        return;
+      }
 
-  const exportPage = () => {
-    const columns = table.reactTable
-      .getVisibleLeafColumns()
-      .filter((column) => column.id !== "actions" && column.accessorFn);
+      let rows = table.reactTable.getRowModel().rows.map((row) => row.original);
+      if (all) {
+        if (!resource?.name) throw new Error("Không xác định được danh sách cần xuất.");
+        rows = [];
+        for (let currentPage = 1; ; currentPage++) {
+          const result = await dataProvider().getList<TData>({
+            resource: resource.name,
+            filters,
+            sorters,
+            pagination: { currentPage, pageSize: 200, mode: "server" },
+          });
+          rows.push(...result.data);
+          if (!result.data.length || rows.length >= result.total) break;
+        }
+      }
 
-    const head = columns.map((column) => columnLabel(column));
-    const body = table.reactTable
-      .getRowModel()
-      .rows.map((row) =>
-        columns.map((column) => toField(row.getValue(column.id)))
+      const { createTableWorkbook } = await import("./excel-workbook");
+      const workbook = createTableWorkbook(
+        rows,
+        all,
+        `Danh sách ${name}`,
+        columns.map((column) => ({
+          label: columnLabel(column),
+          width: Math.max(14, Math.min(48, Math.round(column.getSize() / 7))),
+          value: (row: TData) => toField(column.accessorFn?.(row, 0)),
+        })),
       );
-
-    download(`${name}-page.csv`, toCsv([head, ...body]));
+      const buffer = await workbook.xlsx.writeBuffer();
+      const url = URL.createObjectURL(new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `VitalCare-${name}${all ? "" : "-trang"}.xlsx`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      toast.error("Không thể xuất Excel. Vui lòng thử lại.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -273,13 +275,13 @@ export function DataTableExport<TData extends BaseRecord>({
           ) : (
             <DownloadIcon />
           )}
-          Xuất
+          {isLoading ? "Đang xuất..." : "Xuất Excel"}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Tải xuống dạng CSV</DropdownMenuLabel>
+        <DropdownMenuLabel>Tải xuống dạng Excel</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={exportPage}>
+        <DropdownMenuItem disabled={isLoading} onSelect={() => void exportFile(false)}>
           <span className="flex flex-col">
             <span>Trang này</span>
             <span className="text-muted-foreground text-xs">
@@ -289,7 +291,7 @@ export function DataTableExport<TData extends BaseRecord>({
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={isLoading}
-          onSelect={() => void triggerExport()}
+          onSelect={() => void exportFile(true)}
         >
           <span className="flex flex-col">
             <span>Tất cả dòng</span>

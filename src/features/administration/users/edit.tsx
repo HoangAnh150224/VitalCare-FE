@@ -88,7 +88,7 @@ export const UserEdit = () => {
   const { reset } = form;
   useEffect(() => {
     if (!user) return;
-    reset(user, { keepDirtyValues: true });
+    reset({ ...user, phone: formatVietnamesePhone(user.phone) }, { keepDirtyValues: true });
   }, [user, reset]);
 
   function onSubmit(values: Record<string, unknown>) {
