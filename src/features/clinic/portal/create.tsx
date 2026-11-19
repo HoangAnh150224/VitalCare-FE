@@ -49,6 +49,7 @@ export const PortalAppointmentCreate = () => {
 
       <Form {...form}>
         <form
+          noValidate
           onSubmit={form.handleSubmit((values) => onFinish(toBookingPayload(values) as never))}
           className="bg-card flex flex-col gap-6 rounded-2xl border border-border p-5 sm:p-6"
         >

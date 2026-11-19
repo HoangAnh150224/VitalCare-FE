@@ -158,7 +158,7 @@ export const WalkInRegistration = () => {
     <CreateView>
       <CreateViewHeader title="Đăng ký khám vãng lai" />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(submit)} className="min-w-0">
+        <form noValidate onSubmit={form.handleSubmit(submit)} className="min-w-0">
           <SectionedFormPanel>
             <FormSection
               title="Bệnh nhân"

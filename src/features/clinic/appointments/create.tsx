@@ -70,7 +70,7 @@ export const AppointmentCreate = () => {
     <CreateView>
       <CreateViewHeader title="Đăng ký khám" />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="min-w-0">
+        <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="min-w-0">
           <SectionedFormPanel>
             <FormSection title="Bệnh nhân" description="Đăng ký khám này của ai.">
               <FormField
