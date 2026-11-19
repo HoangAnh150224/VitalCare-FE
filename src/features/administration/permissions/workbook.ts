@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { humanizeResource, splitPermissionCode, type Permission } from "@/domains/permission/types";
+import { humanizeResource, permissionDisplay, splitPermissionCode, type Permission } from "@/domains/permission/types";
 import { actionLabel } from "@/domains/row-level-policy/types";
 
 export function createPermissionWorkbook(records: Permission[], all: boolean) {
@@ -19,15 +19,15 @@ export function createPermissionWorkbook(records: Permission[], all: boolean) {
   sheet.mergeCells("A2:G2");
   sheet.getCell("A2").value = "Ngày xuất: " + new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) + " • Giờ Việt Nam (UTC+7)";
   sheet.mergeCells("A3:G3");
-  sheet.getCell("A3").value = `Phạm vi: ${all ? "Tất cả kết quả theo bộ lọc hiện tại" : "Trang đang xem"} • Tổng số quyền: ${records.length}`;
+  sheet.getCell("A3").value = `Phạm vi: ${all ? "Tất cả kết quả theo bộ lọc hiện tại" : "Trang đang xem"} • Tổng số quyền: ${records.length};
   sheet.getRow(2).height = 24;
   sheet.getRow(3).height = 24;
   sheet.getRow(5).values = ["STT", "Mã quyền", "Tài nguyên", "Hành động", "Tên quyền", "Mô tả", "Quyền hệ thống"];
   sheet.getRow(5).height = 34;
   records.forEach((record, i) => {
     const { resource, action } = splitPermissionCode(record.code);
-    const values = [i + 1, record.code, humanizeResource(resource), actionLabel(action),
-      record.name, record.description ?? "—", record.systemPermission ? "Có" : "Không"];
+    const display = permissionDisplay(record);
+    const values = [i + 1, record.code, humanizeResource(resource), actionLabel(action), display.name, display.description, record.systemPermission ? "Có" : "Không"];
     const row = sheet.addRow(values);
     const lines = values.map((value, col) => String(value).split("\n")
       .reduce((total, line) => total + Math.max(1, Math.ceil(line.length / (widths[col] - 4))), 0));

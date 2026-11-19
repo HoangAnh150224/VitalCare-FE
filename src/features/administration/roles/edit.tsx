@@ -84,7 +84,19 @@ export const RoleEdit = () => {
     refineCore: { onFinish, query },
     ...form
   } = useForm({
-    refineCoreProps: {},
+    refineCoreProps: {
+      errorNotification: (error) => {
+        const raw = error?.errors?.name;
+        if (typeof raw === "string") return { type: "error", message: raw };
+        return error?.statusCode === 422
+          ? false
+          : { type: "error", message: "Không lưu được vai trò. Vui lòng thử lại." };
+      },
+      onMutationError: (error) => {
+        const raw = error?.errors?.name;
+        if (typeof raw === "string") form.setError("name", { type: "server", message: raw });
+      },
+    },
   });
 
   const record = query?.data?.data;
@@ -107,6 +119,15 @@ export const RoleEdit = () => {
   const [detailsOpen, setDetailsOpen] = useState(true);
 
   function onSubmit(values: Record<string, unknown>) {
+    if (typeof values.name !== "string" || values.name.trim().length === 0) {
+      form.setError("name", {
+        type: "validate",
+        message: "Tên vai trò không hợp lệ. Vui lòng thử lại.",
+      });
+      setDetailsOpen(true);
+      return;
+    }
+
     const permissions = Array.isArray(values.permissions)
       ? (values.permissions as PermissionRef[]).map((p) => ({ id: p.id }))
       : values.permissions;
@@ -124,7 +145,14 @@ export const RoleEdit = () => {
 
   return (
     <EditView>
-      <EditViewHeader />
+      <EditViewHeader
+        onRefresh={() => {
+          void query.refetch().then(({ data }) => {
+            const latest = data?.data;
+            if (latest) form.reset(latest);
+          });
+        }}
+      />
       <Form {...form}>
         <form
           // Collapsed, the identity fields are still mounted and still

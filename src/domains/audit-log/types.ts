@@ -16,6 +16,7 @@ export type AuditEntry = {
 };
 
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
+  create: "Táº¡o má»›i",
   view: "Xem",
   update: "Cập nhật",
   role_change: "Đổi vai trò",

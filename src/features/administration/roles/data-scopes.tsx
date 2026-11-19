@@ -432,7 +432,14 @@ function PolicyDialog({
           // `min-h-0`, or the body below refuses to shrink and pushes the
           // footer off the bottom instead of scrolling inside itself.
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={(event) => {
+              // This dialog is rendered through a portal, but React submit
+              // events still bubble through the role editor's form. Stop the
+              // outer role form from submitting (and redirecting) when this
+              // policy form is invalid or being saved.
+              event.stopPropagation();
+              void form.handleSubmit(onSubmit)(event);
+            }}
             className="flex min-h-0 flex-1 flex-col"
           >
             <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">

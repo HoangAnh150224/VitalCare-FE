@@ -1,4 +1,6 @@
-import { useShow } from "@refinedev/core";
+import { useNotification, useShow } from "@refinedev/core";
+import { useEffect, useRef } from "react";
+import { useParams } from "react-router";
 
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
 import {
@@ -14,7 +16,26 @@ import { AUDIT_ACTION_LABELS, type AuditEntry } from "./types";
 
 /** Audit Log Details (FE-20): one event with the state before and after it. */
 export const AuditLogShow = () => {
-  const { result: entry } = useShow<AuditEntry>({ resource: "audit_logs" });
+  const { open } = useNotification();
+  const { id } = useParams<{ id: string }>();
+  const { result: entry, query } = useShow<AuditEntry>({
+    resource: "audit_logs",
+    errorNotification: false,
+  });
+  const notifiedError = useRef<unknown>(null);
+
+  useEffect(() => {
+    const error = query.error;
+    if (!error || notifiedError.current === error) return;
+    notifiedError.current = error;
+    open?.({
+      type: "error",
+      message:
+        error.statusCode === 404
+          ? `Hoạt động với ID: ${id} không tồn tại.`
+          : "Không tải được thông tin nhật ký hoạt động. Vui lòng thử lại.",
+    });
+  }, [id, open, query.error]);
 
   return (
     <ShowView>

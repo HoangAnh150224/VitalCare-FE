@@ -1,5 +1,6 @@
 import type { HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 
 import { CreateView, CreateViewHeader } from "@/shared/components/views/create-view";
@@ -63,10 +64,27 @@ const TEXT_FIELDS: TextField[] = [
 function ClinicForm({ submitLabel }: { submitLabel: string }) {
   const navigate = useNavigate();
   const {
-    refineCore: { onFinish },
+    refineCore: { onFinish, query },
     ...form
   } = useForm<ClinicFormValues, HttpError, ClinicFormValues>({
-    refineCoreProps: { redirect: "show" },
+    refineCoreProps: {
+      redirect: "show",
+      errorNotification: (error) => {
+        const raw = error?.errors?.name;
+        const message = typeof raw === "string" ? raw : undefined;
+        if (message) return { type: "error", message };
+        return error?.statusCode === 422
+          ? false
+          : { type: "error", message: "Không lưu được cơ sở. Vui lòng thử lại." };
+      },
+      onMutationError: (error) => {
+        const raw = error?.errors?.name;
+        const message = typeof raw === "string" ? raw : undefined;
+        if (message) {
+          form.setError("name", { type: "server", message });
+        }
+      },
+    },
     defaultValues: {
       name: "",
       contactEmail: "",
@@ -76,6 +94,14 @@ function ClinicForm({ submitLabel }: { submitLabel: string }) {
       operatingStatus: "OPERATING",
     },
   });
+
+  // The edit header's refresh button refetches this record. Reset the form
+  // from that response so refresh discards edits and restores the saved values.
+  const clinic = query?.data?.data;
+  useEffect(() => {
+    if (!clinic) return;
+    form.reset(clinic);
+  }, [clinic, form.reset]);
 
   return (
     <Form {...form}>
@@ -111,6 +137,9 @@ function ClinicForm({ submitLabel }: { submitLabel: string }) {
                   pattern: type === "email" ? {
                     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
                     message: "Vui lòng nhập email hợp lệ",
+                  } : name === "contactPhone" ? {
+                    value: /^\+?(?=(?:\D*\d){8,15}\D*$)[0-9\s().-]+$/,
+                    message: "Số điện thoại không hợp lệ. Vui lòng nhập một số khác",
                   } : undefined,
                   maxLength: { value: max, message: `Tối đa ${max} ký tự` },
                 }}

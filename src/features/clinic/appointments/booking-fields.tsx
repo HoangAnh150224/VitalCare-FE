@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
-import { useList, useSelect } from "@refinedev/core";
+import { useList } from "@refinedev/core";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { useFormContext, useWatch, type Control } from "react-hook-form";
 
@@ -18,7 +19,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/ui/form";
-import type { Clinic } from "@/domains/clinic/types";
+import type { PublicClinic } from "@/domains/public-site/types";
+import { publicGet, publicRetry } from "@/shared/api/public";
 import { SPECIALTY_OPTIONS } from "@/domains/employee/types";
 import type { Profile } from "@/domains/profile/types";
 import { profileKind, relativesFull } from "@/domains/profile/types";
@@ -71,12 +73,17 @@ export function BookingFields({
     }
   }, [forOwnAccount, profiles, getValues, setValue]);
 
-  const { options: clinicOptions } = useSelect<Clinic>({
-    resource: "clinics",
-    optionLabel: "name",
-    optionValue: "id",
-    pagination: { mode: "off" },
+  const { data: activeClinics = [], isSuccess: clinicsLoaded } = useQuery({
+    queryKey: ["public", "clinics"],
+    queryFn: () => publicGet<PublicClinic[]>("clinics"),
+    retry: publicRetry,
+    staleTime: 0,
+    refetchInterval: 10_000,
   });
+  const clinicOptions = useMemo(
+    () => activeClinics.map((clinic) => ({ label: clinic.name, value: clinic.id })),
+    [activeClinics],
+  );
 
   // Most deployments have one clinic; asking somebody to choose from a list
   // of one is a step for nothing.
@@ -85,6 +92,16 @@ export function BookingFields({
       setValue("clinicId", String(clinicOptions[0].value));
     }
   }, [clinicOptions, getValues, setValue]);
+
+  // A clinic may stop operating while this booking form is already open.
+  // Drop its selection and date as soon as the active-only list refreshes.
+  useEffect(() => {
+    if (!clinicId || !clinicsLoaded) return;
+    if (!activeClinics.some((clinic) => clinic.id === clinicId)) {
+      setValue("clinicId", "", { shouldValidate: true });
+      setValue("appointmentDate", "", { shouldValidate: true });
+    }
+  }, [activeClinics, clinicId, clinicsLoaded, setValue]);
 
 
   const { doctors, isLoading: doctorsLoading } = useClinicDoctors(

@@ -34,7 +34,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/shared/components/tabs/tabs";
-import { formatDateTime } from "@/shared/lib/format";
+import { formatDateTime, formatVietnamesePhone } from "@/shared/lib/format";
 import { ResetPasswordCard } from "./reset-password-card";
 import {
   ROLE_ORIGIN_HINT,
@@ -78,7 +78,7 @@ export const UserEdit = () => {
   const { reset } = form;
   useEffect(() => {
     if (!user) return;
-    reset(user, { keepDirtyValues: true });
+    reset({ ...user, phone: formatVietnamesePhone(user.phone) }, { keepDirtyValues: true });
   }, [user, reset]);
 
   function onSubmit(values: Record<string, unknown>) {

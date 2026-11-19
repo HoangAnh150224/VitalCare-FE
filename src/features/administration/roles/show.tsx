@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useCan, useShow } from "@refinedev/core";
+import { useEffect, useRef, useState } from "react";
+import { useCan, useNotification, useShow } from "@refinedev/core";
+import { useParams } from "react-router";
 
 import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
 import {
@@ -48,8 +49,24 @@ const TAB_HINTS: Record<string, string> = {
  * something, with the whole catalogue one button away.
  */
 export const RoleShow = () => {
-  const { result: record, query } = useShow<Role>({});
+  const { open } = useNotification();
+  const { id } = useParams<{ id: string }>();
+  const { result: record, query } = useShow<Role>({ errorNotification: false });
   const { isLoading } = query;
+  const notifiedError = useRef<unknown>(null);
+
+  useEffect(() => {
+    const error = query.error;
+    if (!error || notifiedError.current === error) return;
+    notifiedError.current = error;
+    open?.({
+      type: "error",
+      message:
+        error.statusCode === 404
+          ? `Vai trò với ID: ${id} không tồn tại.`
+          : "Không tải được thông tin vai trò. Vui lòng thử lại.",
+    });
+  }, [id, open, query.error]);
 
   // `row_level_policies:*` is seeded to ADMIN alone. Somebody who may read a
   // role is not necessarily somebody who may read its data scopes, so the tab

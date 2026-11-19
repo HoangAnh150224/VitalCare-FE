@@ -29,6 +29,7 @@ import {
 } from "@/domains/customer/types";
 import { ACTIVITY_STATUS_VARIANTS, CUSTOMER_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatDate } from "@/shared/lib/format";
+import { ExcelTableExport } from "@/shared/components/data-table/excel-export";
 import { useClinicOptions } from "../clinics/use-clinic-options";
 
 const FILTER_FIELDS: AdvancedFilterField[] = [
@@ -176,6 +177,25 @@ export const CustomerList = ({ clinicId, readOnly = false }: FrontDeskListProps 
           <>
             <ListToolbar
               table={table}
+              exportAction={<ExcelTableExport<Customer>
+                table={table}
+                resource="customers"
+                title="Danh sách khách hàng"
+                columns={[
+                  { label: "Mã khách hàng", width: 22, numFmt: "@", value: (r) => r.customerCode },
+                  { label: "Họ và tên", width: 30, value: (r) => r.fullName },
+                  { label: "Số điện thoại", width: 20, numFmt: "@", value: (r) => r.phone },
+                  { label: "Email", width: 30, value: (r) => r.email ?? "—" },
+                  { label: "Trạng thái", width: 20, value: (r) => CUSTOMER_STATUS_LABELS[r.status] ?? r.status },
+                  { label: "Trạng thái theo dõi", width: 22, value: (r) => r.activityStatus ? ACTIVITY_STATUS_LABELS[r.activityStatus] : "—" },
+                  { label: "Ngày sinh", width: 18, value: (r) => formatDate(r.dateOfBirth) },
+                  { label: "Giới tính", width: 16, value: (r) => r.gender ? ({ male: "Nam", female: "Nữ", other: "Khác" }[r.gender]) : "—" },
+                  { label: "Địa chỉ", width: 40, value: (r) => [r.address, r.ward, r.province].filter(Boolean).join(", ") || "—" },
+                  { label: "Người thân của", width: 30, value: (r) => r.guardian?.fullName ?? "—" },
+                  { label: "Ngày trở thành bệnh nhân", width: 26, value: (r) => formatDate(r.patientActivatedAt) },
+                  { label: "Ngày đăng ký", width: 26, value: (r) => formatDate(r.createdAt) },
+                ]}
+              />}
               search={<DataTableQuickFilter table={table} placeholder="Tìm theo tên, số điện thoại, mã hồ sơ hoặc giấy tờ định danh..." />}
               filters={<DataTableAdvancedFilter table={table} fields={filterFields} />}
             />

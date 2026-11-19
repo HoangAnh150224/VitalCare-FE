@@ -39,12 +39,14 @@ type EditViewHeaderProps = PropsWithChildren<{
   wrapperClassName?: string;
   headerClassName?: string;
   actionsSlot?: React.ReactNode;
+  onRefresh?: () => void;
 }>;
 
 export const EditViewHeader = ({
   resource: resourceFromProps,
   title: titleFromProps,
   actionsSlot,
+  onRefresh,
   wrapperClassName,
   headerClassName,
 }: EditViewHeaderProps) => {
@@ -94,6 +96,7 @@ export const EditViewHeader = ({
             variant="outline"
             recordItemId={recordItemId}
             resource={resourceName}
+            onRefresh={onRefresh}
           />
         </div>
       </div>

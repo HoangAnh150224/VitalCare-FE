@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/data-table/data-table";
 import { DataTableQuickFilter } from "@/shared/components/data-table/data-table-quick-filter";
 import { ListToolbar, ListView, ListViewHeader } from "@/shared/components/views/list-view";
+import { ExcelTableExport } from "@/shared/components/data-table/excel-export";
 import { ShowButton } from "@/shared/components/buttons/show";
 import { Badge } from "@/shared/ui/badge";
 import type { Appointment } from "@/domains/appointment/types";
@@ -28,6 +29,12 @@ import { formatLocalDate, formatLocalTime } from "@/shared/lib/format";
 import { useClinicOptions } from "../clinics/use-clinic-options";
 import { AppointmentActions } from "./appointment-actions";
 import { clinicToday } from "./clinic-day";
+
+/** Keep exported dates readable in Excel without relying on locale parsing. */
+function appointmentDateLabel(date: string, time: string | null): string {
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}/${year}${time ? ` ${time.slice(0, 5)}` : ""}`;
+}
 
 /** Monday and Sunday of the clinic's current week, `YYYY-MM-DD`: the list opens on "this week". */
 function thisWeek(): [string, string] {
@@ -270,6 +277,22 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
                   />
                 </div>
               }
+              exportAction={<ExcelTableExport
+                table={table}
+                resource={resource}
+                title="Danh sách lượt khám"
+                columns={[
+                  { label: "Số khám", width: 12, value: (row: Appointment) => formatQueueNumber(row.queueNumber) },
+                  { label: "Ngày khám", width: 20, value: (row: Appointment) => appointmentDateLabel(row.appointmentDate, row.startTime) },
+                  { label: "Mã đặt khám", width: 20, value: (row: Appointment) => formatBookingCode(row.bookingCode) },
+                  { label: "Khách hàng", width: 30, value: (row: Appointment) => row.customer.fullName },
+                  { label: "Số điện thoại", width: 18, value: (row: Appointment) => row.customer.phone },
+                  { label: "Bác sĩ", width: 28, value: (row: Appointment) => row.doctor?.fullName ?? "Xếp khi gọi vào phòng" },
+                  { label: "Phòng khám", width: 28, value: (row: Appointment) => row.clinic.name },
+                  { label: "Lý do", width: 42, value: (row: Appointment) => row.reason ?? "—" },
+                  { label: "Trạng thái", width: 32, value: (row: Appointment) => APPOINTMENT_STATUS_LABELS[row.status] ?? row.status },
+                ]}
+              />}
             />
           </>
         }

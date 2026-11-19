@@ -22,6 +22,7 @@ import { ShowButton } from "@/shared/components/buttons/show";
 import { Badge } from "@/shared/ui/badge";
 import {
   humanizeResource,
+  permissionDisplay,
   splitPermissionCode,
   type Permission,
 } from "@/domains/permission/types";
@@ -106,7 +107,7 @@ export const PermissionList = () => {
         enableSorting: true,
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <span className="font-medium">{row.original.name}</span>
+            <span className="font-medium">{permissionDisplay(row.original).name}</span>
             {row.original.systemPermission && (
               <Badge variant="secondary" className="text-[10px]">
                 Hệ thống
@@ -120,10 +121,8 @@ export const PermissionList = () => {
         enableResizing: true,
         header: "Mô tả",
         enableSorting: false,
-        cell: ({ getValue }) => (
-          <span className="text-muted-foreground text-sm">
-            {getValue() ?? "—"}
-          </span>
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-sm">{permissionDisplay(row.original).description}</span>
         ),
       }),
       columnHelper.display({

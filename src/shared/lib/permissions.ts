@@ -205,12 +205,15 @@ const DOCTOR_HIDDEN = new Set(["medical_services", "exam_rooms", "first_aid_arti
  * link to them. Technicians keep theirs.
  */
 const VISIT_SCREENS = new Set(["clinical_encounters", "service_orders", "result_returns"]);
+const REQUESTED_MENU_HIDDEN = new Set(["clinics", "reports"]);
 
 /** Menu entries an account does not need, though their screens stay open to it (unlike {@link hiddenMenus}). */
 export function sidebarOnlyHidden(roles: readonly string[] | undefined): ReadonlySet<string> {
   const administers = roles?.includes("CLINIC_ADMIN") || roles?.includes("ADMIN");
-  if (!administers && (roles?.includes("DOCTOR") || roles?.includes("MANAGER"))) return VISIT_SCREENS;
-  return NONE_HIDDEN;
+  if (!administers && (roles?.includes("DOCTOR") || roles?.includes("MANAGER"))) {
+    return new Set([...REQUESTED_MENU_HIDDEN, ...VISIT_SCREENS]);
+  }
+  return REQUESTED_MENU_HIDDEN;
 }
 
 /**

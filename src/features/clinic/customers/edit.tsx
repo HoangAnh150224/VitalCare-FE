@@ -123,7 +123,11 @@ export const CustomerEdit = () => {
                   <FormItem className="md:col-span-8">
                     <FormLabel>Địa chỉ</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value ?? ""} />
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        placeholder="Số nhà, đường, phường/xã, tỉnh/thành phố"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -143,7 +147,11 @@ export const CustomerEdit = () => {
                   <FormItem className="md:col-span-4">
                     <FormLabel>Họ và tên</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value ?? ""} />
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        placeholder="Nhập họ và tên người liên hệ"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -157,7 +165,13 @@ export const CustomerEdit = () => {
                   <FormItem className="md:col-span-4">
                     <FormLabel>Số điện thoại</FormLabel>
                     <FormControl>
-                      <Input {...field} type="tel" inputMode="tel" value={field.value ?? ""} />
+                      <Input
+                        {...field}
+                        type="tel"
+                        inputMode="tel"
+                        value={field.value ?? ""}
+                        placeholder="Nhập số điện thoại liên hệ"
+                      />
                     </FormControl>
                     <FormDescription>Có thể là số cố định.</FormDescription>
                     <FormMessage />
