@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useCan } from "@refinedev/core";
 import {
   ActivityIcon,
   BatteryLowIcon,
@@ -41,6 +42,9 @@ const chart = {
  */
 export const MonitoringDashboard = () => {
   const [clinicId, setClinicId] = useState("");
+  // The device tiles open the device screen only for whoever manages devices (not the front desk).
+  const { data: devicesAccess } = useCan({ resource: "devices", action: "list" });
+  const devicesTo = devicesAccess?.can ? "/devices" : undefined;
   const { data, isLoading, isError, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["monitoring_dashboard", clinicId],
     queryFn: () =>
@@ -84,7 +88,7 @@ export const MonitoringDashboard = () => {
               testId="tile-monitored"
             />
             <Tile
-              to="/devices"
+              to={devicesTo}
               icon={<WatchIcon />}
               label="Thiết bị trực tuyến"
               value={`${data.devices.online}/${data.devices.total}`}
@@ -185,7 +189,7 @@ export const MonitoringDashboard = () => {
               testId="tile-sync-failures"
             />
             <Tile
-              to="/devices"
+              to={devicesTo}
               icon={<BatteryLowIcon />}
               label="Thiết bị pin yếu (dưới 20%)"
               value={data.devices.lowBattery}
@@ -208,7 +212,8 @@ function Tile({
   tone,
   testId,
 }: {
-  to: string;
+  /** Where the tile leads; without it the tile only shows its figure. */
+  to?: string;
   icon: ReactNode;
   label: string;
   value: number | string;
@@ -216,8 +221,7 @@ function Tile({
   tone?: "critical" | "warning";
   testId: string;
 }) {
-  return (
-    <Link to={to} data-testid={testId}>
+  const card = (
       <Card
         className={cn(
           "hover:bg-accent/30 h-full gap-1 px-5 py-4 transition-colors",
@@ -232,6 +236,6 @@ function Tile({
         <span className="text-3xl font-semibold tabular-nums">{value}</span>
         {note && <span className="text-muted-foreground text-xs">{note}</span>}
       </Card>
-    </Link>
   );
+  return to ? <Link to={to} data-testid={testId}>{card}</Link> : <div data-testid={testId}>{card}</div>;
 }

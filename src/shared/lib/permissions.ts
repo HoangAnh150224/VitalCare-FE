@@ -213,8 +213,12 @@ export function sidebarOnlyHidden(roles: readonly string[] | undefined): Readonl
   return NONE_HIDDEN;
 }
 
-/** Healthcare staff (the front desk) works the day; managing the clinic's staff is the clinic administrator's. */
-const MANAGER_HIDDEN = new Set(["employees"]);
+/**
+ * Healthcare staff (the front desk) works the day; managing the clinic's staff
+ * and its IoMT devices (register, edit, secrets, simulation) is the clinic
+ * administrator's. Handing a device to a patient stays on the customer page.
+ */
+const MANAGER_HIDDEN = new Set(["employees", "devices"]);
 const NONE_HIDDEN = new Set<string>();
 
 /**
