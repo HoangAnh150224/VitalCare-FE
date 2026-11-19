@@ -70,10 +70,8 @@ export const UserEdit = () => {
   /**
    * Fill the form from the record, in one go.
    *
-   * `roles` has no field of its own any more (it is shown, not picked), so the
-   * per-field fill would skip it and Save would send no roles. `reset` writes
-   * the whole record into the form, so the account's roles go back unchanged.
-   * `keepDirtyValues` stops a refetch from throwing away edits in progress.
+   * `reset` writes the whole record into the form; `keepDirtyValues` stops a
+   * refetch from throwing away edits in progress.
    */
   const { reset } = form;
   useEffect(() => {
@@ -82,17 +80,13 @@ export const UserEdit = () => {
   }, [user, reset]);
 
   function onSubmit(values: Record<string, unknown>) {
-    // `roles` arrives from the API as full objects and goes back as `{ id }`
-    // refs. The API ignores the extra keys, but trimming them keeps the request
-    // an honest statement of what is being changed.
-    const roles = Array.isArray(values.roles)
-      ? (values.roles as { id: number }[]).map((role) => ({ id: role.id }))
-      : values.roles;
-
-    onFinish({
-      ...values,
-      roles,
-    });
+    // `roles` is shown, not edited, here, so it is left out: the API reads an
+    // absent `roles` as "unchanged". Sending the loaded copy back would be
+    // refused (403) the moment someone else changed the roles meanwhile, and
+    // the name/phone edit would be lost with it.
+    const payload = { ...values };
+    delete payload.roles;
+    onFinish(payload);
   }
 
   const status = user?.status;

@@ -45,7 +45,7 @@ async function send(method: "post" | "put", url: string, json: unknown) {
 }
 
 /** The server's refusals here, in Vietnamese. */
-function membershipErrorText(body: unknown): string {
+export function membershipErrorText(body: unknown): string {
   const text = JSON.stringify(body ?? "");
   if (/visits to see/.test(text)) return "Nhân viên còn lượt khám chưa xong tại cơ sở này. Chuyển các lượt khám cho người khác trước.";
   if (/already work at this clinic/.test(text)) return "Nhân viên đang làm ở cơ sở này rồi.";
@@ -55,7 +55,8 @@ function membershipErrorText(body: unknown): string {
   if (/at least one role/.test(text)) return "Chọn ít nhất một vai trò.";
   if (/Your own roles/.test(text)) return "Không tự đổi vai trò của chính mình; nhờ quản trị khác.";
   if (/Only the system administrator/.test(text)) return "Chỉ quản trị hệ thống mới cấp hoặc gỡ vai trò Quản trị phòng khám.";
-  if (/Only the clinic administrator/.test(text)) return "Vai trò Bác sĩ và Lễ tân do quản trị phòng khám cấp.";
+  if (/roles in their own clinic/.test(text)) return "Chỉ quản trị của chính phòng khám này mới quản lý được vai trò của nhân viên.";
+  if (/Only the clinic administrator gives/.test(text)) return "Vai trò Bác sĩ và Lễ tân do quản trị phòng khám cấp.";
   if (/last active administrator|no active administrator/.test(text)) return "Không thể gỡ quản trị viên cuối cùng.";
   if (typeof body === "object" && body !== null && "statusCode" in body && body.statusCode === 403) {
     return "Bạn không có quyền thay đổi vai trò này. Vai trò Bác sĩ và Lễ tân cần quyền quản lý nhân viên.";
@@ -243,6 +244,7 @@ export function ClinicRolesPanel({ employeeId }: { employeeId: number }) {
   const ownAccount = employee?.userId === getIdentity()?.id;
   const { open: notify } = useNotification();
   const queryClient = useQueryClient();
+  const invalidate = useInvalidate();
   const [draft, setDraft] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { data: catalogue } = useQuery({
@@ -264,6 +266,8 @@ export function ClinicRolesPanel({ employeeId }: { employeeId: number }) {
       setDraft(null);
       setError(null);
       void queryClient.invalidateQueries({ queryKey: key });
+      void invalidate({ resource: "audit_logs", invalidates: ["list", "many"] });
+      void invalidate({ resource: "employees", invalidates: ["detail", "list"], id: employeeId });
     },
     onError: (e) => setError(membershipErrorText(e)),
   });

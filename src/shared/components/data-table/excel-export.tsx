@@ -3,6 +3,7 @@ import { useDataProvider, type HttpError } from "@refinedev/core";
 import type { UseTableReturnType } from "@refinedev/react-table";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
+import { fetchAllForExport } from "./fetch-all";
 import { Button } from "@/shared/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 import type { BaseRecord } from "@refinedev/core";
@@ -13,17 +14,9 @@ export function ExcelTableExport<T extends BaseRecord>({ table, resource, title,
   async function exportFile(all: boolean) {
     setBusy(true);
     try {
-      let rows: T[] = [];
-      if (all) {
-        for (let currentPage = 1; ; currentPage++) {
-          const result = await provider().getList<T>({
-            resource, filters: table.refineCore.filters, sorters: table.refineCore.sorters,
-            pagination: { currentPage, pageSize: 200, mode: "server" },
-          });
-          rows.push(...result.data);
-          if (!result.data.length || rows.length >= result.total) break;
-        }
-      } else rows = table.reactTable.getRowModel().rows.map((row) => row.original);
+      let rows: T[];
+      if (all) rows = await fetchAllForExport<T>(provider(), resource, table.refineCore.filters, table.refineCore.sorters);
+      else rows = table.reactTable.getRowModel().rows.map((row) => row.original);
       const { createTableWorkbook } = await import("./excel-workbook");
       const workbook = createTableWorkbook(rows, all, title, columns);
       const buffer = await workbook.xlsx.writeBuffer();

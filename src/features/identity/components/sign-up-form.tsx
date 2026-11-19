@@ -24,6 +24,7 @@ import {
   type ProfileMatch,
 } from "@/shared/api/registration";
 import { cn } from "@/shared/lib/utils";
+import { passwordInRange } from "@/shared/lib/password";
 
 const CODE_LENGTH = 6;
 
@@ -38,6 +39,9 @@ const isAllZeroPhone = (phone: string) => {
   const significant = !hasCountryCode && national.startsWith("0") ? national.slice(1) : national;
   return /^0{9}$/.test(significant);
 };
+
+/** Fields of the first step: an error on one of them is shown there, not on the step that got it. */
+const DETAILS_FIELDS = ["phone", "fullName", "password", "confirmPassword"];
 
 /** The API's answer to a number that already has an account (UC-04 D2). */
 const PHONE_TAKEN = "Số điện thoại đã được sử dụng";
@@ -86,6 +90,13 @@ export const SignUpForm = () => {
     return () => window.clearTimeout(timer);
   }, [resendIn]);
 
+  /** Show a refusal; one about a field of the first step takes the person back to it. */
+  const showFieldErrors = (errors: Record<string, string> | undefined) => {
+    setFieldErrors(errors ?? {});
+    const detail = Object.keys(errors ?? {}).find((name) => DETAILS_FIELDS.includes(name));
+    if (detail) setStep("details");
+  };
+
   const sendCode = async () => {
     setSending(true);
     setError(null);
@@ -95,7 +106,7 @@ export const SignUpForm = () => {
 
     if (!result.ok) {
       setError(translate(result.error.message));
-      setFieldErrors(result.error.fieldErrors ?? {});
+      showFieldErrors(result.error.fieldErrors);
       return;
     }
     setResendIn(result.value.resendAfter);
@@ -131,7 +142,10 @@ export const SignUpForm = () => {
     if (!phone.trim()) missing.phone = "Vui lòng nhập số điện thoại.";
     if (!fullName.trim()) missing.fullName = "Vui lòng nhập họ và tên.";
     if (!password) missing.password = "Vui lòng nhập mật khẩu.";
+    else if (!password.trim()) missing.password = translate("Password cannot contain only spaces");
     else if (password.length < 8) missing.password = "Mật khẩu phải có từ 8 đến 72 ký tự.";
+    // 72 is counted in bytes, as the server does: accented letters take two or three.
+    else if (!passwordInRange(password)) missing.password = translate("Password is too long; use fewer accented letters");
     if (!confirmPassword) missing.confirmPassword = "Vui lòng nhập lại mật khẩu.";
     if (Object.keys(missing).length > 0) {
       setFieldErrors(missing);
@@ -168,7 +182,7 @@ export const SignUpForm = () => {
     setChecking(false);
     if (!result.ok) {
       setError(translate(result.error.message));
-      setFieldErrors(result.error.fieldErrors ?? {});
+      showFieldErrors(result.error.fieldErrors);
       if (result.error.fieldErrors?.otp) setOtp("");
       return;
     }
@@ -204,7 +218,7 @@ export const SignUpForm = () => {
           }
           const failure = data.error as (Error & { fieldErrors?: Record<string, string> }) | undefined;
           setError(failure?.message ? translate(failure.message) : null);
-          setFieldErrors(failure?.fieldErrors ?? {});
+          showFieldErrors(failure?.fieldErrors);
           // The code is spent or wrong: back to it, to ask for a new one.
           if (failure?.fieldErrors?.otp) {
             setOtp("");

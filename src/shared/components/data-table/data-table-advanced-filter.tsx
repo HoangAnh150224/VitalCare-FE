@@ -28,7 +28,7 @@ import {
 } from "@/shared/components/data-table/data-table-filter";
 import { cn } from "@/shared/lib/utils";
 
-export type AdvancedFilterFieldType = "text" | "number" | "select";
+export type AdvancedFilterFieldType = "text" | "number" | "select" | "date";
 
 /**
  * Only these operators survive the simple-rest provider AND this API:
@@ -43,6 +43,7 @@ const OPERATORS_BY_TYPE: Record<AdvancedFilterFieldType, CrudOperators[]> = {
   text: ["contains", "eq", "ne"],
   number: ["eq", "ne", "gte", "lte"],
   select: ["eq", "ne"],
+  date: ["eq", "gte", "lte"],
 };
 
 export type AdvancedFilterField = {
@@ -266,7 +267,7 @@ export function DataTableAdvancedFilter<TData extends BaseRecord>({
                   ) : (
                     <Input
                       id={`advanced-filter-${field.field}`}
-                      type={field.type === "number" ? "number" : "text"}
+                      type={field.type === "number" || field.type === "date" ? field.type : "text"}
                       className={cn("flex-1")}
                       placeholder={field.placeholder ?? "Bất kỳ"}
                       value={entry.value}

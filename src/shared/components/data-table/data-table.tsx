@@ -134,12 +134,18 @@ export function DataTable<TData extends BaseRecord>({
   const filtersHere = table.reactTable.options.manualFiltering === false;
   const filteredCount = filtersHere ? table.reactTable.getFilteredRowModel().rows.length : undefined;
   const total = filteredCount ?? tableQuery.data?.total;
+  // Pagination mode "off": the API answered every row and they all sit on one
+  // page, but @refinedev/react-table still sets `manualPagination` and reports
+  // `pageCount` as total / pageSize ("trang 1/3" over 25 rows). Having every
+  // row means there is one page, whatever the mode.
+  const allRowsHere =
+    (tableQuery.data?.data?.length ?? 0) >= (tableQuery.data?.total ?? 0);
   const shownPageCount =
     filteredCount === undefined
-      ? pageCount
+      ? allRowsHere ? 1 : pageCount
       : table.reactTable.options.manualPagination
         ? // Every row is on the one page the API answered: the filter only narrows it.
-          (tableQuery.data?.data?.length ?? 0) <= pageSize
+          (tableQuery.data?.data?.length ?? 0) <= pageSize || allRowsHere
           ? 1
           : pageCount
         : Math.max(1, Math.ceil(filteredCount / pageSize));

@@ -46,14 +46,16 @@ const FILTER_FIELDS: AdvancedFilterField[] = [
   {
     field: "occurredFrom",
     label: "Từ ngày",
-    type: "text",
-    placeholder: "YYYY-MM-DD",
+    type: "date",
+    // The field name carries the direction; the API ignores the operator.
+    hideOperator: true,
   },
   {
     field: "occurredTo",
     label: "Đến ngày",
-    type: "text",
-    placeholder: "YYYY-MM-DD",
+    type: "date",
+    // The field name carries the direction; the API ignores the operator.
+    hideOperator: true,
   },
 ];
 

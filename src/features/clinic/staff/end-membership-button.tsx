@@ -9,6 +9,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
+import { membershipErrorText } from "./membership";
 
 export function EndMembershipButton({ employee }: { employee: Employee }) {
   const [open, setOpen] = useState(false);
@@ -50,7 +51,7 @@ export function EndMembershipButton({ employee }: { employee: Employee }) {
           values: { reason: reason.trim() },
           config: { headers: { "Content-Type": "application/json" } },
           successNotification: { type: "success", message: "Đã kết thúc thành viên. Hồ sơ được giữ lại trong danh sách." },
-          errorNotification: { type: "error", message: "Không thể kết thúc thành viên. Vui lòng kiểm tra lại." },
+          errorNotification: (error) => ({ type: "error", message: membershipErrorText(error) }),
         }, { onSuccess: () => {
           setOpen(false);
           setReason("");

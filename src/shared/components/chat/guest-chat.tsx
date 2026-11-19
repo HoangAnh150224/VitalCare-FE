@@ -44,6 +44,8 @@ import type { PublicClinic } from "@/domains/public-site/types";
 
 /** Where a guest's conversation is remembered: in this browser only, so they can come back to it. */
 const STORAGE_KEY = "vitalcare.guest-chat";
+/** After this the remembered conversation is dropped: the next guest on a shared machine must not see it. */
+const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 /** Asks any page to open the chat, optionally on one clinic: `openGuestChat(clinicId)`. */
 const OPEN_EVENT = "vitalcare:open-chat";
 
@@ -52,11 +54,15 @@ type Session = { id: number; token: string };
 const readSession = (): Session | null => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? (JSON.parse(raw) as Session) : null;
-    return parsed &&
-      typeof parsed.id === "number" &&
-      typeof parsed.token === "string"
-      ? parsed
+    const parsed = raw ? (JSON.parse(raw) as Session & { savedAt?: number }) : null;
+    if (!parsed) return null;
+    // No savedAt is an entry from before the expiry existed: as stale as an old one.
+    if (typeof parsed.savedAt !== "number" || Date.now() - parsed.savedAt > SESSION_MAX_AGE_MS) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return typeof parsed.id === "number" && typeof parsed.token === "string"
+      ? { id: parsed.id, token: parsed.token }
       : null;
   } catch {
     return null;
@@ -65,7 +71,7 @@ const readSession = (): Session | null => {
 
 const writeSession = (session: Session | null) => {
   try {
-    if (session) localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    if (session) localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...session, savedAt: Date.now() }));
     else localStorage.removeItem(STORAGE_KEY);
   } catch {
     // Private mode or blocked storage: the conversation lasts until the tab closes.

@@ -2,7 +2,6 @@ import type { HttpError } from "@refinedev/core";
 import { useShow } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { useNavigate } from "react-router";
-import { useWatch } from "react-hook-form";
 
 import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
 import { Button } from "@/shared/ui/button";
@@ -26,11 +25,10 @@ import { StaffCreate } from "./create";
 import { getAuthorities } from "@/shared/api/session";
 
 /**
- * Editing a member of staff's record, and recording that they have left.
+ * Editing a member of staff's record, and taking a former one back.
  *
- * Setting somebody inactive is the consequential change here, and the form
- * says what it does before it is saved: every care team they are on ends, and
- * their account stops signing in.
+ * Ending somebody's membership is not done here: it needs a reason, so it
+ * lives in "Kết thúc thành viên" on the detail page and the staff list.
  */
 export const StaffEdit = () => {
   const { result: employee, query } = useShow<Employee>({ resource: "employees", errorNotification: false });
@@ -42,7 +40,18 @@ export const StaffEdit = () => {
       <Button variant="outline" onClick={() => navigate("/employees")}>Quay lại danh sách</Button>
     </div>;
   }
-  return getAuthorities()?.roles.includes("ADMIN") ? <StaffCreate editing /> : <StaffProfileEdit />;
+  if (getAuthorities()?.roles.includes("ADMIN")) {
+    // The system administrator edits clinic administrators only; StaffCreate's
+    // edit mode is built for that type and nothing else.
+    if (employee.staffType !== "clinic_admin") {
+      return <div className="space-y-4">
+        <p role="alert">Tài khoản này không chỉnh sửa được tại đây.</p>
+        <Button variant="outline" onClick={() => navigate("/employees")}>Quay lại danh sách</Button>
+      </div>;
+    }
+    return <StaffCreate editing />;
+  }
+  return <StaffProfileEdit />;
 };
 
 const StaffProfileEdit = () => {
@@ -52,9 +61,8 @@ const StaffProfileEdit = () => {
     ...form
   } = useForm<Employee, HttpError, Employee>({ refineCoreProps: {} });
 
-  const original = query?.data?.data?.status;
-  const status = useWatch({ control: form.control, name: "status" });
-  const leaving = original === "active" && status === "inactive";
+  // Only a former member of staff can have their status changed here (back to active).
+  const returning = query?.data?.data?.status === "inactive";
 
   function onSubmit(values: Employee) {
     onFinish({
@@ -62,7 +70,7 @@ const StaffProfileEdit = () => {
       professionalTitle: values.professionalTitle ?? "",
       licenseNo: values.licenseNo ?? "",
       clinicPosition: values.clinicPosition ?? "",
-      status: values.status,
+      ...(returning ? { status: values.status } : {}),
     } as unknown as Employee);
   }
 
@@ -79,8 +87,13 @@ const StaffProfileEdit = () => {
               <ProfileFields control={form.control} />
             </FormSection>
 
-            <FormSection title="Trạng thái" description="Nhân viên nghỉ việc được chuyển sang Đã nghỉ, không xoá.">
-              <FormField
+            <FormSection
+              title="Trạng thái"
+              description={returning
+                ? "Nhân viên đã nghỉ có thể được nhận lại làm việc."
+                : "Để cho nhân viên nghỉ, dùng \"Kết thúc thành viên\" ở trang chi tiết (mục Phòng khám trực thuộc) hoặc danh sách nhân viên — cần nhập lý do."}
+            >
+              {returning && <FormField
                 control={form.control}
                 name="status"
                 render={({ field }) => (
@@ -103,13 +116,7 @@ const StaffProfileEdit = () => {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
-              {leaving && (
-                <p className="text-warning md:col-span-8 text-sm">
-                  Khi lưu, nhân viên này sẽ được gỡ khỏi mọi nhóm chăm sóc đang theo dõi và tài khoản
-                  không đăng nhập được nữa. Thiết bị bệnh nhân đang đeo không bị thu hồi.
-                </p>
-              )}
+              />}
             </FormSection>
 
             <FormSectionActions>

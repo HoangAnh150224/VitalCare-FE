@@ -3,6 +3,7 @@ import { useDataProvider, type HttpError } from "@refinedev/core";
 import type { UseTableReturnType } from "@refinedev/react-table";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
+import { fetchAllForExport } from "@/shared/components/data-table/fetch-all";
 import { Button } from "@/shared/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 import type { Permission } from "@/domains/permission/types";
@@ -13,17 +14,9 @@ export function PermissionExport({ table }: { table: UseTableReturnType<Permissi
   async function exportFile(all: boolean) {
     setBusy(true);
     try {
-      let rows: Permission[] = [];
-      if (all) {
-        for (let currentPage = 1; ; currentPage++) {
-          const result = await provider().getList<Permission>({
-            resource: "permissions", filters: table.refineCore.filters, sorters: table.refineCore.sorters,
-            pagination: { currentPage, pageSize: 200, mode: "server" },
-          });
-          rows.push(...result.data);
-          if (!result.data.length || rows.length >= result.total) break;
-        }
-      } else rows = table.reactTable.getRowModel().rows.map((row) => row.original);
+      let rows: Permission[];
+      if (all) rows = await fetchAllForExport<Permission>(provider(), "permissions", table.refineCore.filters, table.refineCore.sorters);
+      else rows = table.reactTable.getRowModel().rows.map((row) => row.original);
       const { createPermissionWorkbook } = await import("./workbook");
       const workbook = createPermissionWorkbook(rows, all);
       const buffer = await workbook.xlsx.writeBuffer();

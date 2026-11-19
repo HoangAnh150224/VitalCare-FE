@@ -4,6 +4,7 @@ import type { HttpError } from "@refinedev/core";
 import type { UseTableReturnType } from "@refinedev/react-table";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
+import { fetchAllForExport } from "@/shared/components/data-table/fetch-all";
 import { Button } from "@/shared/ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/shared/ui/dropdown-menu";
 import { EMPLOYEE_STATUS_LABELS, STAFF_TYPE_LABELS, type Employee } from "@/domains/employee/types";
@@ -18,18 +19,9 @@ export function StaffExport({ table, clinicName, adminsOnly }: {
   async function exportFile(all: boolean) {
     setBusy(true);
     try {
-      let records: Employee[] = [];
-      if (all) {
-        for (let currentPage = 1; ; currentPage++) {
-          const result = await provider().getList<Employee>({
-            resource: "employees", filters: table.refineCore.filters,
-            sorters: table.refineCore.sorters,
-            pagination: { currentPage, pageSize: 200, mode: "server" },
-          });
-          records.push(...result.data);
-          if (!result.data.length || records.length >= result.total) break;
-        }
-      } else records = table.reactTable.getRowModel().rows.map((row) => row.original);
+      let records: Employee[];
+      if (all) records = await fetchAllForExport<Employee>(provider(), "employees", table.refineCore.filters, table.refineCore.sorters);
+      else records = table.reactTable.getRowModel().rows.map((row) => row.original);
       const { default: ExcelJS } = await import("exceljs");
       const workbook = new ExcelJS.Workbook();
       workbook.creator = "VitalCare";
