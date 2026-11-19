@@ -19,7 +19,7 @@ export function createPermissionWorkbook(records: Permission[], all: boolean) {
   sheet.mergeCells("A2:G2");
   sheet.getCell("A2").value = "Ngày xuất: " + new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) + " • Giờ Việt Nam (UTC+7)";
   sheet.mergeCells("A3:G3");
-  sheet.getCell("A3").value = `Phạm vi: ${all ? "Tất cả kết quả theo bộ lọc hiện tại" : "Trang đang xem"} • Tổng số quyền: ${records.length};
+  sheet.getCell("A3").value = `Phạm vi: ${all ? "Tất cả kết quả theo bộ lọc hiện tại" : "Trang đang xem"} • Tổng số quyền: ${records.length}`;
   sheet.getRow(2).height = 24;
   sheet.getRow(3).height = 24;
   sheet.getRow(5).values = ["STT", "Mã quyền", "Tài nguyên", "Hành động", "Tên quyền", "Mô tả", "Quyền hệ thống"];
