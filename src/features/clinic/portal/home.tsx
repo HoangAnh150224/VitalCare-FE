@@ -2,6 +2,7 @@ import { useGetIdentity, useList } from "@refinedev/core";
 import {
   CalendarCheck2Icon,
   CalendarPlusIcon,
+  ChevronLeftIcon,
   ChevronRightIcon,
   CloudOffIcon,
   FileHeartIcon,
@@ -12,6 +13,7 @@ import {
   Share2Icon,
   HandHeartIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router";
 
 import { usePortalCanOpen } from "@/shared/components/layout/portal-layout";
@@ -58,7 +60,10 @@ export const PortalHome = () => {
   const all = visits?.data ?? [];
   // The list comes newest first; the next visit is the soonest of those still to come.
   const upcoming = all.filter((visit) => isUpcoming(visit, today)).reverse();
-  const next = upcoming[0];
+  // Which upcoming visit the card shows (KAN-72); kept in range when the list shrinks.
+  const [shownIndex, setShownIndex] = useState(0);
+  const current = Math.min(shownIndex, Math.max(upcoming.length - 1, 0));
+  const next = upcoming[current];
   const recent = all.filter((visit) => !isUpcoming(visit, today)).slice(0, 3);
   const results = all.filter((visit) => visit.status === "completed").length;
 
@@ -166,9 +171,32 @@ export const PortalHome = () => {
         title="Lượt khám sắp tới"
         action={
           upcoming.length > 1 && (
-            <Link to="/my-appointments" className="text-primary text-sm font-medium hover:underline">
-              Còn {upcoming.length - 1} lượt khác
-            </Link>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Lượt khám trước"
+                disabled={current === 0}
+                onClick={() => setShownIndex(current - 1)}
+              >
+                <ChevronLeftIcon />
+              </Button>
+              <span className="text-muted-foreground min-w-10 text-center text-sm tabular-nums" aria-live="polite">
+                {current + 1}/{upcoming.length}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Lượt khám sau"
+                disabled={current === upcoming.length - 1}
+                onClick={() => setShownIndex(current + 1)}
+              >
+                <ChevronRightIcon />
+              </Button>
+              <Link to="/my-appointments" className="text-primary ms-1 text-sm font-medium hover:underline">
+                Xem tất cả
+              </Link>
+            </div>
           )
         }
       >
