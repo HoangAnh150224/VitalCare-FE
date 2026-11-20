@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
+  CloudOffIcon,
   MessageCircleIcon,
   PhoneIcon,
 } from "lucide-react";
@@ -37,6 +38,7 @@ import type {
 import { CHAT_TEXT_MAX, chatErrorText } from "@/domains/chat/types";
 import type { PublicClinic } from "@/domains/public-site/types";
 import { displayPhone } from "@/domains/public-site/types";
+import { EmptyState } from "../portal/parts";
 import { fetchThread, threadKey, threadRetry, useChatSend } from "./api";
 
 /** Where the API nudges a customer that one of their conversations moved. */
@@ -53,6 +55,7 @@ export function PortalConversations() {
   const {
     data: list,
     isLoading,
+    isLoadingError,
     refetch,
   } = useQuery({
     queryKey: ["my-conversations"],
@@ -139,6 +142,19 @@ export function PortalConversations() {
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">Cuộc trò chuyện</h2>
         {isLoading && <Skeleton className="h-20 rounded-2xl" />}
+        {/* A list that never arrived is not an empty one: said here, once, as the profiles screen does. */}
+        {isLoadingError && (
+          <EmptyState
+            icon={CloudOffIcon}
+            title="Không thể tải danh sách cuộc trò chuyện"
+            text="Vui lòng kiểm tra kết nối và thử lại."
+            action={
+              <Button variant="outline" className="rounded-full" onClick={() => void refetch()}>
+                Thử lại
+              </Button>
+            }
+          />
+        )}
         {list?.length === 0 && (
           <p className="text-muted-foreground text-sm">
             Bạn chưa nhắn cho phòng khám nào.
