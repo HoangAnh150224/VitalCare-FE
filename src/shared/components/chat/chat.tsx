@@ -100,7 +100,7 @@ export function ChatThread({
           )}
           <div
             className={cn(
-              "rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words shadow-xs",
+              "max-w-full rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap wrap-anywhere shadow-xs",
               line.mine
                 ? "bg-primary text-primary-foreground rounded-br-md"
                 : "bg-muted rounded-bl-md"
