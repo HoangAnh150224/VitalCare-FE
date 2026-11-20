@@ -74,31 +74,46 @@ export const StaffCreate = ({ editing = false }: { editing?: boolean }) => {
     option.value === "clinic_admin" ? canCreateClinicAdmin : canCreateClinicStaff,
   );
   const {
-    refineCore: { onFinish },
+    refineCore: { onFinish, query },
     ...form
   } = useForm<StaffFormValues, HttpError, StaffFormValues>({
-    refineCoreProps: { redirect: "show" },
+    refineCoreProps: {
+      redirect: "show",
+      // A refused field (a licence number already held, KAN-112) is said under that field by the
+      // server-side validation useForm applies, not again as "Validation failed" in a toast.
+      errorNotification: (error) =>
+        error?.statusCode === 422 && Object.keys(error.errors ?? {}).some((key) => key in DEFAULT_VALUES)
+          ? false
+          : undefined,
+    },
     defaultValues: {
       ...DEFAULT_VALUES,
       staffType: clinicAdminOnly ? "clinic_admin" : "doctor",
     },
   });
+  // "Làm mới" puts back what is saved, dropping unsaved edits and the password typed (KAN-113).
+  async function reload() {
+    const fresh = (await query?.refetch())?.data?.data;
+    if (fresh) form.reset({ ...DEFAULT_VALUES, ...fresh, password: "" });
+  }
   const clinics = useClinicOptions();
   const selectedStaffType = form.watch("staffType");
   const View = editing ? EditView : CreateView;
 
   return (
     <View>
-      {editing ? <EditViewHeader title="Chỉnh sửa quản trị phòng khám" /> : <CreateViewHeader title={clinicAdminOnly ? "Tạo quản trị phòng khám" : undefined} />}
+      {editing ? <EditViewHeader title="Chỉnh sửa quản trị phòng khám" onRefresh={() => void reload()} /> : <CreateViewHeader title={clinicAdminOnly ? "Tạo quản trị phòng khám" : undefined} />}
       <Form {...form}>
         <form
           // An empty clinic is left to the API: the creator's own clinic, or the first one.
-          onSubmit={form.handleSubmit((values) => onFinish({
+          // A refusal is already said (under the field or in the toast); left unhandled it
+          // would also surface as an uncaught rejection.
+          onSubmit={form.handleSubmit((values) => Promise.resolve(onFinish({
             ...values,
             password: editing && !values.password ? undefined : values.password,
             staffType: clinicAdminOnly ? "clinic_admin" : values.staffType,
             clinicId: values.clinicId || null,
-          } as never))}
+          } as never)).catch(() => undefined))}
           className="min-w-0"
         >
           <SectionedFormPanel>

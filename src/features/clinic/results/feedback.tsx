@@ -134,7 +134,7 @@ export function MyFeedbackCard({ appointmentId }: { appointmentId: number }) {
 export const FeedbackList = () => {
   const [rating, setRating] = useState(0);
   const { term: q, inputProps } = useSearchOnEnter();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isLoadingError, refetch } = useQuery({
     queryKey: ["feedback", rating, q],
     queryFn: () => {
       const searchParams = new URLSearchParams({ _end: "500" });
@@ -170,7 +170,15 @@ export const FeedbackList = () => {
           </span>
         )}
       </div>
-      {!isLoading && rows.length === 0 ? (
+      {isLoadingError ? (
+        <Card role="alert" className="items-center gap-2 px-6 py-8 text-center text-sm">
+          <p className="font-medium">Không thể tải danh sách góp ý</p>
+          <p className="text-muted-foreground">Vui lòng kiểm tra kết nối và thử lại.</p>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>
+            Thử lại
+          </Button>
+        </Card>
+      ) : !isLoading && rows.length === 0 ? (
         <Card className="text-muted-foreground px-6 py-8 text-center text-sm">Chưa có góp ý nào.</Card>
       ) : (
         <div className="flex flex-col gap-3">
@@ -183,7 +191,7 @@ export const FeedbackList = () => {
               </div>
               <p className="text-muted-foreground text-xs">
                 Lượt khám {formatLocalDate(f.appointmentDate)}
-                {f.doctorName ? ` · BS ${f.doctorName}` : ""} · gửi {formatDateTime(f.createdAt)}
+                {f.doctorName ? ` · ${f.doctorName}` : ""} · gửi {formatDateTime(f.createdAt)}
               </p>
               {f.comment && <p className="text-sm whitespace-pre-line">{f.comment}</p>}
               <div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">{f.reply ? "Đã phản hồi" : "Chưa phản hồi"}</span><Button asChild variant="outline" size="sm"><Link to={`/feedback/show/${f.id}`}>Xem chi tiết</Link></Button></div>
@@ -195,6 +203,18 @@ export const FeedbackList = () => {
   );
 };
 
+/** Why replying or removing failed, in Vietnamese: no connection, the server's own reason, or a refusal. */
+function failureText(e: unknown, deleting: boolean): string {
+  const what = deleting ? "Không xóa được góp ý" : "Không lưu được phản hồi";
+  if ((e as { statusCode?: number }).statusCode === 0) return `${what}. Kiểm tra mạng rồi thử lại.`;
+  const body = refusal(e) as { status?: number; message?: string; errors?: Record<string, string> } | null;
+  const field = body?.errors && Object.values(body.errors)[0];
+  if (field) return field;
+  // A conflict's reason is written in Vietnamese by the service ("Góp ý đã xóa, ...").
+  if (body?.status === 409 && body.message) return body.message;
+  return `${what}. Vui lòng kiểm tra quyền và thử lại.`;
+}
+
 export function FeedbackShow() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -205,18 +225,19 @@ export function FeedbackShow() {
   const [reply, setReply] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [reason, setReason] = useState("");
-  const [error, setError] = useState("");
+  // Which action failed and why, said under that action's button rather than at the foot of the page.
+  const [error, setError] = useState<{ deleting: boolean; text: string } | null>(null);
   const { data, isLoading, isError } = useQuery({ queryKey: ["feedback", id], queryFn: () => kyInstance.get(`feedback/${id}`).json<PatientFeedback>() });
   const action = useMutation({
     mutationFn: (deleting: boolean) => send(deleting ? "delete" : "put", deleting ? `feedback/${id}` : `feedback/${id}/reply`, deleting ? { reason: reason.trim() } : { reply: (reply ?? data?.reply ?? "").trim() }),
     onSuccess: (_, deleting) => {
       void cache.invalidateQueries({ queryKey: ["feedback"] });
       void cache.invalidateQueries({ queryKey: ["my_feedback"] });
-      setError("");
+      setError(null);
       notify?.({ type: "success", message: deleting ? "Đã xóa góp ý không phù hợp" : "Đã lưu phản hồi cho bệnh nhân" });
       if (deleting) navigate("/feedback");
     },
-    onError: () => setError("Không thực hiện được thao tác. Vui lòng kiểm tra quyền và thử lại."),
+    onError: (e, deleting) => setError({ deleting, text: failureText(e, deleting) }),
   });
   return <ListView>
     <div className="flex items-center gap-3"><Button variant="ghost" aria-label="Quay lại danh sách" onClick={() => navigate("/feedback")}>←</Button><h1 className="text-3xl font-bold">Chi tiết góp ý</h1></div>
@@ -224,11 +245,10 @@ export function FeedbackShow() {
       <Card className="gap-3 p-6"><h2 className="text-xl font-semibold">{data.customerName}</h2><Stars value={data.rating} /><p>Lượt khám: {formatLocalDate(data.appointmentDate)} · Bác sĩ: {data.doctorName ?? "—"}</p><p className="text-sm text-muted-foreground">Gửi lúc {formatDateTime(data.createdAt)}</p><p className="whitespace-pre-wrap">{data.comment || "Không có nội dung nhận xét."}</p></Card>
       {data.deleted && <Card className="gap-2 p-6"><h2 className="font-semibold">Đã xóa{data.deletedAt ? ` · ${formatDateTime(data.deletedAt)}` : ""}</h2><p className="whitespace-pre-wrap">Lý do: {data.removalReason || "—"}</p><p className="text-sm text-muted-foreground">Góp ý này chỉ có thể xem chi tiết.</p></Card>}
       <Card className="gap-3 p-6"><Label htmlFor="feedback-reply">Phản hồi của phòng khám</Label>
-        {write?.can && !data.deleted ? <><Textarea id="feedback-reply" placeholder="Nhập phản hồi cho bệnh nhân..." maxLength={2000} value={reply ?? data.reply ?? ""} onChange={(e) => setReply(e.target.value)} /><Button className="w-fit" disabled={action.isPending || !(reply ?? data.reply ?? "").trim()} onClick={() => action.mutate(false)}>Lưu phản hồi</Button></> : <p className="whitespace-pre-wrap">{data.reply || "Chưa có phản hồi."}</p>}
+        {write?.can && !data.deleted ? <><Textarea id="feedback-reply" placeholder="Nhập phản hồi cho bệnh nhân..." maxLength={2000} value={reply ?? data.reply ?? ""} onChange={(e) => setReply(e.target.value)} /><Button className="w-fit" disabled={action.isPending || !(reply ?? data.reply ?? "").trim()} onClick={() => action.mutate(false)}>Lưu phản hồi</Button>{error && !error.deleting && <p role="alert" className="text-destructive text-sm">{error.text}</p>}</> : <p className="whitespace-pre-wrap">{data.reply || "Chưa có phản hồi."}</p>}
         {data.repliedAt && <p className="text-sm text-muted-foreground">Phản hồi lúc {formatDateTime(data.repliedAt)}</p>}
       </Card>
-      {remove?.can && !data.deleted && <Card className="gap-3 p-6">{!confirmDelete ? <Button variant="outline" className="w-fit text-destructive" onClick={() => setConfirmDelete(true)}>Xóa góp ý không phù hợp</Button> : <><Label htmlFor="feedback-reason">Lý do xóa <span className="text-destructive">*</span></Label><Textarea id="feedback-reason" required maxLength={500} placeholder="Nhập lý do góp ý không phù hợp..." value={reason} onChange={(e) => setReason(e.target.value)} /><p className="text-sm">Góp ý vẫn hiển thị trong danh sách quản lý với trạng thái Đã xóa và chỉ cho xem chi tiết.</p><div className="flex gap-2"><Button variant="destructive" disabled={action.isPending || !reason.trim()} onClick={() => action.mutate(true)}>Xác nhận xóa</Button><Button variant="outline" disabled={action.isPending} onClick={() => setConfirmDelete(false)}>Hủy</Button></div></>}</Card>}
-      {error && <p role="alert" className="text-destructive">{error}</p>}
+      {remove?.can && !data.deleted && <Card className="gap-3 p-6">{!confirmDelete ? <Button variant="outline" className="w-fit text-destructive" onClick={() => setConfirmDelete(true)}>Xóa góp ý không phù hợp</Button> : <><Label htmlFor="feedback-reason">Lý do xóa <span className="text-destructive">*</span></Label><Textarea id="feedback-reason" required maxLength={500} placeholder="Nhập lý do góp ý không phù hợp..." value={reason} onChange={(e) => setReason(e.target.value)} /><p className="text-sm">Góp ý vẫn hiển thị trong danh sách quản lý với trạng thái Đã xóa và chỉ cho xem chi tiết.</p><div className="flex gap-2"><Button variant="destructive" disabled={action.isPending || !reason.trim()} onClick={() => action.mutate(true)}>Xác nhận xóa</Button><Button variant="outline" disabled={action.isPending} onClick={() => setConfirmDelete(false)}>Hủy</Button></div>{error?.deleting && <p role="alert" className="text-destructive text-sm">{error.text}</p>}</>}</Card>}
     </>}
   </ListView>;
 }

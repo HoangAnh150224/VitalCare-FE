@@ -54,29 +54,47 @@ export const StaffEdit = () => {
   return <StaffProfileEdit />;
 };
 
+/** The fields this form shows, for telling a refusal about one of them from any other. */
+const PROFILE_FIELDS = { specialty: true, professionalTitle: true, licenseNo: true, clinicPosition: true, status: true };
+
 const StaffProfileEdit = () => {
   const navigate = useNavigate();
   const {
     refineCore: { onFinish, query },
     ...form
-  } = useForm<Employee, HttpError, Employee>({ refineCoreProps: {} });
+  } = useForm<Employee, HttpError, Employee>({
+    refineCoreProps: {
+      // A refused field (KAN-112: a licence number already held) is said under it, not again in a toast.
+      errorNotification: (error) =>
+        error?.statusCode === 422 && Object.keys(error.errors ?? {}).some((key) => key in PROFILE_FIELDS)
+          ? false
+          : undefined,
+    },
+  });
 
   // Only a former member of staff can have their status changed here (back to active).
   const returning = query?.data?.data?.status === "inactive";
 
+  // "Làm mới" means "back to what is saved" (KAN-113): a refetch alone keeps the typed values
+  // when the record has not changed.
+  async function reload() {
+    const fresh = (await query?.refetch())?.data?.data;
+    if (fresh) form.reset(fresh);
+  }
+
   function onSubmit(values: Employee) {
-    onFinish({
+    return Promise.resolve(onFinish({
       specialty: values.specialty ?? "",
       professionalTitle: values.professionalTitle ?? "",
       licenseNo: values.licenseNo ?? "",
       clinicPosition: values.clinicPosition ?? "",
       ...(returning ? { status: values.status } : {}),
-    } as unknown as Employee);
+    } as unknown as Employee)).catch(() => undefined);
   }
 
   return (
     <EditView>
-      <EditViewHeader />
+      <EditViewHeader onRefresh={() => void reload()} />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="min-w-0">
           <SectionedFormPanel>
