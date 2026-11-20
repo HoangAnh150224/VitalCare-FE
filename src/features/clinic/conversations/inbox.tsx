@@ -328,6 +328,8 @@ function OpenConversation({
       <ChatThread messages={data.messages} loadImage={send.loadImage} />
       {writable ? (
         <ChatComposer
+          key={id}
+          draftKey={`staff:${id}`}
           onSend={send.sendText}
           onImage={send.sendImage}
           onReject={send.reject}

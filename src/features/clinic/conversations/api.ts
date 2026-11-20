@@ -31,7 +31,7 @@ export function fetchThread<C>(side: ChatSide, id: number) {
 /**
  * Sending into a conversation from one side: text or an image. The line the
  * API returns is appended to the cached thread at once; the next read brings
- * the read marks up to date.
+ * the read marks up to date. A send that fails resolves to why, in Vietnamese.
  */
 export function useChatSend(side: ChatSide, id: number) {
   const queryClient = useQueryClient();
@@ -44,15 +44,9 @@ export function useChatSend(side: ChatSide, id: number) {
         thread ? { ...thread, messages: [...thread.messages, line] } : thread
     );
 
-  const fail = (error: unknown) => {
-    open?.({
-      type: "error",
-      message: chatErrorText(
-        error as { message?: string; errors?: Record<string, unknown> }
-      ),
-    });
-    return false;
-  };
+  // Why it was not sent, for the composer to say beside what it kept: one place, no toast.
+  const fail = (error: unknown) =>
+    chatErrorText(error as { message?: string; errors?: Record<string, unknown> });
 
   const sendText = (text: string) =>
     kyInstance

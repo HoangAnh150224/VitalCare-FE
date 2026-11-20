@@ -267,6 +267,8 @@ export function PortalConversationShow() {
           />
         )}
         <ChatComposer
+          key={id}
+          draftKey={`own:${id}`}
           onSend={send.sendText}
           onImage={send.sendImage}
           onReject={send.reject}

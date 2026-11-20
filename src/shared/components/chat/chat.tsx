@@ -1,3 +1,4 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCheckIcon,
   CheckIcon,
@@ -181,31 +182,61 @@ function ChatImage({ id, load }: { id: number; load: ImageLoader }) {
  * image button takes PNG or JPEG up to 5 MB, checked here before the API
  * checks it again.
  */
+/** `true` sent; a string is why not, said beside the composer; `false` the caller said why itself. */
+type SendResult = boolean | string;
+
 export function ChatComposer({
   onSend,
   onImage,
   disabled,
   onReject,
+  draftKey,
   placeholder = "Nhập tin nhắn...",
 }: {
-  onSend: (text: string) => Promise<boolean>;
-  onImage?: (file: File) => Promise<boolean>;
+  onSend: (text: string) => Promise<SendResult>;
+  onImage?: (file: File) => Promise<SendResult>;
   disabled?: boolean;
   /** Told why a picked image was refused before it was sent. */
   onReject?: (message: string) => void;
+  /**
+   * Keeps what is typed but not sent per conversation, so going to another one and back loses
+   * nothing. Held in the query cache, which a sign-in clears: one account never sees another's.
+   * The caller also keys the composer by conversation, so each starts from its own draft.
+   */
+  draftKey?: string;
   placeholder?: string;
 }) {
-  const [text, setText] = useState("");
+  const queryClient = useQueryClient();
+  const draft = ["chat-draft", draftKey ?? ""];
+  // Only to keep the draft cached after the composer unmounts; the text itself lives in state.
+  useQuery({ queryKey: draft, queryFn: () => "", enabled: false, staleTime: Infinity, gcTime: Infinity });
+  const [text, setTextState] = useState(() => (draftKey && queryClient.getQueryData<string>(draft)) || "");
+  const setText = (value: string) => {
+    setTextState(value);
+    if (draftKey) queryClient.setQueryData(draft, value);
+  };
+  const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
+  const settle = (result: SendResult) => {
+    setFailure(typeof result === "string" ? result : null);
+    return result === true;
+  };
+
+  // What stops a second press, or Enter, from sending the same text twice. A ref, not `busy`:
+  // two presses in one tick both still read the state from before the first.
+  const sending = useRef(false);
+
   const send = async () => {
     const value = text.trim();
-    if (!value || busy) return;
+    if (!value || sending.current) return;
+    sending.current = true;
     setBusy(true);
     try {
-      if (await onSend(value)) setText("");
+      if (settle(await onSend(value))) setText("");
     } finally {
+      sending.current = false;
       setBusy(false);
     }
   };
@@ -220,10 +251,13 @@ export function ChatComposer({
       onReject?.("Ảnh tối đa 5 MB.");
       return;
     }
+    if (sending.current) return;
+    sending.current = true;
     setBusy(true);
     try {
-      await onImage(file);
+      settle(await onImage(file));
     } finally {
+      sending.current = false;
       setBusy(false);
       if (fileRef.current) fileRef.current.value = "";
     }
@@ -241,49 +275,60 @@ export function ChatComposer({
   };
 
   return (
-    <div className="flex items-end gap-2 border-t p-3">
-      {onImage && (
-        <>
-          <input
-            ref={fileRef}
-            type="file"
-            accept={CHAT_IMAGE_ACCEPT}
-            className="hidden"
-            onChange={(event) => void pick(event.target.files?.[0])}
-            aria-label="Chọn ảnh"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            disabled={disabled || busy}
-            onClick={() => fileRef.current?.click()}
-            aria-label="Đính kèm ảnh"
-          >
-            <ImagePlusIcon />
-          </Button>
-        </>
+    <div className="flex flex-col gap-2 border-t p-3">
+      {failure && (
+        <p role="alert" className="text-destructive flex items-start gap-1.5 text-xs">
+          <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
+          <span>
+            Chưa gửi được: {failure}
+            {text.trim() && " Nội dung vẫn còn trong ô nhập, bấm Gửi lại."}
+          </span>
+        </p>
       )}
-      <Textarea
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        onKeyDown={onKeyDown}
-        rows={1}
-        maxLength={CHAT_TEXT_MAX}
-        placeholder={placeholder}
-        aria-label="Tin nhắn"
-        disabled={disabled}
-        className="max-h-32 min-h-10 resize-none"
-      />
-      <Button
-        type="button"
-        onClick={() => void send()}
-        disabled={disabled || busy || !text.trim()}
-        aria-label="Gửi"
-      >
-        {busy ? <Loader2Icon className="animate-spin" /> : <SendIcon />}
-        <span className="hidden sm:inline">Gửi</span>
-      </Button>
+      <div className="flex items-end gap-2">
+        {onImage && (
+          <>
+            <input
+              ref={fileRef}
+              type="file"
+              accept={CHAT_IMAGE_ACCEPT}
+              className="hidden"
+              onChange={(event) => void pick(event.target.files?.[0])}
+              aria-label="Chọn ảnh"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={disabled || busy}
+              onClick={() => fileRef.current?.click()}
+              aria-label="Đính kèm ảnh"
+            >
+              <ImagePlusIcon />
+            </Button>
+          </>
+        )}
+        <Textarea
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          onKeyDown={onKeyDown}
+          rows={1}
+          maxLength={CHAT_TEXT_MAX}
+          placeholder={placeholder}
+          aria-label="Tin nhắn"
+          disabled={disabled}
+          className="max-h-32 min-h-10 resize-none"
+        />
+        <Button
+          type="button"
+          onClick={() => void send()}
+          disabled={disabled || busy || !text.trim()}
+          aria-label={failure && text.trim() ? "Gửi lại" : "Gửi"}
+        >
+          {busy ? <Loader2Icon className="animate-spin" /> : <SendIcon />}
+          <span className="hidden sm:inline">{failure && text.trim() ? "Gửi lại" : "Gửi"}</span>
+        </Button>
+      </div>
     </div>
   );
 }

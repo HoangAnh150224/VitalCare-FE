@@ -11,6 +11,23 @@ import {
 } from "./session";
 
 /**
+ * A request that never got an answer (blocked, offline, server down) rejects with the browser's own
+ * English — "Failed to fetch", Safari's "Load failed", Firefox's "NetworkError…" — and a toast would
+ * show that as is. Said once here in Vietnamese, for the data provider and every `kyInstance` caller.
+ * An abort is not a failure and passes through.
+ */
+const NETWORK_ERROR: HttpError = {
+  message: "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.",
+  statusCode: 0,
+};
+
+const fetchOrSayWhy: typeof fetch = (input, init) =>
+  fetch(input, init).catch((error: unknown) => {
+    if ((error as Error)?.name === "AbortError") throw error;
+    throw { ...NETWORK_ERROR };
+  });
+
+/**
  * The REST data provider, with the bearer token attached to every request.
  *
  * The two ky hooks below are the whole of the authentication story for data
@@ -23,6 +40,7 @@ const rest = createSimpleRestDataProvider({
     // refresh below and burn the rotated token; retrying a 409 or a 422 would
     // repeat a write the server already rejected on purpose.
     retry: 0,
+    fetch: fetchOrSayWhy,
     hooks: {
       beforeRequest: [
         (request) => {
@@ -62,7 +80,7 @@ const rest = createSimpleRestDataProvider({
           // consumed and its Authorization header still holds the dead token.
           const retried = request.clone();
           retried.headers.set("Authorization", `Bearer ${accessToken}`);
-          return fetch(retried);
+          return fetchOrSayWhy(retried);
         },
 
         /**
@@ -177,32 +195,10 @@ const RECORD_NOUNS: Record<string, string> = {
   categories: "Danh mục",
 };
 
-/**
- * The REST data provider, with one change: a record that is not there says so
- * in Vietnamese.
- *
- * Every detail and edit screen reads its record through `getOne` (`useShow`,
- * `useForm`), and Refine toasts the error's `message` as the description under
- * "Lỗi (mã trạng thái: …)". The API's 404 text is English ("User with id 5 was
- * not found"), and an id the API cannot even parse ("abc" for a numeric id)
- * comes back as a 400 — to the person who edited the URL, both mean the same
- * thing. Rewritten here once, so every screen gets it and still shows it in
- * one place: the toast. A screen that draws its own not-found state already
- * passes `errorNotification: false`, so it never sees this text twice.
- */
-/**
- * A request that never got an answer (blocked, offline, server down) rejects with the browser's own
- * English — "Failed to fetch", Safari's "Load failed", Firefox's "NetworkError…" — and Refine would
- * toast that as is. Said once here in Vietnamese, for every method, so no screen shows it raw.
- */
-const NETWORK_ERROR: HttpError = {
-  message: "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.",
-  statusCode: 0,
-};
-
+/** ky's own timeout ("Request timed out…") has no status either: said the same way as a lost connection. */
 function vietnameseNetworkError(error: unknown): never {
-  if ((error as HttpError)?.statusCode) throw error;
-  throw NETWORK_ERROR;
+  if ((error as HttpError)?.statusCode || (error as Error)?.name === "AbortError") throw error;
+  throw { ...NETWORK_ERROR };
 }
 
 const restProvider = Object.fromEntries(
@@ -218,6 +214,19 @@ const restProvider = Object.fromEntries(
   ])
 ) as typeof rest.dataProvider;
 
+/**
+ * The REST data provider, with one change: a record that is not there says so
+ * in Vietnamese.
+ *
+ * Every detail and edit screen reads its record through `getOne` (`useShow`,
+ * `useForm`), and Refine toasts the error's `message` as the description under
+ * "Lỗi (mã trạng thái: …)". The API's 404 text is English ("User with id 5 was
+ * not found"), and an id the API cannot even parse ("abc" for a numeric id)
+ * comes back as a 400 — to the person who edited the URL, both mean the same
+ * thing. Rewritten here once, so every screen gets it and still shows it in
+ * one place: the toast. A screen that draws its own not-found state already
+ * passes `errorNotification: false`, so it never sees this text twice.
+ */
 export const dataProvider: DataProvider = {
   ...restProvider,
   getOne: async (params) => {
