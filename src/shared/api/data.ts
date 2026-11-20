@@ -190,11 +190,39 @@ const RECORD_NOUNS: Record<string, string> = {
  * one place: the toast. A screen that draws its own not-found state already
  * passes `errorNotification: false`, so it never sees this text twice.
  */
+/**
+ * A request that never got an answer (blocked, offline, server down) rejects with the browser's own
+ * English — "Failed to fetch", Safari's "Load failed", Firefox's "NetworkError…" — and Refine would
+ * toast that as is. Said once here in Vietnamese, for every method, so no screen shows it raw.
+ */
+const NETWORK_ERROR: HttpError = {
+  message: "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.",
+  statusCode: 0,
+};
+
+function vietnameseNetworkError(error: unknown): never {
+  if ((error as HttpError)?.statusCode) throw error;
+  throw NETWORK_ERROR;
+}
+
+const restProvider = Object.fromEntries(
+  Object.entries(rest.dataProvider).map(([name, method]) => [
+    name,
+    typeof method === "function"
+      ? (...args: unknown[]) => {
+          // Only the async ones: `getApiUrl` returns a plain string.
+          const result = (method as (...a: unknown[]) => unknown)(...args);
+          return result instanceof Promise ? result.catch(vietnameseNetworkError) : result;
+        }
+      : method,
+  ])
+) as typeof rest.dataProvider;
+
 export const dataProvider: DataProvider = {
-  ...rest.dataProvider,
+  ...restProvider,
   getOne: async (params) => {
     try {
-      return await rest.dataProvider.getOne(params);
+      return await restProvider.getOne(params);
     } catch (error) {
       const status = (error as HttpError)?.statusCode;
       if (status !== 404 && status !== 400) throw error;
