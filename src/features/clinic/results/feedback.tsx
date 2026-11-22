@@ -207,11 +207,12 @@ export const FeedbackList = () => {
 function failureText(e: unknown, deleting: boolean): string {
   const what = deleting ? "Không xóa được góp ý" : "Không lưu được phản hồi";
   if ((e as { statusCode?: number }).statusCode === 0) return `${what}. Kiểm tra mạng rồi thử lại.`;
-  const body = refusal(e) as { status?: number; message?: string; errors?: Record<string, string> } | null;
+  const body = refusal(e) as { status?: number; statusCode?: number; message?: string; errors?: Record<string, string> } | null;
   const field = body?.errors && Object.values(body.errors)[0];
   if (field) return field;
-  // A conflict's reason is written in Vietnamese by the service ("Góp ý đã xóa, ...").
-  if (body?.status === 409 && body.message) return body.message;
+  // A conflict's reason is written in Vietnamese by the service ("Góp ý đã xóa, ..."). The data
+  // provider hands refusals on as {message, statusCode}; a raw body says `status` (DEF-FB-01).
+  if ((body?.statusCode ?? body?.status) === 409 && body?.message) return body.message;
   return `${what}. Vui lòng kiểm tra quyền và thử lại.`;
 }
 
