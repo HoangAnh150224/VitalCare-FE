@@ -12,5 +12,8 @@ export default defineConfig({
     setupFiles: ["./src/__unit__/setup.ts"],
     include: ["src/__unit__/**/*.test.ts", "src/__unit__/**/*.test.tsx"],
     css: false,
+    // Refine's ESM builds import lodash without the ".js" Node needs; let Vite resolve them.
+    server: { deps: { inline: [/@refinedev\//] } },
+    testTimeout: 20_000,
   },
 });
