@@ -36,7 +36,11 @@ export function ProfileFields<T extends FieldValues>({ control }: { control: Con
                 <FormLabel>{item.label}</FormLabel>
                 <Select
                   value={current || NONE}
-                  onValueChange={(value) => field.onChange(value === NONE ? "" : value)}
+                  // A real choice is NONE or an option. Radix also reports "" when it is given a value
+                  // whose item has not registered yet — a legacy value on load — which would wipe it (DEF-ST-01).
+                  onValueChange={(value) => {
+                    if (value !== "") field.onChange(value === NONE ? "" : value);
+                  }}
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">

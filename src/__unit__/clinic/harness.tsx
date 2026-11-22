@@ -32,8 +32,10 @@ export function api(routes: Record<string, Reply | ((call: Call) => Reply)>) {
     const request = input instanceof Request ? input : new Request(String(input), init);
     const url = new URL(request.url);
     const path = url.pathname.replace(/^\/api/, "") + url.search;
-    const text = request.method === "GET" || request.method === "HEAD" ? "" : await request.clone().text();
-    let body: unknown = text;
+    // A multipart upload is recorded as such: reading a FormData body back hangs under jsdom.
+    const multipart = (request.headers.get("content-type") ?? "").startsWith("multipart/");
+    const text = request.method === "GET" || request.method === "HEAD" || multipart ? "" : await request.clone().text();
+    let body: unknown = multipart ? "multipart" : text;
     try {
       body = text ? JSON.parse(text) : undefined;
     } catch {
