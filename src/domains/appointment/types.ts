@@ -115,3 +115,11 @@ export const APPOINTMENT_STATUS_OPTIONS: { label: string; value: AppointmentStat
 export function formatQueueNumber(value: number | null | undefined): string {
   return value == null ? "—" : String(value).padStart(2, "0");
 }
+
+/**
+ * What the patient reads in place of a queue number the visit does not carry (KAN-156; older and sample visits):
+ * said in words rather than a bare dash, and not as "not yet" once the visit is over.
+ */
+export function noQueueNumberLabel(status: AppointmentStatus | undefined): string {
+  return status === "completed" || status === "cancelled" || status === "no_show" ? "Không có số" : "Chưa có số";
+}

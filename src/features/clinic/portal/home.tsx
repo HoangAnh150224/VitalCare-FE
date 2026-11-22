@@ -111,7 +111,9 @@ export const PortalHome = () => {
           {visitsQuery.isLoading || visitsQuery.isError
             ? " "
             : next
-              ? `Lượt khám tiếp theo: ${formatVisitDay(next.appointmentDate)}, số ${formatQueueNumber(next.queueNumber)}.`
+              ? next.queueNumber == null
+                ? `Lượt khám tiếp theo: ${formatVisitDay(next.appointmentDate)}, chưa có số khám.`
+                : `Lượt khám tiếp theo: ${formatVisitDay(next.appointmentDate)}, số ${formatQueueNumber(next.queueNumber)}.`
               : "Bạn chưa có lượt khám nào sắp tới. Đăng ký để nhận số khám ngay."}
         </p>
         <Button

@@ -11,7 +11,7 @@ import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import type { Appointment } from "@/domains/appointment/types";
-import { APPOINTMENT_STATUS_LABELS, formatBookingCode, formatQueueNumber } from "@/domains/appointment/types";
+import { APPOINTMENT_STATUS_LABELS, formatBookingCode, formatQueueNumber, noQueueNumberLabel } from "@/domains/appointment/types";
 import { ShowButton } from "@/shared/components/buttons/show";
 import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatLocalDate, formatLocalTime } from "@/shared/lib/format";
@@ -52,9 +52,12 @@ export const MyAppointmentList = ({
         id: "queueNumber",
         header: "Số khám",
         enableSorting: true,
-        cell: ({ getValue }) => (
-          <span className="text-lg font-semibold tabular-nums">{formatQueueNumber(getValue())}</span>
-        ),
+        cell: ({ getValue, row }) =>
+          getValue() == null ? (
+            <span className="text-muted-foreground text-sm">{noQueueNumberLabel(row.original.status)}</span>
+          ) : (
+            <span className="text-lg font-semibold tabular-nums">{formatQueueNumber(getValue())}</span>
+          ),
       }),
       columnHelper.accessor("appointmentDate", {
         id: "appointmentDate",

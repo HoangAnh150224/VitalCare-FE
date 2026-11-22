@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { Badge } from "@/shared/ui/badge";
 import type { Appointment } from "@/domains/appointment/types";
-import { APPOINTMENT_STATUS_LABELS, formatQueueNumber } from "@/domains/appointment/types";
+import { APPOINTMENT_STATUS_LABELS, formatQueueNumber, noQueueNumberLabel } from "@/domains/appointment/types";
 import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { formatLocalTime } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
@@ -43,9 +43,15 @@ export function AppointmentTicket({ appointment, footer, status, className }: Pr
           )}
         >
           <span className="text-[11px] font-medium opacity-80">Số khám</span>
-          <span className="font-display text-4xl leading-none font-extrabold tabular-nums sm:text-5xl">
-            {formatQueueNumber(appointment.queueNumber)}
-          </span>
+          {appointment.queueNumber == null ? (
+            <span className="font-display mt-1 px-1 text-center text-sm leading-tight font-bold">
+              {noQueueNumberLabel(appointment.status)}
+            </span>
+          ) : (
+            <span className="font-display text-4xl leading-none font-extrabold tabular-nums sm:text-5xl">
+              {formatQueueNumber(appointment.queueNumber)}
+            </span>
+          )}
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-1">

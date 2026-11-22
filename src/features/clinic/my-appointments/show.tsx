@@ -12,7 +12,7 @@ import { Card } from "@/shared/ui/card";
 import { DetailList, DetailRow, EmptyValue } from "@/shared/components/views/record-detail";
 import { formatLocalDate, formatLocalTime } from "@/shared/lib/format";
 import type { Appointment } from "@/domains/appointment/types";
-import { APPOINTMENT_STATUS_LABELS, formatBookingCode, formatQueueNumber } from "@/domains/appointment/types";
+import { APPOINTMENT_STATUS_LABELS, formatBookingCode, formatQueueNumber, noQueueNumberLabel } from "@/domains/appointment/types";
 import { APPOINTMENT_STATUS_VARIANTS } from "@/shared/lib/status-variants";
 import { AppointmentActions } from "../appointments/appointment-actions";
 import { MyInvoiceCard } from "../invoices/my-invoice-card";
@@ -72,9 +72,13 @@ export const MyAppointmentShow = ({ resource, id, readOnly = false }: MyAppointm
           <div className="flex flex-col items-center gap-5 px-6 text-center">
             <div className="flex flex-col items-center gap-1">
               <span className="text-overline text-muted-foreground">Số khám</span>
-              <span className="text-6xl leading-none font-semibold tabular-nums">
-                {formatQueueNumber(record?.queueNumber)}
-              </span>
+              {record && record.queueNumber == null ? (
+                <span className="text-2xl leading-tight font-semibold">{noQueueNumberLabel(record.status)}</span>
+              ) : (
+                <span className="text-6xl leading-none font-semibold tabular-nums">
+                  {formatQueueNumber(record?.queueNumber)}
+                </span>
+              )}
               <span className="text-muted-foreground font-mono text-lg tracking-widest">
                 {formatBookingCode(record?.bookingCode)}
               </span>
