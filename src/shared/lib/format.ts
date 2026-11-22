@@ -91,3 +91,11 @@ export function initials(name: string): string {
   if (parts.length === 0) return "?";
   return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
 }
+
+/** A turnaround in minutes as people say it: "45 phút", "2 giờ", "1 giờ 30 phút". */
+export function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes} phút`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} giờ ${rest} phút` : `${hours} giờ`;
+}

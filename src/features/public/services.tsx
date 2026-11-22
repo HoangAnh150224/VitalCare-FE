@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { publicGet, publicRetry } from "@/shared/api/public";
 import { Card, CardContent } from "@/shared/ui/card";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { formatMoney } from "@/shared/lib/format";
+import { formatMinutes, formatMoney } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import type { ServiceCategory } from "@/domains/billing/types";
 import { SERVICE_CATEGORY_LABELS } from "@/domains/billing/types";
@@ -92,11 +92,4 @@ export function ServicePriceList({ className }: { className?: string }) {
       })}
     </div>
   );
-}
-
-function formatMinutes(minutes: number) {
-  if (minutes < 60) return `${minutes} phút`;
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  return rest ? `${hours} giờ ${rest} phút` : `${hours} giờ`;
 }
