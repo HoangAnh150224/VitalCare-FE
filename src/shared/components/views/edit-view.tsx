@@ -7,6 +7,7 @@ import {
   useUserFriendlyName,
 } from "@refinedev/core";
 import type { PropsWithChildren } from "react";
+import type { FieldValues, UseFormReturn } from "react-hook-form";
 import { Button } from "@/shared/ui/button";
 import { RefreshButton } from "@/shared/components/buttons/refresh";
 import { ArrowLeftIcon } from "lucide-react";
@@ -33,6 +34,31 @@ export function EditView({ children, className }: EditViewProps) {
   );
 }
 
+/**
+ * What "Làm mới" does on an edit form (KAN-115): refetch the record, then put the
+ * saved values back, dropping unsaved edits, their errors and the dirty flag.
+ *
+ * Without `toValues` the form's own fields are filled from the record by name, as
+ * Refine does on first load; a field the record does not carry goes back to its
+ * default. A form that shapes the record before showing it passes `toValues`.
+ */
+export async function reloadSaved<TRecord, TValues extends FieldValues>(
+  query: { refetch: () => Promise<{ data?: { data?: TRecord } }> } | undefined,
+  form: Pick<UseFormReturn<TValues>, "reset" | "getValues" | "formState">,
+  toValues?: (record: TRecord) => unknown,
+) {
+  const fresh = (await query?.refetch())?.data?.data;
+  if (!fresh) return;
+  const saved = fresh as unknown as Record<string, unknown>;
+  const defaults = (form.formState.defaultValues ?? {}) as Record<string, unknown>;
+  const values = toValues
+    ? toValues(fresh)
+    : Object.fromEntries(
+        Object.keys(form.getValues()).map((key) => [key, key in saved ? saved[key] : defaults[key]]),
+      );
+  form.reset(values as TValues);
+}
+
 type EditViewHeaderProps = PropsWithChildren<{
   resource?: string;
   title?: string;
@@ -43,7 +69,7 @@ type EditViewHeaderProps = PropsWithChildren<{
    * Replaces what "Làm mới" does. The default only refetches the record, and
    * Refine's `useForm` leaves fields alone when the refetch brings back the
    * same data — so edits survive the click. A form that should drop its edits
-   * passes a handler that refetches and resets.
+   * passes a handler that refetches and resets: `reloadSaved` above.
    */
   onRefresh?: () => void;
 }>;

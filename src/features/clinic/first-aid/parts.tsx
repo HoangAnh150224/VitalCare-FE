@@ -5,6 +5,7 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 
 import { API_URL } from "@/shared/api/constants";
 import { Badge } from "@/shared/ui/badge";
+import { RecordNotFound } from "@/shared/components/views/record-not-found";
 import type {
   FirstAidArticle,
   FirstAidStatus,
@@ -17,6 +18,26 @@ export const FirstAidStatusBadge = ({ status }: { status: FirstAidStatus }) => (
   <Badge variant={FIRST_AID_STATUS_VARIANTS[status]}>
     {FIRST_AID_STATUS_LABELS[status]}
   </Badge>
+);
+
+/**
+ * In place of the detail, edit and history screens when the article cannot be
+ * read: an id that does not exist (404) or cannot be one (400) is "not found".
+ */
+export const FirstAidNotFound = ({
+  error,
+}: {
+  error?: { statusCode?: number } | null;
+}) => (
+  <RecordNotFound
+    message={
+      error?.statusCode === 404 || error?.statusCode === 400
+        ? "Không tìm thấy nội dung sơ cứu. Nội dung có thể đã bị xóa hoặc đường dẫn không đúng."
+        : "Không tải được nội dung sơ cứu. Vui lòng thử lại."
+    }
+    listPath="/first-aid-articles"
+    listLabel="Về danh sách Nội dung sơ cứu"
+  />
 );
 
 /** "v3", the way the wireframes write a revision. */

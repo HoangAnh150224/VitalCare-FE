@@ -71,9 +71,17 @@ export function ChatThread({
 }) {
   const bottom = useRef<HTMLDivElement | null>(null);
   const lastId = messages.at(-1)?.id;
+  // Whether the reader is at (or near) the newest message. An image takes its height only once
+  // loaded, after the scroll below has run, so it scrolls again — but never under a reader who
+  // has gone up to older messages.
+  const atEnd = useRef(true);
   useLayoutEffect(() => {
+    atEnd.current = true;
     bottom.current?.scrollIntoView({ block: "end" });
   }, [lastId]);
+  const onImageLoad = () => {
+    if (atEnd.current) bottom.current?.scrollIntoView({ block: "end" });
+  };
 
   return (
     <div
@@ -82,6 +90,10 @@ export function ChatThread({
         className
       )}
       aria-live="polite"
+      onScroll={({ currentTarget: box }) => {
+        atEnd.current =
+          box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+      }}
     >
       {messages.length === 0 && (
         <p className="text-muted-foreground m-auto text-sm">{emptyText}</p>
@@ -108,7 +120,7 @@ export function ChatThread({
             )}
           >
             {line.image ? (
-              <ChatImage id={line.id} load={loadImage} />
+              <ChatImage id={line.id} load={loadImage} onLoad={onImageLoad} />
             ) : (
               line.text
             )}
@@ -139,7 +151,16 @@ export function ChatThread({
  * An image message, fetched with the reader's credentials and shown from an
  * object URL: an `<img src>` pointing at the API could not carry them.
  */
-function ChatImage({ id, load }: { id: number; load: ImageLoader }) {
+function ChatImage({
+  id,
+  load,
+  onLoad,
+}: {
+  id: number;
+  load: ImageLoader;
+  /** The image is on screen at its real height. */
+  onLoad?: () => void;
+}) {
   const [url, setUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -172,7 +193,12 @@ function ChatImage({ id, load }: { id: number; load: ImageLoader }) {
     );
   return (
     <a href={url} target="_blank" rel="noreferrer">
-      <img src={url} alt="Ảnh đính kèm" className="max-h-64 rounded-lg" />
+      <img
+        src={url}
+        alt="Ảnh đính kèm"
+        className="max-h-64 rounded-lg"
+        onLoad={onLoad}
+      />
     </a>
   );
 }

@@ -107,6 +107,13 @@ describe("ExamRoomBoard (/exam-rooms) — Exam Room Board", () => {
     expect(within(view.getByTestId("shared-queue")).getByText("Đỗ Hải")).toBeInTheDocument();
   });
 
+  it("EB7b the shared queue counts as waiting, in the total and in its department (KAN-144)", async () => {
+    api(routes(board({ rooms: [{ ...busy, waiting: [] }], sharedQueue: [visit(21, 6, "Đỗ Hải", { department: "Nội" }), visit(22, 7, "Lý Mai")] })));
+    openBoard();
+    expect((await view.findByText(/người đang chờ/)).textContent).toMatch(/^2\s*người đang chờ/);
+    expect(view.getByText(/người chờ/).textContent).toMatch(/·\s*1\s*người chờ/);
+  });
+
   it("EB8 a refused action is told in a toast", async () => {
     api(routes(board(), { "POST /exam_rooms/1/call-next": { status: 409, body: { status: 409, message: "The room is not free" } } }));
     const user = userEvent.setup();
@@ -122,6 +129,15 @@ describe("MyExamQueue (/my-queue) — Doctor's Queue", () => {
     screen("/my-queue", "/my-queue", <MyExamQueue />);
     expect(await view.findByText("Hàng chờ khám của tôi")).toBeInTheDocument();
     expect(await view.findByText("Trần Thị Bích")).toBeInTheDocument();
+  });
+
+  it("MQ1b waiting: my room stays on screen when a patient is inside and nobody waits (KAN-151)", async () => {
+    api(routes(board({ rooms: [busy] })));
+    screen("/my-queue", "/my-queue", <MyExamQueue />);
+    expect(await view.findByText("Bệnh nhân đang khám được hiển thị trong tab Đang khám / làm chỉ định.")).toBeInTheDocument();
+    expect(view.getByText("P101")).toBeInTheDocument();
+    expect(view.getAllByText("Đang khám").length).toBeGreaterThan(0);
+    expect(view.getByText("Đang chờ (0)")).toBeInTheDocument();
   });
 
   it("MQ2 boundary: no shift with a room says so", async () => {

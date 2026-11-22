@@ -210,6 +210,11 @@ export function PublicFirstAidShow() {
             <h1 className="font-display text-3xl font-extrabold tracking-tight">
               {article.title}
             </h1>
+            {article.summary && (
+              <p className="text-muted-foreground mt-2 text-lg">
+                {article.summary}
+              </p>
+            )}
             <GuidanceDisclaimer className="mt-2" />
           </header>
           <EmergencyWarning text={article.emergencyWarning} />

@@ -32,7 +32,7 @@ import {
   CreateView,
   CreateViewHeader,
 } from "@/shared/components/views/create-view";
-import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
+import { EditView, EditViewHeader, reloadSaved } from "@/shared/components/views/edit-view";
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
 import {
   DetailList,
@@ -319,6 +319,10 @@ const translateThresholdError = (
     const vi = FIELD_MESSAGES[String(error?.errors?.[name] ?? "")];
     if (vi) setError(name, { type: "server", message: vi });
   }
+  // A rule that already exists (KAN-123): the API says so in Vietnamese with 409.
+  if (error?.statusCode === 409) {
+    setError("name", { type: "server", message: error.message });
+  }
 };
 
 /**
@@ -327,7 +331,7 @@ const translateThresholdError = (
  * clinic, is told so instead of a button that seems to do nothing.
  */
 const ruleErrorNotification = (error?: HttpError) =>
-  error?.statusCode === 422 && !error.errors?.clinicId
+  error?.statusCode === 409 || (error?.statusCode === 422 && !error.errors?.clinicId)
     ? false
     : {
         type: "error" as const,
@@ -580,7 +584,7 @@ export const AlertRuleEdit = () => {
 
   return (
     <EditView>
-      <EditViewHeader resource="alert_rules" />
+      <EditViewHeader resource="alert_rules" onRefresh={() => void reloadSaved(query, form)} />
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit((v) =>

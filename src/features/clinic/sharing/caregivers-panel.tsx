@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { kyInstance } from "@/shared/api/data";
 import { DetailPanel } from "@/shared/components/views/record-detail";
 import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
 import { formatDate } from "@/shared/lib/format";
 import {
   SHARING_STATUS_LABELS,
@@ -15,7 +16,7 @@ import {
 /** Caregiver Access List (BF-06) on a patient's page: who the patient shared with, in force or not. */
 export function CaregiversPanel({ customerId }: { customerId: number }) {
   const { data: can } = useCan({ resource: "customers", action: "show" });
-  const { data } = useQuery({
+  const { data, isLoadingError, refetch } = useQuery({
     queryKey: ["caregivers", customerId],
     queryFn: () =>
       kyInstance
@@ -27,7 +28,14 @@ export function CaregiversPanel({ customerId }: { customerId: number }) {
   const rows = data ?? [];
   return (
     <DetailPanel title="Người chăm sóc được chia sẻ" bodyClassName="p-4">
-      {rows.length === 0 ? (
+      {isLoadingError ? (
+        <p role="alert" className="text-muted-foreground text-sm">
+          Không tải được danh sách người chăm sóc.{" "}
+          <Button variant="link" className="h-auto p-0" onClick={() => refetch()}>
+            Thử lại
+          </Button>
+        </p>
+      ) : rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           Bệnh nhân chưa chia sẻ cho ai.
         </p>

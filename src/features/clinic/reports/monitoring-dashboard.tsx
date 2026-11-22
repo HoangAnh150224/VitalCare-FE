@@ -26,14 +26,17 @@ import {
 } from "@/shared/ui/chart";
 import { formatDateTime } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
-import { METRIC_LABELS } from "@/domains/alerts/types";
+import { METRIC_LABELS, SEVERITY_LABELS } from "@/domains/alerts/types";
 import type { MonitoringDashboard as Data } from "@/domains/reports/types";
 import { ClinicPicker } from "./clinic-picker";
 
 const chart = {
-  critical: { label: "Nguy hiểm", color: "var(--destructive)" },
-  warning: { label: "Cảnh giác", color: "var(--warning)" },
+  critical: { label: SEVERITY_LABELS.CRITICAL, color: "var(--destructive)" },
+  warning: { label: SEVERITY_LABELS.WARNING, color: "var(--warning)" },
 } satisfies ChartConfig;
+// The severity names as the alert screens show them, for use inside a sentence.
+const critical = SEVERITY_LABELS.CRITICAL.toLowerCase();
+const warning = SEVERITY_LABELS.WARNING.toLowerCase();
 
 /**
  * BF-10 Clinic Monitoring Dashboard: patients monitored, devices, open alerts,
@@ -45,6 +48,12 @@ export const MonitoringDashboard = () => {
   // The device tiles open the device screen only for whoever manages devices (not the front desk).
   const { data: devicesAccess } = useCan({ resource: "devices", action: "list" });
   const devicesTo = devicesAccess?.can ? "/devices" : undefined;
+  // Likewise every other figure: a link only where the viewer may open the list it counts (KAN-135).
+  const vitalSignsTo = useListLink("vital_signs", "/vital-signs");
+  const alertsTo = useListLink("alerts", "/alerts");
+  const appointmentsTo = useListLink("appointments", "/appointments");
+  const deviceSyncsTo = useListLink("device_syncs", "/device-syncs");
+  const syncFailuresTo = useListLink("sync_failures", "/sync-failures");
   const { data, isLoading, isError, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["monitoring_dashboard", clinicId],
     queryFn: () =>
@@ -52,6 +61,8 @@ export const MonitoringDashboard = () => {
         .get("monitoring_dashboard", { searchParams: clinicId ? { clinicId } : {} })
         .json<Data>(),
     refetchInterval: 30_000,
+    // The app turns this off globally; a background tab's timer is paused, so refresh on return.
+    refetchOnWindowFocus: true,
   });
 
   return (
@@ -81,7 +92,7 @@ export const MonitoringDashboard = () => {
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Tile
-              to="/vital-signs"
+              to={vitalSignsTo}
               icon={<HeartPulseIcon />}
               label="Bệnh nhân đang theo dõi"
               value={data.monitoredPatients}
@@ -96,16 +107,16 @@ export const MonitoringDashboard = () => {
               testId="tile-devices"
             />
             <Tile
-              to="/alerts"
+              to={alertsTo}
               icon={<SirenIcon />}
-              label="Cảnh báo nguy hiểm đang mở"
+              label={`Cảnh báo ${critical} đang mở`}
               value={data.alerts.openCritical}
-              note={`${data.alerts.openWarning} cảnh giác · ${data.alerts.acknowledged} đã tiếp nhận`}
+              note={`${data.alerts.openWarning} mức ${warning} · ${data.alerts.acknowledged} đã tiếp nhận`}
               tone={data.alerts.openCritical > 0 ? "critical" : undefined}
               testId="tile-alerts"
             />
             <Tile
-              to="/appointments"
+              to={appointmentsTo}
               icon={<CalendarCheckIcon />}
               label="Lượt khám hôm nay"
               value={data.appointmentsToday.total}
@@ -136,14 +147,14 @@ export const MonitoringDashboard = () => {
             </Card>
 
             <Card className="gap-3 p-5">
-              <h2 className="text-base font-semibold">Nguy hiểm chưa xử lý</h2>
+              <h2 className="text-base font-semibold">{SEVERITY_LABELS.CRITICAL} chưa xử lý</h2>
               {data.recentCritical.length === 0 ? (
-                <p className="text-muted-foreground text-sm">Không có cảnh báo nguy hiểm nào đang mở.</p>
+                <p className="text-muted-foreground text-sm">Không có cảnh báo {critical} nào đang mở.</p>
               ) : (
                 <ul className="flex flex-col gap-2" data-testid="recent-critical">
                   {data.recentCritical.map((a) => (
                     <li key={a.id}>
-                      <Link to={`/alerts/show/${a.id}`} className="hover:bg-accent/40 -mx-2 flex flex-col rounded-md px-2 py-1.5">
+                      <AlertRow to={alertsTo && `/alerts/show/${a.id}`}>
                         <span className="flex items-center justify-between gap-2 text-sm font-medium">
                           {a.customerName}
                           <Badge variant={a.status === "OPEN" ? "destructive" : "outline"}>
@@ -154,7 +165,7 @@ export const MonitoringDashboard = () => {
                           {METRIC_LABELS[a.metric as keyof typeof METRIC_LABELS] ?? a.metric}
                           {a.measuredValue != null ? ` ${a.measuredValue}` : ""} · {formatDateTime(a.triggeredAt)}
                         </span>
-                      </Link>
+                      </AlertRow>
                     </li>
                   ))}
                 </ul>
@@ -164,7 +175,7 @@ export const MonitoringDashboard = () => {
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Tile
-              to="/vital-signs"
+              to={vitalSignsTo}
               icon={<ActivityIcon />}
               label="Số đo nhận trong 1 giờ"
               value={data.intake.lastHour}
@@ -172,7 +183,7 @@ export const MonitoringDashboard = () => {
               testId="tile-intake"
             />
             <Tile
-              to="/device-syncs"
+              to={deviceSyncsTo}
               icon={<RefreshCwIcon />}
               label="Lần đồng bộ hôm nay"
               value={data.sync.batchesToday}
@@ -180,7 +191,7 @@ export const MonitoringDashboard = () => {
               testId="tile-syncs"
             />
             <Tile
-              to="/sync-failures"
+              to={syncFailuresTo}
               icon={<RefreshCwIcon />}
               label="Bản ghi đồng bộ lỗi chờ xử lý"
               value={data.sync.openFailures}
@@ -203,6 +214,22 @@ export const MonitoringDashboard = () => {
   );
 };
 
+/** The list's path when the viewer may open that resource's list, otherwise nothing to link to. */
+function useListLink(resource: string, to: string): string | undefined {
+  const { data } = useCan({ resource, action: "list" });
+  return data?.can ? to : undefined;
+}
+
+/** One open critical alert: a link to its detail, or plain content when the viewer may not open alerts. */
+function AlertRow({ to, children }: { to?: string; children: ReactNode }) {
+  const className = "-mx-2 flex flex-col rounded-md px-2 py-1.5";
+  return to ? (
+    <Link to={to} className={cn("hover:bg-accent/40", className)}>{children}</Link>
+  ) : (
+    <div className={className}>{children}</div>
+  );
+}
+
 function Tile({
   to,
   icon,
@@ -224,7 +251,8 @@ function Tile({
   const card = (
       <Card
         className={cn(
-          "hover:bg-accent/30 h-full gap-1 px-5 py-4 transition-colors",
+          "h-full gap-1 px-5 py-4 transition-colors",
+          to && "hover:bg-accent/30",
           tone === "critical" && "border-destructive",
           tone === "warning" && "border-warning",
         )}

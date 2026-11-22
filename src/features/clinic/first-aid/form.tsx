@@ -10,7 +10,7 @@ import {
   CreateView,
   CreateViewHeader,
 } from "@/shared/components/views/create-view";
-import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
+import { EditView, EditViewHeader, reloadSaved } from "@/shared/components/views/edit-view";
 import {
   FormSection,
   FormSectionActions,
@@ -47,7 +47,7 @@ import type {
 } from "@/domains/first-aid/types";
 import { FIRST_AID_CATEGORY_OPTIONS } from "@/domains/first-aid/types";
 import { billingErrorNotification, billingErrorText } from "@/domains/billing/messages";
-import { revisionLabel } from "./parts";
+import { FirstAidNotFound, revisionLabel } from "./parts";
 
 type Values = {
   title: string;
@@ -105,7 +105,12 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
       resource: "first_aid_articles",
       redirect: false,
       // The server's refusal, in Vietnamese: a 422 names the field and what to fix.
-      errorNotification: billingErrorNotification,
+      // One naming a field of this form (a title already in use, KAN-129) is said
+      // under that field by useForm's server-side validation, not again in a toast.
+      errorNotification: (error) =>
+        error?.statusCode === 422 && Object.keys(error.errors ?? {}).some((key) => key in EMPTY)
+          ? false
+          : billingErrorNotification(error),
     },
     defaultValues: mode === "create" ? EMPTY : undefined,
   });
@@ -382,6 +387,9 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
             <h2 className="text-2xl font-bold tracking-tight">
               {values.title || "Tiêu đề"}
             </h2>
+            {values.summary?.trim() && (
+              <p className="text-muted-foreground">{values.summary}</p>
+            )}
             {values.emergencyWarning && (
               <EmergencyWarning text={values.emergencyWarning} />
             )}
@@ -400,9 +408,14 @@ function FirstAidForm({ mode }: { mode: "create" | "edit" }) {
       <CreateViewHeader title="Tạo nội dung sơ cứu" />
       {body}
     </CreateView>
+  ) : query?.isError && !current ? (
+    // No such article (an id edited in the URL): say so, not an empty form.
+    <EditView>
+      <FirstAidNotFound error={query.error} />
+    </EditView>
   ) : (
     <EditView>
-      <EditViewHeader title="Cập nhật nội dung sơ cứu" />
+      <EditViewHeader title="Cập nhật nội dung sơ cứu" onRefresh={() => void reloadSaved(query, form)} />
       {body}
     </EditView>
   );

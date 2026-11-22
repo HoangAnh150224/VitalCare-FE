@@ -4,7 +4,7 @@ import { createSimpleRestDataProvider } from "@refinedev/rest/simple-rest";
 import { API_URL } from "./constants";
 import {
   AUTH_VERSION_HEADER,
-  clearSession,
+  endSession,
   getAccessToken,
   reconcileAuthVersion,
   refreshSession,
@@ -72,7 +72,10 @@ const rest = createSimpleRestDataProvider({
           // rather than each burning the rotated token in turn.
           const accessToken = await refreshSession(API_URL);
           if (!accessToken) {
-            clearSession();
+            // Not only cleared but announced: a direct `kyInstance` caller
+            // never reaches `authProvider.onError`, so the route guard has to
+            // be told the session is over.
+            endSession();
             return response;
           }
 

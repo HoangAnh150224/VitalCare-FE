@@ -13,6 +13,7 @@ import {
 import { ListView, ListViewHeader } from "@/shared/components/views/list-view";
 import { DeleteButton } from "@/shared/components/buttons/delete";
 import { EditButton } from "@/shared/components/buttons/edit";
+import { useConfirmDiscard } from "@/shared/components/form/unsaved-changes-guard";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import {
@@ -51,16 +52,20 @@ export const DoctorScheduleList = () => {
   const [scheduleStatus, setScheduleStatus] = useState("all");
   const { data: canWrite } = useCan({ resource: "doctor_schedules", action: "edit" });
   const [chosen, setChosen] = useState("");
+  // Switching doctor is local state, not a navigation: ask about the editor's unsaved rows here.
+  const confirmDiscard = useConfirmDiscard();
   const [from, setFrom] = useState(clinicToday());
 
   // Clinic administrators choose a doctor first; doctors open their own schedule.
   const selectedId = chosen || (chooseDoctorFirst ? "" : String((doctors.find((doctor) => doctor.manageable) ?? doctors[0])?.id ?? ""));
   const doctor = doctors.find((candidate) => String(candidate.id) === selectedId);
-  const term = search.trim().toLocaleLowerCase("vi-VN");
+  // Marks ignored as well as case (KAN-116): "dang minh tuan" finds "Đặng Minh Tuấn".
+  const fold = (value: string) => value.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
+  const term = fold(search.trim());
   const specialties = Array.from(new Set(doctors.map((item) => item.specialty).filter((value): value is string => Boolean(value)))).sort((a, b) => a.localeCompare(b, "vi"));
   const titles = Array.from(new Set(doctors.map((item) => item.professionalTitle).filter((value): value is string => Boolean(value)))).sort((a, b) => a.localeCompare(b, "vi"));
   const visibleDoctors = doctors.filter((item) =>
-    doctorLabel(item).toLocaleLowerCase("vi-VN").includes(term) &&
+    fold(doctorLabel(item)).includes(term) &&
     (specialty === "all" || item.specialty === specialty) &&
     (professionalTitle === "all" || item.professionalTitle === professionalTitle) &&
     (scheduleStatus === "all" || (scheduleStatus === "configured" ? item.workingHours.length > 0 : item.workingHours.length === 0)));
@@ -135,8 +140,8 @@ export const DoctorScheduleList = () => {
         actions={
           (!chooseDoctorFirst || doctor) && (
           <div className="flex flex-wrap gap-2">
-          {chooseDoctorFirst && <Button variant="outline" onClick={() => setChosen("")}>Danh sách bác sĩ</Button>}
-          <Select value={selectedId} onValueChange={setChosen}>
+          {chooseDoctorFirst && <Button variant="outline" onClick={() => confirmDiscard(() => setChosen(""))}>Danh sách bác sĩ</Button>}
+          <Select value={selectedId} onValueChange={(value) => confirmDiscard(() => setChosen(value))}>
             <SelectTrigger className="w-72" aria-label="Bác sĩ">
               <SelectValue placeholder="Chọn bác sĩ" />
             </SelectTrigger>

@@ -34,6 +34,7 @@ export const refineMock = () => ({
   useNotification: () => ({ open: refine.notify }),
   useCan: () => ({ data: { can: refine.can } }),
   usePermissions: () => ({ data: [] as string[] }),
+  useInvalidate: () => async () => {},
 });
 
 export type Reply = { status: number; body: unknown };

@@ -56,7 +56,8 @@ export const InvoiceShow = () => {
         </LoadingOverlay>
       </Card>
 
-      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+      {/* `data-print="receipt"`: one full-width column on paper, see the print block in `styles/index.css`. */}
+      <div data-print="receipt" className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
         <DetailPanel title="Chi tiết">
           <div className="px-4 py-2">{invoice && <InvoiceLines invoice={invoice} />}</div>
         </DetailPanel>

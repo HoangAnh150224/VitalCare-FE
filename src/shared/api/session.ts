@@ -200,6 +200,31 @@ export function clearSession() {
 }
 
 /**
+ * Notified when a request found the session over: a 401 the refresh could not
+ * recover from.
+ *
+ * Refine only learns of a 401 from its own data-provider calls. A screen that
+ * polls through `kyInstance` directly would otherwise sit on a dead session,
+ * failing every interval, until the user navigated. `AuthoritiesSync` subscribes
+ * and re-runs the route guard's check, which is what sends a protected page to
+ * the sign-in form; a public page has no such guard and stays where it is.
+ */
+const sessionEndListeners = new Set<() => void>();
+
+export function subscribeToSessionEnd(listener: () => void): () => void {
+  sessionEndListeners.add(listener);
+  return () => {
+    sessionEndListeners.delete(listener);
+  };
+}
+
+/** Clears the session and says so. Not for `authProvider.check`, which the listener re-runs. */
+export function endSession() {
+  clearSession();
+  sessionEndListeners.forEach((listener) => listener());
+}
+
+/**
  * Notified whenever a load actually changes what this account may do.
  *
  * The cache above is read synchronously and outside React, so nothing re-renders

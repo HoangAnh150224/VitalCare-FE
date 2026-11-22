@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import {
   EditView,
   EditViewHeader,
+  reloadSaved,
 } from "@/shared/components/views/edit-view";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -14,6 +15,22 @@ import { PolicyForm, type PolicyFormValues } from "./policy-form";
 import { DEFAULT_POLICY, normalize } from "./policy-values";
 import { useManagedResources } from "./use-managed-resources";
 import { EMPTY_SCOPE, type RowLevelPolicy } from "@/domains/row-level-policy/types";
+
+/** The saved policy as the form holds it: what the first fill and "Làm mới" both write. */
+const toValues = (policy: RowLevelPolicy) => ({
+  kind: policy.kind,
+  role: { id: policy.role?.id ?? null },
+  resource: policy.resource,
+  action: policy.action,
+  name: policy.name,
+  policyGroup: policy.policyGroup ?? "",
+  description: policy.description ?? "",
+  scope: policy.scope ?? EMPTY_SCOPE,
+  // Null stays null: it means "same as the condition above", which is
+  // not the same thing as an empty tree.
+  checkScope: policy.checkScope ?? null,
+  enabled: policy.enabled,
+});
 
 export const RowLevelPolicyEdit = () => {
   const navigate = useNavigate();
@@ -65,20 +82,7 @@ export const RowLevelPolicyEdit = () => {
   useEffect(() => {
     if (!policy) return;
     reset(
-      {
-        kind: policy.kind,
-        role: { id: policy.role?.id ?? null },
-        resource: policy.resource,
-        action: policy.action,
-        name: policy.name,
-        policyGroup: policy.policyGroup ?? "",
-        description: policy.description ?? "",
-        scope: policy.scope ?? EMPTY_SCOPE,
-        // Null stays null: it means "same as the condition above", which is
-        // not the same thing as an empty tree.
-        checkScope: policy.checkScope ?? null,
-        enabled: policy.enabled,
-      },
+      toValues(policy),
       // Protects an edit in progress from the background refetch that follows a
       // cache hit. Nothing can be dirty on the first pass, so this only matters
       // from the second onwards.
@@ -97,7 +101,10 @@ export const RowLevelPolicyEdit = () => {
 
   return (
     <EditView>
-      <EditViewHeader />
+      {/* "Làm mới" drops unsaved edits too, which the keepDirtyValues fill above would keep (KAN-115). */}
+      <EditViewHeader
+        onRefresh={() => void reloadSaved(query, form, (saved) => toValues(saved as RowLevelPolicy))}
+      />
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {policy?.invalidReason && (
           <Alert variant="destructive">

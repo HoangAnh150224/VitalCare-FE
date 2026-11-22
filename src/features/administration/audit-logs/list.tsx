@@ -39,7 +39,7 @@ const FILTER_FIELDS: AdvancedFilterField[] = [
     field: "entityType",
     label: "Loại dữ liệu",
     type: "select",
-    options: ["users", "employees", "roles", "row_level_policies", "clinics", "medical_records", "device_assignments", "invoices"].map(
+    options: ["users", "employees", "roles", "row_level_policies", "clinics", "medical_records", "device_assignments", "invoices", "first_aid_articles"].map(
       (value) => ({ value, label: humanizeResource(value) })
     ),
   },

@@ -150,7 +150,10 @@ export function ExamRoomBoard() {
   useEffect(() => {
     if (stale) setAsking(null);
   }, [stale]);
+  // The shared line (paid, no doctor yet) is where most people wait: it counts too.
+  const sharedQueue = board?.sharedQueue ?? [];
   const waitingTotal =
+    sharedQueue.length +
     rooms.reduce((sum, room) => sum + room.waiting.length, 0) +
     (board?.withoutRoom ?? []).reduce((sum, queue) => sum + queue.waiting.length, 0);
 
@@ -197,7 +200,9 @@ export function ExamRoomBoard() {
             <h2 className="text-lg font-semibold">{department ? `Khoa ${department}` : "Phòng chưa thuộc khoa"}</h2>
             <span className="text-muted-foreground text-sm">
               {group.filter((r) => r.status === "occupied").length} / {group.length} phòng đang khám ·{" "}
-              {group.reduce((sum, r) => sum + r.waiting.length, 0)} người chờ
+              {group.reduce((sum, r) => sum + r.waiting.length, 0) +
+                (department ? sharedQueue.filter((visit) => visit.department === department).length : 0)}{" "}
+              người chờ
             </span>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -267,6 +272,7 @@ export function ExamRoomBoard() {
                   {visit.patientName}
                 </Link>
                 {visit.department && <Badge variant="outline">{visit.department}</Badge>}
+                <span className="text-muted-foreground text-xs tabular-nums">{clockTime(visit.checkedInAt)}</span>
               </li>
             ))}
           </ol>

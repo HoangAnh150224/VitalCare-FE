@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import {
   EditView,
   EditViewHeader,
+  reloadSaved,
 } from "@/shared/components/views/edit-view";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -87,7 +88,7 @@ export const TaskEdit = () => {
 
   return (
     <EditView>
-      <EditViewHeader />
+      <EditViewHeader onRefresh={() => void reloadSaved(query, form)} />
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}

@@ -431,6 +431,19 @@ export function DataTable<TData extends BaseRecord>({
               <DataTableNoData
                 isOverflowing={isOverflowing}
                 columnsLength={leafColumns.length}
+                // A search term or filter is set (the toolbar's all live in
+                // `columnFilters`), or a filter applied in the browser is
+                // hiding rows the API did answer: the table is not empty,
+                // nothing matches.
+                filtered={
+                  table.reactTable
+                    .getState()
+                    .columnFilters.some(
+                      (filter) => filter.value != null && filter.value !== ""
+                    ) ||
+                  (filtersHere &&
+                    table.reactTable.getCoreRowModel().rows.length > 0)
+                }
               />
             )}
           </TableBody>
@@ -441,8 +454,11 @@ export function DataTable<TData extends BaseRecord>({
           because it is part of the table rather than a control next to one:
           floating it underneath leaves the card ending in a hard edge and the
           page controls belonging to nothing in particular.
+
+          It stays under an empty table too, where it reads "Không có dòng nào":
+          a pager that vanishes leaves nothing saying the answer was zero rows.
         */}
-        {!isLoading && getRowModel().rows?.length > 0 && (
+        {!isLoading && (
           <div
             data-print="hide"
             className={cn("border-t border-border px-3 py-2")}
@@ -491,9 +507,11 @@ function SortIndicator({ sorted }: { sorted: false | "asc" | "desc" }) {
 function DataTableNoData({
   isOverflowing,
   columnsLength,
+  filtered,
 }: {
   isOverflowing: { horizontal: boolean; vertical: boolean };
   columnsLength: number;
+  filtered: boolean;
 }) {
   // A narrowed account sees exactly what a system with no data looks like, and
   // has no way to tell the two apart. Saying which it is costs one sentence and
@@ -539,13 +557,19 @@ function DataTableNoData({
               "bg-accent text-muted-foreground [&_svg]:size-6"
             )}
           >
-            {scoped ? <ShieldOff /> : <Inbox />}
+            {scoped && !filtered ? <ShieldOff /> : <Inbox />}
           </span>
           <div className={cn("text-base", "font-semibold", "text-foreground")}>
-            {scoped ? "Không có dữ liệu trong phạm vi của bạn" : "Chưa có bản ghi nào"}
+            {filtered
+              ? "Không tìm thấy kết quả phù hợp"
+              : scoped
+              ? "Không có dữ liệu trong phạm vi của bạn"
+              : "Chưa có bản ghi nào"}
           </div>
           <div className={cn("max-w-sm", "text-sm", "text-muted-foreground")}>
-            {scoped
+            {filtered
+              ? "Không có dòng nào khớp với từ khóa hoặc bộ lọc đang áp dụng."
+              : scoped
               ? "Bạn có thể truy cập mục này, nhưng không có dòng nào nằm trong phạm vi dữ liệu mà các vai trò của bạn cho phép."
               : "Hiện bảng này chưa có dữ liệu."}
           </div>

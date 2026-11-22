@@ -7,6 +7,13 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       placeholderData: keepPreviousData,
     },
+    mutations: {
+      // The default "online" mode pauses a save made offline: the button
+      // hangs on "Đang lưu..." and the write fires by itself once the network
+      // is back. "always" sends it at once, so it fails through the normal
+      // error path ("Không kết nối được máy chủ…") and the user retries.
+      networkMode: "always",
+    },
   },
 });
 // Auth checks must run after local logout even when the browser is offline.

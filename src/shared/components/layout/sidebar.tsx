@@ -6,6 +6,7 @@ import {
   useLink,
   useRefineOptions,
   usePermissions,
+  useResourceParams,
   type TreeMenuItem,
 } from "@refinedev/core";
 import {
@@ -173,7 +174,14 @@ function clinicAdminMenu(items: TreeMenuItem[]): TreeMenuItem[] {
 
 export function Sidebar() {
   const { open, isMobile } = useShadcnSidebar();
-  const { menuItems, selectedKey } = useMenu();
+  const { menuItems, selectedKey: resourceKey } = useMenu();
+  const { resource } = useResourceParams();
+  // A hidden sub-page (an article's version history) has no item of its own:
+  // the one it sits under is selected, whose key is this one less its last part.
+  const selectedKey =
+    resource?.meta?.hide && resource.meta.parent
+      ? resourceKey.slice(0, resourceKey.lastIndexOf("/"))
+      : resourceKey;
   const visibleItems = useAccessibleMenuItems(
     isClinicAdminOnly(getAuthorities()?.roles) ? clinicAdminMenu(menuItems) : menuItems
   );
@@ -471,7 +479,8 @@ function SidebarLink({ item, selectedKey, isCollapsed }: MenuItemProps) {
           {badge != null && (
             <span
               className={cn(
-                "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5",
+                // A live badge renders nothing at zero; the pill goes with it.
+                "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 empty:hidden",
                 "bg-sidebar-primary/15 text-[10px] font-semibold text-sidebar-primary"
               )}
             >

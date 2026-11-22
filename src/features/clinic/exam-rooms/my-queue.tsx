@@ -135,7 +135,8 @@ export function MyExamQueue({ mode = "waiting" }: { mode?: "waiting" | "active" 
 
       {mode === "waiting" ? (
         <div className="flex flex-col gap-4">
-          {rooms.filter((room) => waitingForFirstCall(room.waiting).length > 0 || !room.current).map((room) => (
+          {/* Always the doctor's room, also when it is occupied and nobody waits: the screen is never blank. */}
+          {rooms.map((room) => (
             <MyRoom key={room.id} room={room} view="waiting"
               sharedWaiting={shared.filter((v) => !v.department || !room.department || v.department === room.department).length}
               canOperate={canOperate?.can ?? false} pending={pending}
@@ -151,7 +152,7 @@ export function MyExamQueue({ mode = "waiting" }: { mode?: "waiting" | "active" 
           ))}
           {unpaid.length > 0 && <Card className="flex flex-col gap-3 p-5">
             <h3 className="font-semibold">Chờ thanh toán phí khám ({unpaid.length})</h3>
-            <p className="text-muted-foreground text-sm">Vào hàng chờ của bạn sau khi trả phí khám ở quầy.</p>
+            <p className="text-muted-foreground text-sm">Vào hàng chờ sau khi trả phí khám ở quầy.</p>
             <WaitingList visits={unpaid.map(({ visit }) => visit)} />
           </Card>}
           {shared.length > 0 && <Card className="flex flex-col gap-2 p-5" data-testid="my-queue-shared">

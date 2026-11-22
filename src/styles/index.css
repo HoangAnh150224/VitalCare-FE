@@ -533,7 +533,27 @@
    ground behind a card.
    -------------------------------------------------------------------------- */
 
+/* The staff visit ticket (KAN-124) exists for the printer only. */
+.visit-ticket {
+  display: none;
+}
+
 @media print {
+  /* Printing a visit that has a ticket prints the ticket alone: every sibling
+     of it on the detail screen comes off the page. `animation: none` because
+     an element first displayed at print time would otherwise be caught at the
+     transparent start of the screen entrance. */
+  .visit-ticket {
+    display: block !important;
+    animation: none !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  :has(> .visit-ticket) > :not(.visit-ticket) {
+    display: none !important;
+  }
+
   @page {
     size: A4 portrait;
     margin: 14mm 12mm;
@@ -582,5 +602,24 @@
   /* A long table may span pages, but every page repeats its header row. */
   thead {
     display: table-header-group;
+  }
+
+  /* The receipt (invoice screen, `data-print="receipt"`). The rail is hidden
+     above but the gap that reserves its width is a sibling and stays, and the
+     20rem side column stays too: between them the lines table was left a
+     sliver that cut the amounts off. On paper: no gap, one full-width column,
+     and SL / Thành tiền never wrap. */
+  [data-slot="sidebar-wrapper"]:has([data-print="receipt"])
+    [data-slot="sidebar-gap"] {
+    display: none !important;
+  }
+
+  [data-print="receipt"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  [data-print="receipt"] table :is(th, td):not(:first-child) {
+    white-space: nowrap;
+    padding-left: 1rem;
   }
 }

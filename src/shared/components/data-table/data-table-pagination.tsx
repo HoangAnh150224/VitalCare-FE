@@ -150,7 +150,7 @@ export function DataTablePagination({
               variant="outline"
               size="icon-sm"
               onClick={() => setCurrentPage(currentPage + 1)}
-              disabled={currentPage === pageCount}
+              disabled={currentPage >= pageCount}
               aria-label="Trang sau"
             >
               <ChevronRight />
@@ -160,7 +160,7 @@ export function DataTablePagination({
               size="icon-sm"
               className={cn("hidden", "lg:flex")}
               onClick={() => setCurrentPage(pageCount)}
-              disabled={currentPage === pageCount}
+              disabled={currentPage >= pageCount}
               aria-label="Trang cuối"
             >
               <ChevronsRight />

@@ -2,7 +2,7 @@ import type { HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { useNavigate } from "react-router";
 
-import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
+import { EditView, EditViewHeader, reloadSaved } from "@/shared/components/views/edit-view";
 import { Button } from "@/shared/ui/button";
 import {
   Select,
@@ -56,7 +56,7 @@ export const DeviceEdit = () => {
 
   return (
     <EditView>
-      <EditViewHeader title="Chỉnh sửa thiết bị IoMT" />
+      <EditViewHeader title="Chỉnh sửa thiết bị IoMT" onRefresh={() => void reloadSaved(query, form)} />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="min-w-0">
           <SectionedFormPanel>

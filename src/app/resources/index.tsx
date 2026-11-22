@@ -37,6 +37,8 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
+import { ConversationsWaitingBadge } from "@/features/clinic/conversations/waiting-badge";
+
 /**
  * Resource definitions passed to `<Refine resources={...} />`.
  *
@@ -394,6 +396,8 @@ export const resources: ResourceProps[] = [
     meta: {
       label: "Tin nhắn",
       icon: <MessagesSquare className="h-4 w-4" />,
+      // How many conversations wait on the clinic, live (KAN-146).
+      badge: <ConversationsWaitingBadge />,
       parent: "clinic",
     },
   },
@@ -410,6 +414,14 @@ export const resources: ResourceProps[] = [
       icon: <BriefcaseMedical className="h-4 w-4" />,
       parent: "clinic",
     },
+  },
+  // An article's version history (SRS 3.17.9) is not one of Refine's actions,
+  // so it is declared as a hidden child: the breadcrumb then reads "Nội dung
+  // sơ cứu > Lịch sử phiên bản" and the sidebar lights the parent up.
+  {
+    name: "first_aid_history",
+    list: "/first-aid-articles/history/:id",
+    meta: { label: "Lịch sử phiên bản", parent: "first_aid_articles", hide: true },
   },
   // Issued by concluding an encounter: no create. The report sits under it
   // as a route of its own, guarded by `invoices:report`.

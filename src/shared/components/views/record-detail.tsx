@@ -139,7 +139,7 @@ export function DetailRow({
       )}
     >
       <dt className="text-muted-foreground text-sm">{label}</dt>
-      <dd className="min-w-0 text-sm">{children}</dd>
+      <dd className="min-w-0 text-sm break-words">{children}</dd>
     </div>
   );
 }

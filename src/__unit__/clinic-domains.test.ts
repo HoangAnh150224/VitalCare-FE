@@ -278,6 +278,9 @@ describe("FE-23 Billing — translateBillingMessage, billingErrorText, createRev
     expect(translateBillingMessage("Another service already has that code")).toBe("Mã dịch vụ này đã có.");
     expect(translateBillingMessage("Failed to fetch")).toBe("Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.");
     expect(translateBillingMessage("Something new")).toBe("Something new");
+    // KAN-122: a blocked period refused by the API
+    expect(translateBillingMessage("That doctor already has a period overlapping this one on that day")).toMatch(/^Bác sĩ đã có khoảng chặn trùng/);
+    expect(translateBillingMessage("2 registered visit(s) fall in that time; move or cancel them first")).toMatch(/^Có 2 lượt đăng ký khám/);
   });
   it("BL2 a 422 says its field message, not 'Validation failed'; nothing is a generic retry", () => {
     expect(billingErrorText({ message: "Validation failed", errors: { file: "A file can be at most 10 MB" } })).toBe("File tối đa 10 MB.");

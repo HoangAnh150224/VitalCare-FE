@@ -99,7 +99,7 @@ describe("MonitoringDashboard (/monitoring) — Clinic Monitoring Dashboard", ()
     expect(view.getByText("15/20")).toBeInTheDocument();
     const alerts = view.getByTestId("tile-alerts");
     expect(within(alerts).getByText("3")).toBeInTheDocument();
-    expect(within(alerts).getByText("4 cảnh giác · 1 đã tiếp nhận")).toBeInTheDocument();
+    expect(within(alerts).getByText("4 mức cảnh báo · 1 đã tiếp nhận")).toBeInTheDocument();
     expect(alerts).toHaveAttribute("href", "/alerts");
   });
 
@@ -114,12 +114,21 @@ describe("MonitoringDashboard (/monitoring) — Clinic Monitoring Dashboard", ()
   it("MD3 boundary: no open critical alert says so", async () => {
     api({ "GET /monitoring_dashboard*": { status: 200, body: { ...dashboard, recentCritical: [] } } });
     screen("/monitoring", "/monitoring", <MonitoringDashboard />);
-    expect(await view.findByText("Không có cảnh báo nguy hiểm nào đang mở.")).toBeInTheDocument();
+    expect(await view.findByText("Không có cảnh báo khẩn cấp nào đang mở.")).toBeInTheDocument();
   });
 
   it("MD4 figures that could not load say so", async () => {
     api({ "GET /monitoring_dashboard*": { status: 500, body: { message: "down" } } });
     screen("/monitoring", "/monitoring", <MonitoringDashboard />);
     expect(await view.findByText(/Không tải được số liệu/)).toBeInTheDocument();
+  });
+
+  it("MD5 a viewer who may not open the lists gets the figures without links (KAN-135)", async () => {
+    access.can = false;
+    api({ "GET /monitoring_dashboard*": { status: 200, body: dashboard } });
+    screen("/monitoring", "/monitoring", <MonitoringDashboard />);
+    expect((await view.findByText("Trần Thị Bích")).closest("a")).toBeNull();
+    expect(view.getByTestId("tile-alerts")).not.toHaveAttribute("href");
+    expect(within(view.getByTestId("tile-alerts")).getByText("3")).toBeInTheDocument();
   });
 });

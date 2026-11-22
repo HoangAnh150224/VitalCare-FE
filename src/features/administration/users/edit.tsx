@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "@refinedev/react-hook-form";
 import { useNavigate } from "react-router";
 
-import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
+import { EditView, EditViewHeader, reloadSaved } from "@/shared/components/views/edit-view";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -106,7 +106,7 @@ export const UserEdit = () => {
 
   return (
     <EditView>
-      <EditViewHeader />
+      <EditViewHeader onRefresh={() => void reloadSaved(query, form)} />
 
       <Tabs value={tab} onValueChange={setTab} className="min-w-0 gap-4">
         <TabsList>

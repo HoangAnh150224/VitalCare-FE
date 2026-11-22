@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { exportScopeLabel } from "./fetch-all";
 
 export function createTableWorkbook<T>(records: T[], all: boolean, title: string,
   columns: { label: string; width: number; numFmt?: string; value: (row: T) => string | number }[]) {
@@ -15,7 +16,7 @@ export function createTableWorkbook<T>(records: T[], all: boolean, title: string
   sheet.getCell(1, 1).font = { name: "Calibri", size: 18, bold: true, color: { argb: "FF007D83" } };
   sheet.getRow(1).height = 40;
   sheet.getCell(2, 1).value = "Ngày xuất: " + new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) + " (UTC+7)";
-  sheet.getCell(3, 1).value = `Phạm vi: ${all ? "Tất cả kết quả theo bộ lọc hiện tại" : "Trang đang xem"} • Tổng số: ${records.length}`;
+  sheet.getCell(3, 1).value = `Phạm vi: ${exportScopeLabel(all)} • Tổng số: ${records.length}`;
   sheet.getRow(2).height = 24;
   sheet.getRow(3).height = 24;
   sheet.getRow(5).values = ["STT", ...columns.map((c) => c.label)];

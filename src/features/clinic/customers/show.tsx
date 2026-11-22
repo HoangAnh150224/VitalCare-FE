@@ -2,6 +2,7 @@ import { useCan, useList, useShow } from "@refinedev/core";
 import { Link } from "react-router";
 
 import { LoadingOverlay } from "@/shared/components/layout/loading-overlay";
+import { RecordNotFound } from "@/shared/components/views/record-not-found";
 import { ShowView, ShowViewHeader } from "@/shared/components/views/show-view";
 import { Badge } from "@/shared/ui/badge";
 import { Card } from "@/shared/ui/card";
@@ -26,7 +27,10 @@ import {
 } from "@/domains/customer/types";
 import type { Appointment } from "@/domains/appointment/types";
 import { fullAddress, ID_TYPE_LABELS } from "@/domains/profile/types";
-import { APPOINTMENT_STATUS_LABELS } from "@/domains/appointment/types";
+import {
+  APPOINTMENT_STATUS_LABELS,
+  formatQueueNumber,
+} from "@/domains/appointment/types";
 import {
   APPOINTMENT_STATUS_VARIANTS,
   CUSTOMER_STATUS_VARIANTS,
@@ -43,6 +47,27 @@ import { MonitoringOrdersPanel } from "../monitoring/monitoring-orders-panel";
 import { CaregiversPanel } from "../sharing/caregivers-panel";
 
 /**
+ * In place of the detail and edit screens when the customer cannot be read: an
+ * id that does not exist or belongs to another clinic (404), or cannot be one
+ * (400), is "not found" (KAN-141).
+ */
+export const CustomerNotFound = ({
+  error,
+}: {
+  error?: { statusCode?: number } | null;
+}) => (
+  <RecordNotFound
+    message={
+      error?.statusCode === 404 || error?.statusCode === 400
+        ? "Không tìm thấy khách hàng. Khách hàng có thể không thuộc cơ sở của bạn hoặc đường dẫn không đúng."
+        : "Không tải được thông tin khách hàng. Vui lòng thử lại."
+    }
+    listPath="/customers"
+    listLabel="Về danh sách Khách hàng"
+  />
+);
+
+/**
  * One customer: who they are, whether they are a patient yet and how they
  * became one, and their appointments.
  *
@@ -51,7 +76,10 @@ import { CaregiversPanel } from "../sharing/caregivers-panel";
  * for.
  */
 export const CustomerShow = () => {
-  const { result: record, query } = useShow<Customer>({});
+  const { result: record, query } = useShow<Customer>({
+    // Said on the page instead (below), once.
+    errorNotification: false,
+  });
   const { isLoading } = query;
 
   const { data: canReadAppointments } = useCan({
@@ -70,6 +98,16 @@ export const CustomerShow = () => {
   });
 
   const status = record?.status;
+
+  // No such customer here (an id edited in the URL, another clinic's customer):
+  // say so, not an empty layout.
+  if (query.isError && !record) {
+    return (
+      <ShowView>
+        <CustomerNotFound error={query.error} />
+      </ShowView>
+    );
+  }
 
   return (
     <ShowView>
@@ -270,8 +308,11 @@ export const CustomerShow = () => {
                 >
                   <span className="flex min-w-0 flex-col">
                     <span className="text-sm font-medium">
-                      {formatLocalDate(appointment.appointmentDate)} ·{" "}
-                      {formatLocalTime(appointment.startTime)}
+                      {formatLocalDate(appointment.appointmentDate)}
+                      {appointment.queueNumber != null &&
+                        ` · Số khám ${formatQueueNumber(appointment.queueNumber)}`}
+                      {appointment.startTime &&
+                        ` · ${formatLocalTime(appointment.startTime)}`}
                     </span>
                     <span className="text-muted-foreground truncate text-xs">
                       {appointment.reason ?? appointment.clinic.name}

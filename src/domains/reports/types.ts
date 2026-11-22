@@ -73,7 +73,7 @@ export const REPORTS: ReportSpec[] = [
       { key: "monitored", label: "Đang theo dõi", format: "yesno" },
       { key: "readings", label: "Số đo", format: "number" },
       { key: "alerts", label: "Cảnh báo", format: "number" },
-      { key: "criticalAlerts", label: "Nguy hiểm", format: "number" },
+      { key: "criticalAlerts", label: "Khẩn cấp", format: "number" },
     ],
   },
   {
@@ -131,17 +131,18 @@ export const REPORTS: ReportSpec[] = [
     label: "Cảnh báo",
     description: "Cảnh báo phát sinh trong khoảng ngày, theo ngày, và thời gian đến khi được tiếp nhận.",
     figures: [
-      { key: "alerts", label: "Cảnh báo" },
-      { key: "critical", label: "Nguy hiểm" },
-      { key: "warning", label: "Cảnh giác" },
+      // Severity names as in SEVERITY_LABELS (domains/alerts/types.ts); the total says "Tổng" so it does not read as the WARNING level.
+      { key: "alerts", label: "Tổng cảnh báo" },
+      { key: "critical", label: "Khẩn cấp" },
+      { key: "warning", label: "Cảnh báo" },
       { key: "stillOpen", label: "Còn mở" },
       { key: "avgMinutesToAcknowledge", label: "Phút đến khi tiếp nhận (TB)" },
     ],
     columns: [
       { key: "date", label: "Ngày", format: "date" },
       { key: "alerts", label: "Tổng", format: "number" },
-      { key: "critical", label: "Nguy hiểm", format: "number" },
-      { key: "warning", label: "Cảnh giác", format: "number" },
+      { key: "critical", label: "Khẩn cấp", format: "number" },
+      { key: "warning", label: "Cảnh báo", format: "number" },
       { key: "resolved", label: "Đã xử lý", format: "number" },
       { key: "dismissed", label: "Bỏ qua", format: "number" },
       { key: "stillOpen", label: "Còn mở", format: "number" },

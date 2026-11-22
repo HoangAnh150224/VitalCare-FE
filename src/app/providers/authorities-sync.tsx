@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { subscribeToAuthorities } from "@/shared/api/session";
+import { disconnect } from "@/shared/api/live";
+import { subscribeToAuthorities, subscribeToSessionEnd } from "@/shared/api/session";
 
 /**
  * Makes a permission change visible without a reload.
@@ -29,6 +30,20 @@ export const AuthoritiesSync = () => {
       subscribeToAuthorities(() => {
         void queryClient.invalidateQueries({ queryKey: ["access"] });
         void queryClient.invalidateQueries({ queryKey: ["auth", "permissions"] });
+      }),
+    [queryClient]
+  );
+
+  // A request found the session over (401, refresh failed). Re-running the
+  // guard's `check` is what moves a protected page to /login?to=<here>, and
+  // unmounting it is what stops a self-refreshing screen from polling on.
+  // Public pages and the sign-in form have no redirecting guard, so nothing
+  // moves there.
+  useEffect(
+    () =>
+      subscribeToSessionEnd(() => {
+        disconnect();
+        void queryClient.invalidateQueries({ queryKey: ["auth"] });
       }),
     [queryClient]
   );

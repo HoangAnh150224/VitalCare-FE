@@ -39,6 +39,14 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   grant: "Cấp quyền",
   revoke: "Thu hồi quyền",
   reply: "Phản hồi",
+  // First-aid content through its editorial life (KAN-133).
+  submit: "Gửi duyệt",
+  approve: "Duyệt",
+  reject: "Trả lại",
+  publish: "Xuất bản",
+  pause: "Tạm ngưng",
+  resume: "Mở lại",
+  archive: "Lưu trữ",
 };
 
 /**

@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from "react-router";
 
 import { kyInstance } from "@/shared/api/data";
 import { CreateView, CreateViewHeader } from "@/shared/components/views/create-view";
-import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
+import { EditView, EditViewHeader, reloadSaved } from "@/shared/components/views/edit-view";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -67,7 +67,12 @@ const toNumber = (value: string | number | null | undefined) =>
  * sees it read-only: still sent back as it was, so saving the rest is not
  * mistaken for changing it.
  */
-function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?: Record<string, number> }) {
+function EncounterForm({ submitLabel, patient, editHeader }: {
+  submitLabel: string;
+  patient?: Record<string, number>;
+  /** The edit screen's header, drawn here so its "Làm mới" can reset this form (KAN-115). */
+  editHeader?: React.ComponentProps<typeof EditViewHeader>;
+}) {
   const navigate = useNavigate();
   const { show } = useNavigation();
   const { open: notify } = useNotification();
@@ -140,11 +145,17 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
   };
 
   // Reached by URL after the 24 hours: say so instead of taking text the API will refuse.
+  const header = editHeader && (
+    <EditViewHeader {...editHeader} onRefresh={() => void reloadSaved(query, form)} />
+  );
   if (record && isEncounterLocked(record)) {
     return (
+      <>
+      {header}
       <Alert>
         <AlertDescription>Lần khám này đã hoàn tất quá 24 giờ nên đã khoá, không sửa được nữa.</AlertDescription>
       </Alert>
+      </>
     );
   }
 
@@ -185,6 +196,8 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
   );
 
   return (
+    <>
+    {header}
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((values) =>
@@ -364,6 +377,7 @@ function EncounterForm({ submitLabel, patient }: { submitLabel: string; patient?
         </SectionedFormPanel>
       </form>
     </Form>
+    </>
   );
 }
 
@@ -396,7 +410,6 @@ export const EncounterCreate = () => {
 
 export const EncounterEdit = () => (
   <EditView>
-    <EditViewHeader resource="clinical_encounters" />
-    <EncounterForm submitLabel="Lưu thay đổi" />
+    <EncounterForm submitLabel="Lưu thay đổi" editHeader={{ resource: "clinical_encounters" }} />
   </EditView>
 );

@@ -41,7 +41,12 @@ import { Textarea } from "@/shared/ui/textarea";
 import type { FirstAidArticle } from "@/domains/first-aid/types";
 import { FIRST_AID_CATEGORY_LABELS } from "@/domains/first-aid/types";
 import { formatDateTime } from "@/shared/lib/format";
-import { FirstAidStatusBadge, revisionLabel, useFirstAidSteps } from "./parts";
+import {
+  FirstAidNotFound,
+  FirstAidStatusBadge,
+  revisionLabel,
+  useFirstAidSteps,
+} from "./parts";
 
 type Confirm = "publish" | "archive" | "pause" | "resume" | null;
 
@@ -53,6 +58,8 @@ type Confirm = "publish" | "archive" | "pause" | "resume" | null;
 export const FirstAidShow = () => {
   const { result: article, query } = useShow<FirstAidArticle>({
     resource: "first_aid_articles",
+    // Said on the page instead (below), once.
+    errorNotification: false,
   });
   const invalidate = useInvalidate();
   const steps = useFirstAidSteps(() => {
@@ -65,6 +72,15 @@ export const FirstAidShow = () => {
   const can = (action: FirstAidArticle["actions"][number]) =>
     article?.actions.includes(action) ?? false;
   const deciding = can("approve") || can("reject");
+
+  // No such article (an id edited in the URL): say so, not an empty layout.
+  if (query.isError && !article) {
+    return (
+      <ShowView>
+        <FirstAidNotFound error={query.error} />
+      </ShowView>
+    );
+  }
 
   return (
     <ShowView>

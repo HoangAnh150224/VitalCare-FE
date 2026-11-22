@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useCan, useCustomMutation, useList, useNotification, type HttpError } from "@refinedev/core";
+import { useCan, useCustomMutation, useList, useNotification, useWarnAboutChange, type HttpError } from "@refinedev/core";
 import { DoorOpenIcon, PlusIcon, Trash2Icon } from "lucide-react";
 
 import { API_URL } from "@/shared/api/constants";
@@ -47,6 +47,10 @@ const visitsIn = (row: WorkingHoursEntry) => {
   return row.visitMinutes > 0 && length > 0 ? Math.floor(length / row.visitMinutes) : 0;
 };
 
+/** KAN-119: one visit longer than the session itself, so the session would hold nobody. The server refuses it too. */
+const visitTooLong = (row: WorkingHoursEntry) =>
+  row.visitMinutes > 0 && row.endTime > row.startTime && visitsIn(row) === 0;
+
 /**
  * A doctor's week, repeating: one row per session, so a lunch break is two
  * rows on one day and a day off is a day with none.
@@ -79,6 +83,14 @@ export function WorkingHoursEditor({
     dirtyRef.current = value;
     setDirtyState(value);
   };
+
+  // Unsaved rows are what `UnsavedChangesGuard` asks about: leaving the screen,
+  // and (through `useConfirmDiscard` in the list) switching to another doctor.
+  const { setWarnWhen } = useWarnAboutChange();
+  useEffect(() => {
+    setWarnWhen(dirty);
+    return () => setWarnWhen(false);
+  }, [dirty, setWarnWhen]);
 
   const loaded = doctor.workingHours;
   useEffect(() => {
@@ -131,6 +143,8 @@ export function WorkingHoursEditor({
 
   const save = () => {
     setError(null);
+    // Said under the field itself; nothing is sent.
+    if (rows.some(visitTooLong)) return;
     mutate(
       {
         url: `${API_URL}/doctors/${doctor.id}/working-hours`,
@@ -164,6 +178,12 @@ export function WorkingHoursEditor({
           });
         },
         onError: (failure: HttpError) => {
+          // No status: the request never reached the server (blocked, offline). The data
+          // provider already says that in Vietnamese; the rows are not what is wrong.
+          if (!failure.statusCode) {
+            setError(failure.message);
+            return;
+          }
           const message = failure.errors?.sessions ?? failure.message;
           const clash = typeof message === "string" ? roomClash(message) : null;
           setError(
@@ -260,16 +280,24 @@ export function WorkingHoursEditor({
               value={hhmm(row.endTime)}
               onChange={(e) => update(row.key, { endTime: e.target.value })}
             />
-            <Input
-              type="number"
-              aria-label="Phút mỗi lượt khám"
-              min={5}
-              max={240}
-              step={5}
-              disabled={!editable}
-              value={row.visitMinutes}
-              onChange={(e) => update(row.key, { visitMinutes: Number(e.target.value) })}
-            />
+            <div className="flex flex-col gap-1">
+              <Input
+                type="number"
+                aria-label="Phút mỗi lượt khám"
+                min={5}
+                max={240}
+                step={5}
+                disabled={!editable}
+                aria-invalid={visitTooLong(row)}
+                value={row.visitMinutes}
+                onChange={(e) => update(row.key, { visitMinutes: Number(e.target.value) })}
+              />
+              {visitTooLong(row) && (
+                <p className="text-destructive text-xs">
+                  Phút mỗi lượt phải nhỏ hơn hoặc bằng tổng giờ làm việc. Vui lòng thử lại.
+                </p>
+              )}
+            </div>
             <span className="text-muted-foreground text-sm tabular-nums">{visitsIn(row)} lượt</span>
             {showRooms && (
               <Select

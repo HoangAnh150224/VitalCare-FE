@@ -1,6 +1,9 @@
 import type { BaseRecord, CrudFilter, CrudSort, DataProvider } from "@refinedev/core";
 import { toast } from "sonner";
 
+/** The name of an export scope: the menu item and the file's "Phạm vi" line both read it, so they cannot drift apart. */
+export const exportScopeLabel = (all: boolean) => all ? "Tất cả kết quả theo bộ lọc" : "Trang đang xem";
+
 /** "Tất cả kết quả theo bộ lọc" stops here: a wider export is a filter to narrow, not a file to wait for. */
 export const EXPORT_ROW_CAP = 10_000;
 

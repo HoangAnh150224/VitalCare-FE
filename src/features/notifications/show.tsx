@@ -45,6 +45,7 @@ const TYPE_LABELS: Record<string, string> = {
   chat: "Tin nhắn",
   alert: "Cảnh báo sức khỏe",
   device: "Thiết bị",
+  assignment: "Phân công theo dõi",
 };
 
 /**

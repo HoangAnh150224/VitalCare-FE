@@ -3,7 +3,7 @@ import { useForm } from "@refinedev/react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
 
 import { CreateView, CreateViewHeader } from "@/shared/components/views/create-view";
-import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
+import { EditView, EditViewHeader, reloadSaved } from "@/shared/components/views/edit-view";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -20,6 +20,7 @@ import {
   FormSectionActions,
   SectionedFormPanel,
 } from "@/shared/components/form/form-section";
+import { billingErrorNotification } from "@/domains/billing/messages";
 import type { DoctorSchedule } from "@/domains/schedule/types";
 import { clinicToday } from "../appointments/clinic-day";
 import { useOwnClinicDoctors } from "./use-doctors";
@@ -39,13 +40,18 @@ type BlockedTimeValues = {
  * (`?doctorId=`) and is fixed once saved. The API refuses a period that
  * covers a visit somebody has already registered.
  */
-function BlockedTimeForm({ submitLabel, doctorId }: { submitLabel: string; doctorId?: number }) {
+function BlockedTimeForm({ submitLabel, doctorId, editHeader }: {
+  submitLabel: string;
+  doctorId?: number;
+  /** The edit screen's header, drawn here so its "Làm mới" can reset this form (KAN-115). */
+  editHeader?: React.ComponentProps<typeof EditViewHeader>;
+}) {
   const navigate = useNavigate();
   const {
     refineCore: { onFinish, query },
     ...form
   } = useForm<DoctorSchedule, HttpError, BlockedTimeValues>({
-    refineCoreProps: { resource: "doctor_schedules", redirect: "list" },
+    refineCoreProps: { resource: "doctor_schedules", redirect: "list", errorNotification: billingErrorNotification },
     defaultValues: { workDate: "", startTime: "", endTime: "", note: "" },
   });
   const record = query?.data?.data;
@@ -53,6 +59,8 @@ function BlockedTimeForm({ submitLabel, doctorId }: { submitLabel: string; docto
   const doctorName = record?.doctor.fullName ?? doctors.find((doctor) => doctor.id === doctorId)?.fullName;
 
   return (
+    <>
+    {editHeader && <EditViewHeader {...editHeader} onRefresh={() => void reloadSaved(query, form)} />}
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((values) =>
@@ -143,6 +151,7 @@ function BlockedTimeForm({ submitLabel, doctorId }: { submitLabel: string; docto
         </SectionedFormPanel>
       </form>
     </Form>
+    </>
   );
 }
 
@@ -168,7 +177,9 @@ export const DoctorScheduleCreate = () => {
 
 export const DoctorScheduleEdit = () => (
   <EditView>
-    <EditViewHeader resource="doctor_schedules" title="Sửa khoảng thời gian chặn" />
-    <BlockedTimeForm submitLabel="Lưu thay đổi" />
+    <BlockedTimeForm
+      submitLabel="Lưu thay đổi"
+      editHeader={{ resource: "doctor_schedules", title: "Sửa khoảng thời gian chặn" }}
+    />
   </EditView>
 );

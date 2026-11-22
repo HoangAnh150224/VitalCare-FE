@@ -45,7 +45,7 @@ export const ACTION_TO_PERMISSION: Record<
   perform: "perform",
   // customers:assign — putting a patient in somebody's care and on a device.
   assign: "assign",
-  // customers:assign_staff — the care team; the clinic administrator's alone (SRS 3.1.3).
+  // customers:assign_staff — the care team, managed by the front desk on the customer page.
   assign_staff: "assign_staff",
   list: "read",
   show: "read",

@@ -3,7 +3,7 @@ import { useDataProvider, type HttpError } from "@refinedev/core";
 import type { UseTableReturnType } from "@refinedev/react-table";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
-import { fetchAllForExport } from "./fetch-all";
+import { exportScopeLabel, fetchAllForExport } from "./fetch-all";
 import { Button } from "@/shared/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 import type { BaseRecord } from "@refinedev/core";
@@ -39,13 +39,13 @@ export function ExcelTableExport<T extends BaseRecord>({ table, resource, title,
       <DropdownMenuSeparator />
       <DropdownMenuItem disabled={busy} onSelect={() => void exportFile(false)}>
         <span className="flex flex-col">
-          <span>Trang này</span>
+          <span>{exportScopeLabel(false)}</span>
           <span className="text-muted-foreground text-xs">Các dòng và cột đang hiển thị</span>
         </span>
       </DropdownMenuItem>
       <DropdownMenuItem disabled={busy} onSelect={() => void exportFile(true)}>
         <span className="flex flex-col">
-          <span>Tất cả dòng</span>
+          <span>{exportScopeLabel(true)}</span>
           <span className="text-muted-foreground text-xs">Mọi kết quả khớp với bộ lọc hiện tại</span>
         </span>
       </DropdownMenuItem>

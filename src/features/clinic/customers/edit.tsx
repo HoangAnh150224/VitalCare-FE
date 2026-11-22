@@ -1,7 +1,7 @@
 import { useForm } from "@refinedev/react-hook-form";
 import { useNavigate } from "react-router";
 
-import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
+import { EditView, EditViewHeader, reloadSaved } from "@/shared/components/views/edit-view";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import {
@@ -28,6 +28,7 @@ import {
 import type { Customer } from "@/domains/customer/types";
 import { GENDER_OPTIONS } from "@/domains/customer/types";
 import { birthDateProblem, clinicToday } from "../appointments/clinic-day";
+import { CustomerNotFound } from "./show";
 
 /** What `PATCH /customers/{id}` accepts — the profile, nothing else. */
 type CustomerFormValues = Pick<
@@ -47,9 +48,9 @@ export const CustomerEdit = () => {
   const navigate = useNavigate();
 
   const {
-    refineCore: { onFinish },
+    refineCore: { onFinish, query },
     ...form
-  } = useForm<Customer>({ refineCoreProps: {} });
+  } = useForm<Customer>({ refineCoreProps: { redirect: "show" } });
 
   function onSubmit(values: Record<string, unknown>) {
     const v = values as CustomerFormValues;
@@ -64,9 +65,19 @@ export const CustomerEdit = () => {
     } as unknown as Customer);
   }
 
+  // No such customer here (an id edited in the URL, another clinic's customer):
+  // say so, not an empty form.
+  if (query?.isError && !query.data) {
+    return (
+      <EditView>
+        <CustomerNotFound error={query.error} />
+      </EditView>
+    );
+  }
+
   return (
     <EditView>
-      <EditViewHeader />
+      <EditViewHeader onRefresh={() => void reloadSaved(query, form)} />
       <Form {...form}>
         <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="min-w-0">
           <SectionedFormPanel>

@@ -116,6 +116,9 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
       columnHelper.display({
         id: "customer",
         enableResizing: true,
+        // Wide enough for "phone · customer code · Chưa kích hoạt" on one line:
+        // at the 150px default the cell cut the line off after the phone (KAN-120).
+        size: 300,
         header: "Khách hàng",
         enableSorting: false,
         cell: ({ row }) => {

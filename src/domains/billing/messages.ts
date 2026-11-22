@@ -46,6 +46,11 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ["Somebody else is in this room now", "Trong phòng đã là bệnh nhân khác. Bảng vừa được tải lại, vui lòng kiểm tra rồi thao tác lại."],
   ["This visit already has an encounter", "Lượt khám này đã có lần khám (có thể vừa được mở ở tab khác). Quay lại màn Đang khám và bấm “Mở lần khám” thay vì tạo mới."],
   ["Nobody is in this room","Phòng đang trống. Bảng vừa được tải lại."],
+  // "Gọi người tiếp theo" refused (KAN-145)
+  ["Nobody is waiting for this room's doctor", "Không còn bệnh nhân nào đang chờ bác sĩ của phòng này."],
+  ["No doctor is scheduled in this room right now", "Hiện không có bác sĩ nào trong ca tại phòng này nên chưa gọi được bệnh nhân."],
+  ["Somebody is still in this room", "Trong phòng vẫn còn bệnh nhân. Kết thúc lượt khám hoặc báo vắng trước khi gọi người tiếp theo."],
+  ["This room is paused", "Phòng đang tạm dừng. Mở lại phòng trước khi gọi bệnh nhân."],
   ["A walk-in is registered for today", "Khám vãng lai chỉ đăng ký cho hôm nay."],
   // Ordering and results
   ["This encounter is concluded", "Lần khám đã hoàn tất nên không chỉ định hay thay đổi dịch vụ được nữa."],
@@ -119,6 +124,16 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ],
   ["The date cannot be in the past", "Ngày khám không được ở quá khứ."],
   ["Registration is open up to", "Ngày khám vượt quá thời gian mở đăng ký."],
+  // A doctor's blocked time (KAN-122)
+  [
+    "That doctor already has a period overlapping",
+    "Bác sĩ đã có khoảng chặn trùng với khoảng thời gian này trong ngày. Vui lòng chọn khoảng thời gian khác.",
+  ],
+  [
+    "registered visit(s) fall in that time",
+    (message) => `Có ${parseInt(message, 10) || "một số"} lượt đăng ký khám rơi vào khoảng thời gian này. Đổi ngày khám hoặc huỷ các lượt ấy trước.`,
+  ],
+  ["The end time must be after the start time", "Giờ kết thúc phải sau giờ bắt đầu."],
   // First-aid content
   ["Only a draft can be sent for review", "Chỉ gửi duyệt được bản nháp."],
   ["Only content waiting for review can be approved", "Nội dung này không ở trạng thái chờ duyệt."],

@@ -3,7 +3,7 @@ import { useForm } from "@refinedev/react-hook-form";
 import { useNavigate } from "react-router";
 
 import { CreateView, CreateViewHeader } from "@/shared/components/views/create-view";
-import { EditView, EditViewHeader } from "@/shared/components/views/edit-view";
+import { EditView, EditViewHeader, reloadSaved } from "@/shared/components/views/edit-view";
 import { Button } from "@/shared/ui/button";
 import { Form } from "@/shared/ui/form";
 import { FormSection, FormSectionActions, SectionedFormPanel } from "@/shared/components/form/form-section";
@@ -18,7 +18,7 @@ import {
 function MedicalServiceForm({ mode }: { mode: "create" | "edit" }) {
   const navigate = useNavigate();
   const {
-    refineCore: { onFinish },
+    refineCore: { onFinish, query },
     ...form
   } = useForm<MedicalServiceFormValues, HttpError, MedicalServiceFormValues>({
     refineCoreProps: { resource: "medical_services", redirect: "list" },
@@ -60,7 +60,7 @@ function MedicalServiceForm({ mode }: { mode: "create" | "edit" }) {
     </CreateView>
   ) : (
     <EditView>
-      <EditViewHeader />
+      <EditViewHeader onRefresh={() => void reloadSaved(query, form)} />
       {body}
     </EditView>
   );

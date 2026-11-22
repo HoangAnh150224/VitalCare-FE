@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCan, useNotification } from "@refinedev/core";
+import { useCan, useInvalidate, useNotification } from "@refinedev/core";
 
 import { NOTIFICATIONS, subscribe } from "@/shared/api/live";
 import { kyInstance } from "@/shared/api/data";
@@ -48,6 +48,7 @@ async function get<T>(path: string): Promise<T> {
 export function useNotifications() {
   const queryClient = useQueryClient();
   const { open } = useNotification();
+  const invalidate = useInvalidate();
 
   // The bell is hidden outright for an account without the permission, rather
   // than rendered empty. `notifications:read` is granted to every system role,
@@ -101,18 +102,29 @@ export function useNotifications() {
     });
   }, [enabled, queryClient, open]);
 
+  // The Notifications screen's table is Refine's, cached under Refine's own
+  // key (`["data", ..., "notifications", "list", ...]`), which the
+  // `["notifications"]` prefix above does not reach — so marking read has to
+  // invalidate that list too, or its rows stay unread until a reload. Kept out
+  // of `refresh` itself: the list calls `refresh` whenever its rows change, and
+  // invalidating the rows from there would refetch them forever.
+  const refreshAfterRead = useCallback(() => {
+    refresh();
+    void invalidate({ resource: "notifications", invalidates: ["list"] });
+  }, [refresh, invalidate]);
+
   const markRead = useCallback(
     async (id: number) => {
       await kyInstance.post(`notifications/${id}/read`);
-      refresh();
+      refreshAfterRead();
     },
-    [refresh]
+    [refreshAfterRead]
   );
 
   const markAllRead = useCallback(async () => {
     await kyInstance.post(`notifications/read-all`);
-    refresh();
-  }, [refresh]);
+    refreshAfterRead();
+  }, [refreshAfterRead]);
 
   return {
     enabled,

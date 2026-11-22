@@ -8,7 +8,7 @@ import {
   useUpdate,
 } from "@refinedev/core";
 import { BanknoteIcon, PencilIcon, PlusIcon, PrinterIcon } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router";
 
 import { API_URL } from "@/shared/api/constants";
@@ -60,6 +60,11 @@ import { clinicToday } from "./clinic-day";
 import { CounterPaymentDialog } from "../invoices/counter-payment";
 import { InvoiceStatusBadge } from "../invoices/invoice-lines";
 import { newEncounterPath } from "@/domains/encounter/types";
+
+// Loaded on first visit, not with the app: it brings qrcode.react (see routes.tsx).
+const VisitTicket = lazy(() =>
+  import("./visit-ticket").then((m) => ({ default: m.VisitTicket }))
+);
 
 /** One registered visit: its queue number, what can be done to it, and the encounter it led to. */
 export const AppointmentShow = () => {
@@ -346,6 +351,13 @@ export const AppointmentShow = () => {
           </DetailList>
         </DetailPanel>
       </div>
+
+      {/* Print-only: what "In phiếu khám" puts on paper instead of this screen. */}
+      {record?.status === "ready_for_examination" && (
+        <Suspense fallback={null}>
+          <VisitTicket appointment={record} />
+        </Suspense>
+      )}
 
       {record && editing && (
         <EditVisitDialog

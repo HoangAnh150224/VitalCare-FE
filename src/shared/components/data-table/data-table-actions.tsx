@@ -29,6 +29,7 @@ import {
 } from "@/shared/ui/tooltip";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "sonner";
+import { exportScopeLabel } from "./fetch-all";
 
 /* --------------------------------------------------------------------------
    Refresh
@@ -283,7 +284,7 @@ export function DataTableExport<TData extends BaseRecord>({
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled={isLoading} onSelect={() => void exportFile(false)}>
           <span className="flex flex-col">
-            <span>Trang này</span>
+            <span>{exportScopeLabel(false)}</span>
             <span className="text-muted-foreground text-xs">
               Các dòng và cột đang hiển thị
             </span>
@@ -294,7 +295,7 @@ export function DataTableExport<TData extends BaseRecord>({
           onSelect={() => void exportFile(true)}
         >
           <span className="flex flex-col">
-            <span>Tất cả dòng</span>
+            <span>{exportScopeLabel(true)}</span>
             <span className="text-muted-foreground text-xs">
               Mọi kết quả khớp với bộ lọc hiện tại
             </span>

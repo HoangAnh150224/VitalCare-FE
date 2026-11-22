@@ -4,7 +4,7 @@ import {
   useList,
   useNotification,
 } from "@refinedev/core";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   LockIcon,
   LockOpenIcon,
@@ -12,11 +12,10 @@ import {
   PhoneIcon,
   SearchIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 
 import { kyInstance } from "@/shared/api/data";
-import { subscribe } from "@/shared/api/live";
 import {
   ChatComposer,
   ChatEmergencyNotice,
@@ -34,42 +33,8 @@ import type { InboxConversation } from "@/domains/chat/types";
 import { CHAT_KIND_LABELS, chatErrorText } from "@/domains/chat/types";
 import { displayPhone } from "@/domains/public-site/types";
 import { fetchThread, threadKey, threadRetry, useChatSend } from "./api";
+import { useConversationNudges, WAITING_KEY } from "./waiting-badge";
 import { useSearchOnEnter } from "@/shared/hooks/use-search-on-enter";
-
-/** Where the API nudges a clinic's staff that one of its conversations moved. */
-const topicOf = (clinicId: string) => `/topic/conversations/${clinicId}`;
-
-/**
- * Nudges for the clinics the caller answers — their own, or every one for the
- * system administrator. The handler is read through a ref, so a new one on
- * every render does not close and reopen the subscriptions.
- */
-function useConversationNudges(onNudge: (conversationId: number) => void) {
-  const handler = useRef(onNudge);
-  useEffect(() => {
-    handler.current = onNudge;
-  });
-  const { data: clinicIds } = useQuery({
-    queryKey: ["conversation-clinics"],
-    queryFn: () => kyInstance.get("conversations/clinics").json<string[]>(),
-    staleTime: 5 * 60_000,
-  });
-  const ids = clinicIds?.join(",") ?? "";
-  useEffect(() => {
-    if (!ids) return;
-    const offs = ids
-      .split(",")
-      .map((clinicId) =>
-        subscribe(topicOf(clinicId), (body) =>
-          handler.current(
-            (body as { conversationId?: number } | undefined)?.conversationId ??
-              0
-          )
-        )
-      );
-    return () => offs.forEach((off) => off());
-  }, [ids]);
-}
 
 /**
  * The clinic's support inbox (SRS 3.16.1, 3.16.3): conversations on the
@@ -115,6 +80,12 @@ export function ConversationInbox() {
     if (openedId) void listQuery.refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openedId]);
+
+  // Every read of the open thread marks it read, so the sidebar's count follows it.
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    void queryClient.invalidateQueries({ queryKey: WAITING_KEY });
+  }, [queryClient, thread.dataUpdatedAt]);
 
   return (
     <ListView>

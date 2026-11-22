@@ -24,7 +24,7 @@ import type { FirstAidStep } from "@/domains/first-aid/types";
 import { FIRST_AID_STATUS_LABELS } from "@/domains/first-aid/types";
 import { formatDateTime } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
-import { revisionLabel } from "./parts";
+import { FirstAidNotFound, revisionLabel } from "./parts";
 
 /**
  * SRS 3.17.9: every step an article went through, newest first, each with the
@@ -37,10 +37,21 @@ export const FirstAidHistory = () => {
     url: `${API_URL}/first_aid_articles/${id}/history`,
     method: "get",
     queryOptions: { enabled: Boolean(id) },
+    // Said on the page instead (below), once.
+    errorNotification: false,
   });
   // An array, or the empty object useCustom answers before there is data.
   const steps: FirstAidStep[] = Array.isArray(result?.data) ? result.data : [];
   const [openId, setOpenId] = useState<number | null>(null);
+
+  // No such article (an id edited in the URL): say so, not an empty table.
+  if (query.isError && steps.length === 0) {
+    return (
+      <ShowView>
+        <FirstAidNotFound error={query.error} />
+      </ShowView>
+    );
+  }
 
   return (
     <ShowView>
