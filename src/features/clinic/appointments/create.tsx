@@ -52,7 +52,7 @@ export const AppointmentCreate = () => {
   const { options: customerOptions, onSearch } = useSelect<Customer>({
     resource: "customers",
     optionLabel: (customer) =>
-      `${customer.fullName} · ${customer.phone} · ${customer.customerCode}`,
+      `${customer.fullName} · ${customer.phone ?? "—"} · ${customer.customerCode}`,
     optionValue: "id",
     onSearch: (value) => [{ field: "q", operator: "eq", value }],
   });

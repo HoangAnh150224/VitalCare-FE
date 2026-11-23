@@ -129,7 +129,7 @@ export const AppointmentList = ({ clinicId, readOnly = false, resource = "appoin
                 {customer.fullName}
               </Link>
               <span className="text-muted-foreground font-mono text-xs">
-                {customer.phone} · {customer.customerCode}
+                {customer.phone ?? "—"} · {customer.customerCode}
                 {customer.status === "neutral" && (
                   <span className="ms-1 font-sans">
                     · {CUSTOMER_STATUS_LABELS.neutral}

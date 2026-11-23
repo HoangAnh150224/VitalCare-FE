@@ -251,7 +251,7 @@ function AppointmentCard({
             {appointment.customer.fullName}
           </Link>
           <span className="text-muted-foreground font-mono text-xs">
-            {appointment.customer.phone} · {appointment.customer.customerCode}
+            {appointment.customer.phone ?? "—"} · {appointment.customer.customerCode}
           </span>
         </div>
         <div className="flex gap-2">
@@ -338,7 +338,7 @@ function SearchMatches({ term, onPick }: { term: string; onPick: (appointment: A
           onClick={() => onPick(row)}
         >
           <span>
-            <strong>{row.customer.fullName}</strong> · {row.customer.phone} ·{" "}
+            <strong>{row.customer.fullName}</strong> · {row.customer.phone ?? "—"} ·{" "}
             <span className="font-mono">{formatBookingCode(row.bookingCode)}</span>
           </span>
           <span className="flex items-center gap-2">

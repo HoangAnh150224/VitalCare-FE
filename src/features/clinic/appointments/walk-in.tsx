@@ -87,7 +87,7 @@ export const WalkInRegistration = () => {
   const { options: customerOptions, onSearch } = useSelect<Customer>({
     resource: "customers",
     optionLabel: (customer) =>
-      `${customer.fullName} · ${customer.phone} · ${customer.customerCode}${
+      `${customer.fullName} · ${customer.phone ?? "—"} · ${customer.customerCode}${
         customer.nationalId ? ` · ID …${customer.nationalId.slice(-4)}` : ""
       }`,
     optionValue: "id",

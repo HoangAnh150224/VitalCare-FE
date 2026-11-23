@@ -76,7 +76,7 @@ export const ViewAsPick = () => {
 
   const customers = useSelect<Customer>({
     resource: "customers",
-    optionLabel: (customer) => `${customer.fullName} · ${customer.phone} · ${customer.customerCode}`,
+    optionLabel: (customer) => `${customer.fullName} · ${customer.phone ?? "—"} · ${customer.customerCode}`,
     optionValue: "id",
     onSearch: (value) => [{ field: "q", operator: "eq", value }],
   });

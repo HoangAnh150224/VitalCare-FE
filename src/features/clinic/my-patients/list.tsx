@@ -91,7 +91,7 @@ export const MyPatientList = ({
           <div className="flex flex-col">
             <span className="font-medium">{row.original.fullName}</span>
             <span className="text-muted-foreground font-mono text-xs">
-              {row.original.phone} · {row.original.customerCode}
+              {row.original.phone ?? "—"} · {row.original.customerCode}
             </span>
           </div>
         ),
