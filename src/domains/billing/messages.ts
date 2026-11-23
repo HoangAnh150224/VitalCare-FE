@@ -157,6 +157,8 @@ const MESSAGES: [prefix: string, vi: string | ((message: string) => string)][] =
   ["The file's content does not match its type", "Nội dung file không đúng định dạng của nó."],
   // Catalogue
   ["Another service already has that code", "Mã dịch vụ này đã có."],
+  // Monitoring orders (KAN-159)
+  ["Only active monitoring can be ended", "Chỉ định này đã kết thúc hoặc bệnh nhân đã từ chối."],
   // Shared by every endpoint, and the browser's own when the network drops
   ["Failed to fetch", "Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại."],
   ["You do not have permission", "Bạn không có quyền thực hiện thao tác này."],

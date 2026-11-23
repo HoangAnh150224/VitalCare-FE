@@ -1,11 +1,12 @@
-import { useCan } from "@refinedev/core";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCan, useCustomMutation } from "@refinedev/core";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { kyInstance } from "@/shared/api/data";
+import { API_URL } from "@/shared/api/constants";
 import { DetailPanel } from "@/shared/components/views/record-detail";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { formatDateTime } from "@/shared/lib/format";
+import { billingErrorNotification } from "@/domains/billing/messages";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_VARIANTS } from "@/domains/sharing/types";
 import { monitoringOrdersKey, useMonitoringOrders } from "./use-monitoring-orders";
 
@@ -26,12 +27,21 @@ export function MonitoringOrdersPanel({ customerId }: { customerId: number }) {
   });
   const queryClient = useQueryClient();
   const { data } = useMonitoringOrders(customerId, Boolean(canRead?.can));
-  const end = useMutation({
-    mutationFn: (id: number) =>
-      kyInstance.post(`monitoring_orders/${id}/end`, { json: {} }).json(),
-    onSuccess: () =>
-      void queryClient.invalidateQueries({ queryKey: monitoringOrdersKey(customerId) }),
-  });
+  // Through Refine, as the exam-room board does: the server's refusal reaches the user in Vietnamese.
+  const { mutate, mutation } = useCustomMutation();
+  const end = (id: number) =>
+    mutate(
+      {
+        url: `${API_URL}/monitoring_orders/${id}/end`,
+        method: "post",
+        values: {},
+        config: { headers: { "Content-Type": "application/json" } },
+        successNotification: () => ({ type: "success", message: "Đã kết thúc chỉ định theo dõi" }),
+        errorNotification: billingErrorNotification,
+      },
+      // Read again either way: a failed answer does not say whether the order was ended.
+      { onSettled: () => void queryClient.invalidateQueries({ queryKey: monitoringOrdersKey(customerId) }) }
+    );
   const orders = data ?? [];
   if (!canRead?.can || orders.length === 0) return null;
 
@@ -59,8 +69,8 @@ export function MonitoringOrdersPanel({ customerId }: { customerId: number }) {
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => end.mutate(o.id)}
-                  disabled={end.isPending}
+                  onClick={() => end(o.id)}
+                  disabled={mutation.isPending}
                 >
                   Kết thúc
                 </Button>

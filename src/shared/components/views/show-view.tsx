@@ -3,6 +3,7 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
 import { ArrowLeftIcon } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useBack,
   useNavigation,
@@ -61,6 +62,7 @@ export const ShowViewHeader = ({
 }: ShowViewHeaderProps) => {
   const back = useBack();
   const { list } = useNavigation();
+  const queryClient = useQueryClient();
 
   const getUserFriendlyName = useUserFriendlyName();
 
@@ -117,10 +119,13 @@ export const ShowViewHeader = ({
           className="flex shrink-0 flex-wrap items-center justify-end gap-2"
         >
           {actions}
+          {/* Every query on screen, not only the record: a detail page is made of panels that each
+              read their own data (vital signs, notes, orders...), and "Làm mới" means all of it. */}
           <RefreshButton
             variant="outline"
             recordItemId={recordItemId}
             resource={resourceName}
+            onRefresh={() => void queryClient.invalidateQueries({ type: "active" })}
           />
           {/*
             Edit is the page's primary action and carries the only solid fill
